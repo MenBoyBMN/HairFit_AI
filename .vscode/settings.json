@@ -1,3 +1,5 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "cmake.sourceDirectory": "D:/DEV/DEV_Source_Project/2.Develoment_Project/HairFit_AI/windows",
+    "python.terminal.useEnvFile": true
 }

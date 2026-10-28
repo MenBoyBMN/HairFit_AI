@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/barber_profile_model.dart';
 import '../../../providers/app_providers.dart';
+import '../../../providers/auth_provider.dart';
 
 /// Provider cung cấp BarberRepository cho tính năng tìm kiếm và bản đồ (Task 3.2)
 final barberRepositoryProvider = Provider<BarberRepository>((ref) {
@@ -34,6 +35,15 @@ final approvedBarbersStreamProvider = StreamProvider<List<BarberProfileModel>>((
   return repo.streamApprovedBarbers();
 });
 
+/// Provider lọc danh sách thợ ruột yêu thích của khách hàng hiện tại (Task Phase 3 - C3)
+final favoriteBarbersProvider = Provider<List<BarberProfileModel>>((ref) {
+  final user = ref.watch(authStateProvider).value;
+  final favIds = user?.favoriteBarberIds ?? [];
+  if (favIds.isEmpty) return const [];
+  final barbers = ref.watch(approvedBarbersStreamProvider).valueOrNull ?? [];
+  return barbers.where((b) => favIds.contains(b.uid)).toList();
+});
+
 /// FutureProvider.family lấy chi tiết một thợ cắt tóc theo UID
 final barberDetailProvider = FutureProvider.family<BarberProfileModel?, String>(
   (ref, barberId) async {
@@ -45,9 +55,9 @@ final barberDetailProvider = FutureProvider.family<BarberProfileModel?, String>(
 /// StreamProvider lấy danh sách đánh giá của thợ theo barberId
 final barberReviewsStreamProvider =
     StreamProvider.family<List<Map<String, dynamic>>, String>((ref, barberId) {
-  final repo = ref.watch(barberRepositoryProvider);
-  return repo.streamReviewsForBarber(barberId);
-});
+      final repo = ref.watch(barberRepositoryProvider);
+      return repo.streamReviewsForBarber(barberId);
+    });
 
 /// Repository quản lý truy vấn thông tin thợ đã duyệt (Task 3.2)
 class BarberRepository {
@@ -65,8 +75,10 @@ class BarberRepository {
     if (barber.avatarUrl.trim().isNotEmpty) return barber;
 
     try {
-      final userDoc =
-          await _firestore.collection('users').doc(barber.uid).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(barber.uid)
+          .get();
       if (userDoc.exists) {
         final userAvatar = userDoc.data()?['avatarUrl'] as String? ?? '';
         if (userAvatar.trim().isNotEmpty) {
@@ -92,8 +104,7 @@ class BarberRepository {
 
       final list = <BarberProfileModel>[];
       for (final doc in snapshot.docs) {
-        final initial =
-            BarberProfileModel.fromMap(doc.data(), id: doc.id);
+        final initial = BarberProfileModel.fromMap(doc.data(), id: doc.id);
         list.add(await _resolveAvatarIfEmpty(initial));
       }
       return list;
@@ -108,17 +119,14 @@ class BarberRepository {
     return _collection
         .where('approvalStatus', isEqualTo: 'approved')
         .snapshots()
-        .asyncMap(
-          (snapshot) async {
-            final list = <BarberProfileModel>[];
-            for (final doc in snapshot.docs) {
-              final initial =
-                  BarberProfileModel.fromMap(doc.data(), id: doc.id);
-              list.add(await _resolveAvatarIfEmpty(initial));
-            }
-            return list;
-          },
-        );
+        .asyncMap((snapshot) async {
+          final list = <BarberProfileModel>[];
+          for (final doc in snapshot.docs) {
+            final initial = BarberProfileModel.fromMap(doc.data(), id: doc.id);
+            list.add(await _resolveAvatarIfEmpty(initial));
+          }
+          return list;
+        });
   }
 
   /// Lấy thông tin chi tiết một thợ cắt tóc theo UID
@@ -147,8 +155,7 @@ class BarberRepository {
 
       final list = <BarberProfileModel>[];
       for (final doc in snapshot.docs) {
-        final initial =
-            BarberProfileModel.fromMap(doc.data(), id: doc.id);
+        final initial = BarberProfileModel.fromMap(doc.data(), id: doc.id);
         list.add(await _resolveAvatarIfEmpty(initial));
       }
       return list;
@@ -183,3 +190,5 @@ class BarberRepository {
         });
   }
 }
+
+// CreBy: MenBoyBMN

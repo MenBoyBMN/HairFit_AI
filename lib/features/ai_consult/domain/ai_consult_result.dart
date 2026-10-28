@@ -82,3 +82,5 @@ class AIConsultError extends AIConsultResult {
 
   const AIConsultError({required this.message});
 }
+
+// CreBy: MenBoyBMN

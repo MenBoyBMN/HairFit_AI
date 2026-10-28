@@ -61,3 +61,5 @@ class ServiceModel {
   /// Số slot 30 phút mà dịch vụ này chiếm giữ
   int get slotCount => (durationMinutes / 30).ceil();
 }
+
+// CreBy: MenBoyBMN

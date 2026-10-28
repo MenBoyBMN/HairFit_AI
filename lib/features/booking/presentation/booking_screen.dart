@@ -37,12 +37,22 @@ class BookingScreen extends ConsumerStatefulWidget {
   final String barberId;
   final String? preselectedServiceId;
   final String? hairstyleId;
+  final String? customerFaceShape;
+  final String? aiStylingTip;
+  final String? hairstyleImageUrl;
+  final String? customerPhone;
+  final String? barberPhone;
 
   const BookingScreen({
     super.key,
     required this.barberId,
     this.preselectedServiceId,
     this.hairstyleId,
+    this.customerFaceShape,
+    this.aiStylingTip,
+    this.hairstyleImageUrl,
+    this.customerPhone,
+    this.barberPhone,
   });
 
   @override
@@ -73,6 +83,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             barber: barber,
             preselectedService: preselected,
             hairstyleId: widget.hairstyleId,
+            customerFaceShape: widget.customerFaceShape,
+            aiStylingTip: widget.aiStylingTip,
+            hairstyleImageUrl: widget.hairstyleImageUrl,
+            customerPhone: widget.customerPhone,
+            barberPhone: widget.barberPhone,
           );
     });
   }
@@ -214,53 +229,55 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                      // Header tóm tắt thợ
-                      _buildBarberHeader(barber),
-                      const SizedBox(height: AppDimensions.lg),
+                          // Header tóm tắt thợ
+                          _buildBarberHeader(barber),
+                          const SizedBox(height: AppDimensions.lg),
 
-                      // Bước 1: Chọn dịch vụ
-                      ServiceSelector(
-                        services: barber.services,
-                        selectedService: bookingState.selectedService,
-                        onServiceSelected: (service) =>
-                            bookingNotifier.selectService(service, barber),
-                      ),
-                      const SizedBox(height: AppDimensions.xl),
+                          // Bước 1: Chọn dịch vụ
+                          ServiceSelector(
+                            services: barber.services,
+                            selectedService: bookingState.selectedService,
+                            onServiceSelected: (service) =>
+                                bookingNotifier.selectService(service, barber),
+                          ),
+                          const SizedBox(height: AppDimensions.xl),
 
-                      // Bước 2: Chọn ngày hẹn
-                      BookingDatePicker(
-                        selectedDate: bookingState.selectedDate,
-                        barber: barber,
-                        onDateSelected: (date) =>
-                            bookingNotifier.selectDate(date, barber),
-                      ),
-                      const SizedBox(height: AppDimensions.xl),
+                          // Bước 2: Chọn ngày hẹn
+                          BookingDatePicker(
+                            selectedDate: bookingState.selectedDate,
+                            barber: barber,
+                            onDateSelected: (date) =>
+                                bookingNotifier.selectDate(date, barber),
+                          ),
+                          const SizedBox(height: AppDimensions.xl),
 
-                      // Bước 3: Chọn khung giờ
-                      TimeSlotGrid(
-                        slots: bookingState.availableSlots,
-                        selectedSlot: bookingState.selectedSlot,
-                        isLoading: bookingState.isLoadingSlots,
-                        onSlotSelected: bookingNotifier.selectSlot,
-                      ),
-                      const SizedBox(height: AppDimensions.xl),
+                          // Bước 3: Chọn khung giờ
+                          TimeSlotGrid(
+                            slots: bookingState.availableSlots,
+                            selectedSlot: bookingState.selectedSlot,
+                            isLoading: bookingState.isLoadingSlots,
+                            onSlotSelected: bookingNotifier.selectSlot,
+                          ),
+                          const SizedBox(height: AppDimensions.xl),
 
-                      // Bước 4: Tóm tắt & ghi chú
-                      BookingSummary(
-                        barber: barber,
-                        service: bookingState.selectedService,
-                        selectedDate: bookingState.selectedDate,
-                        selectedSlot: bookingState.selectedSlot,
-                        note: bookingState.note,
-                        onNoteChanged: bookingNotifier.setNote,
+                          // Bước 4: Tóm tắt & ghi chú
+                          BookingSummary(
+                            barber: barber,
+                            service: bookingState.selectedService,
+                            selectedDate: bookingState.selectedDate,
+                            selectedSlot: bookingState.selectedSlot,
+                            note: bookingState.note,
+                            onNoteChanged: bookingNotifier.setNote,
+                            customerFaceShape: bookingState.customerFaceShape,
+                            aiStylingTip: bookingState.aiStylingTip,
+                          ),
+                          const SizedBox(height: AppDimensions.xl),
+                        ],
                       ),
-                      const SizedBox(height: AppDimensions.xl),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
 
               // Sticky Bottom Action Bar
               _buildBottomBar(barber, bookingState),
@@ -364,7 +381,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 Expanded(
                   child: AppButton(
                     text: 'Xác Nhận Đặt Lịch',
-                    icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 18,
+                    ),
                     isLoading: isSubmitting,
                     onPressed: canSubmit
                         ? () => _handleConfirmBooking(barber: barber)
@@ -379,3 +399,5 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     );
   }
 }
+
+// CreBy: MenBoyBMN

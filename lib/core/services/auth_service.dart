@@ -246,8 +246,10 @@ class AuthService {
 
       // Đồng bộ sang barberProfiles nếu tồn tại profile của thợ
       try {
-        final barberDoc =
-            await _firestore.collection('barberProfiles').doc(uid).get();
+        final barberDoc = await _firestore
+            .collection('barberProfiles')
+            .doc(uid)
+            .get();
         if (barberDoc.exists) {
           final barberUpdates = <String, dynamic>{
             'updatedAt': FieldValue.serverTimestamp(),
@@ -265,7 +267,9 @@ class AuthService {
           debugPrint('💈 [AuthService] Đã đồng bộ sang barberProfiles/$uid');
         }
       } catch (err) {
-        debugPrint('⚠️ [AuthService] Không thể đồng bộ sang barberProfiles: $err');
+        debugPrint(
+          '⚠️ [AuthService] Không thể đồng bộ sang barberProfiles: $err',
+        );
       }
 
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -273,6 +277,49 @@ class AuthService {
     } catch (e) {
       debugPrint('❌ [AuthService] Lỗi cập nhật profile: $e');
       throw AuthException('Không thể cập nhật thông tin: $e');
+    }
+  }
+
+  /// Lưu dáng khuôn mặt AI của khách hàng (Task Phase 3 - C2)
+  Future<void> saveUserFaceShape(String uid, String faceShape) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'savedFaceShape': faceShape,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint(
+        '🤖 [AuthService] Đã lưu savedFaceShape=$faceShape cho user $uid',
+      );
+    } catch (e) {
+      debugPrint('⚠️ [AuthService] Lỗi lưu savedFaceShape: $e');
+    }
+  }
+
+  /// Thêm hoặc bỏ thợ cắt tóc khỏi danh sách yêu thích (Task Phase 3 - C3)
+  Future<List<String>> toggleFavoriteBarber(String uid, String barberId) async {
+    try {
+      final docRef = _firestore.collection('users').doc(uid);
+      final doc = await docRef.get();
+      final currentFavorites = List<String>.from(
+        doc.data()?['favoriteBarberIds'] ?? [],
+      );
+      if (currentFavorites.contains(barberId)) {
+        currentFavorites.remove(barberId);
+        await docRef.update({
+          'favoriteBarberIds': FieldValue.arrayRemove([barberId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        currentFavorites.add(barberId);
+        await docRef.update({
+          'favoriteBarberIds': FieldValue.arrayUnion([barberId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return currentFavorites;
+    } catch (e) {
+      debugPrint('⚠️ [AuthService] Lỗi toggle favorite barber: $e');
+      return [];
     }
   }
 
@@ -308,3 +355,5 @@ class AuthService {
     }
   }
 }
+
+// CreBy: MenBoyBMN

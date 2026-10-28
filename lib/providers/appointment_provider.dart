@@ -33,6 +33,40 @@ final customerAppointmentsProvider =
       return repository.streamCustomerAppointments(uid);
     });
 
+/// Provider tính toán lịch hẹn sắp diễn ra nhất (hôm nay hoặc ngày mai)
+final upcomingCustomerAppointmentProvider =
+    Provider.autoDispose<AppointmentModel?>((ref) {
+      final appointmentsAsync = ref.watch(customerAppointmentsProvider);
+      return appointmentsAsync.when(
+        data: (list) {
+          final now = DateTime.now();
+          final startOfToday = DateTime(now.year, now.month, now.day);
+          final endOfTomorrow = startOfToday.add(const Duration(days: 2));
+
+          final activeUpcoming = list.where((a) {
+            if (!a.isPending && !a.isConfirmed) return false;
+            // Diễn ra trong vòng 45 phút trước tới hết ngày mai
+            final isRecentOrUpcoming = a.startTimestamp.isAfter(
+              now.subtract(const Duration(minutes: 45)),
+            );
+            final isBeforeEndOfTomorrow = a.startTimestamp.isBefore(
+              endOfTomorrow,
+            );
+            return isRecentOrUpcoming && isBeforeEndOfTomorrow;
+          }).toList();
+
+          if (activeUpcoming.isEmpty) return null;
+          // Sắp xếp lịch sớm nhất lên trước
+          activeUpcoming.sort(
+            (a, b) => a.startTimestamp.compareTo(b.startTimestamp),
+          );
+          return activeUpcoming.first;
+        },
+        loading: () => null,
+        error: (err, stack) => null,
+      );
+    });
+
 /// StreamProvider lắng nghe danh sách lịch hẹn của thợ hiện tại
 final barberAppointmentsProvider =
     StreamProvider.autoDispose<List<AppointmentModel>>((ref) {
@@ -98,6 +132,37 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
       state = state.copyWith(
         isLoading: false,
         successMessage: 'Đã hủy lịch hẹn thành công!',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  /// Khách hàng đổi giờ hẹn sang khung giờ mới (Task Phase 4 - C5)
+  Future<bool> rescheduleAppointment({
+    required String appointmentId,
+    required String newDate,
+    required String newStartTime,
+    required String newEndTime,
+    required List<String> newSlotIds,
+  }) async {
+    state = state.copyWith(isLoading: true, clearMessages: true);
+    try {
+      await _repository.rescheduleAppointment(
+        appointmentId: appointmentId,
+        newDate: newDate,
+        newStartTime: newStartTime,
+        newEndTime: newEndTime,
+        newSlotIds: newSlotIds,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        successMessage: 'Đã đổi giờ hẹn thành công!',
       );
       return true;
     } catch (e) {
@@ -203,6 +268,28 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
     }
   }
 
+  /// Cập nhật ghi chú riêng tư của thợ về khách hàng (Phase 5 - Task B5)
+  Future<bool> updateBarberPrivateNote({
+    required String appointmentId,
+    required String note,
+  }) async {
+    state = state.copyWith(isLoading: true, clearMessages: true);
+    try {
+      await _repository.updateBarberPrivateNote(appointmentId, note);
+      state = state.copyWith(
+        isLoading: false,
+        successMessage: 'Đã lưu ghi chú khách hàng thành công!',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
   void clearStatus() {
     state = const AppointmentActionState();
   }
@@ -217,3 +304,5 @@ final appointmentActionProvider =
       final repo = ref.watch(appointmentRepositoryProvider);
       return AppointmentActionNotifier(repo);
     });
+
+// CreBy: MenBoyBMN

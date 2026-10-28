@@ -113,18 +113,11 @@ class BookingRepository {
         return status == 'pending' || status == 'confirmed';
       }).toList();
 
-      // Nếu không có lịch hẹn thật nào đang active trong ngày này -> không có slot nào đã đặt
-      if (activeAppointments.isEmpty) {
-        // Chủ động dọn dẹp các document rác mồ côi nếu có trong bookedSlots
-        _cleanupOrphanedBookedSlots(barberId, date, activeAppointmentIds: {});
-        return [];
-      }
-
       final activeAppointmentIds = activeAppointments
           .map((doc) => doc.id)
           .toSet();
 
-      // 2. Lấy danh sách các slot trong bookedSlots và chỉ giữ lại các slot liên kết với appointment active thật
+      // 2. Lấy danh sách các slot trong bookedSlots (bao gồm cả slot thợ tự khóa và lịch active)
       final bookedSlotsSnapshot = await _firestore
           .collection('bookedSlots')
           .where('barberId', isEqualTo: barberId)
@@ -137,7 +130,10 @@ class BookingRepository {
       for (final doc in bookedSlotsSnapshot.docs) {
         final data = doc.data();
         final appointmentId = data['appointmentId'] as String? ?? '';
-        if (activeAppointmentIds.contains(appointmentId)) {
+        final isBlocked = data['isBlockedByBarber'] as bool? ?? false;
+        if (isBlocked ||
+            appointmentId == 'BLOCKED_BY_BARBER' ||
+            activeAppointmentIds.contains(appointmentId)) {
           validSlots.add(BookedSlotModel.fromFirestore(doc));
         } else {
           orphanedDocRefs.add(doc.reference);
@@ -191,26 +187,40 @@ class BookingRepository {
     }
   }
 
-  void _cleanupOrphanedBookedSlots(
-    String barberId,
-    String date, {
-    required Set<String> activeAppointmentIds,
+  /// Thợ tự khóa slot giờ nghỉ / bận đột xuất (Task 2.2)
+  Future<void> blockSlotsByBarber({
+    required String barberId,
+    required String date,
+    required List<String> times,
+    String reason = 'Giờ nghỉ / Bận đột xuất',
   }) async {
-    try {
-      final snapshot = await _firestore
-          .collection('bookedSlots')
-          .where('barberId', isEqualTo: barberId)
-          .where('date', isEqualTo: date)
-          .get();
+    final batch = _firestore.batch();
+    for (final time in times) {
+      final slotId = BookedSlotModel.generateSlotId(
+        barberId: barberId,
+        date: date,
+        time: time,
+      );
+      final ref = _firestore.collection('bookedSlots').doc(slotId);
+      final subSlotTimestamp = DateFormatter.combineDateAndTime(date, time);
+      final model = BookedSlotModel(
+        id: slotId,
+        barberId: barberId,
+        date: date,
+        time: time,
+        appointmentId: 'BLOCKED_BY_BARBER',
+        isBlockedByBarber: true,
+        blockReason: reason,
+        startTimestamp: subSlotTimestamp,
+      );
+      batch.set(ref, model.toMap());
+    }
+    await batch.commit();
+  }
 
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final appointmentId = data['appointmentId'] as String? ?? '';
-        if (!activeAppointmentIds.contains(appointmentId)) {
-          doc.reference.delete().catchError((_) => null);
-        }
-      }
-    } catch (_) {}
+  /// Thợ mở lại slot đã khóa
+  Future<void> unblockSlotByBarber(String slotId) async {
+    await _firestore.collection('bookedSlots').doc(slotId).delete();
   }
 
   /// Thực thi TRANSACTION đặt lịch nguyên tử (Atomic Transaction):
@@ -233,6 +243,11 @@ class BookingRepository {
     required String endTime,
     required List<String> slotIds,
     String hairstyleId = '',
+    String? customerFaceShape,
+    String? aiStylingTip,
+    String? hairstyleImageUrl,
+    String? customerPhone,
+    String? barberPhone,
     String note = '',
     DateTime? currentTime,
   }) async {
@@ -299,6 +314,16 @@ class BookingRepository {
         'timezone': BusinessConstants.timezone,
         'slotIds': slotIds,
         'hairstyleId': hairstyleId,
+        if (customerFaceShape != null && customerFaceShape.isNotEmpty)
+          'customerFaceShape': customerFaceShape,
+        if (aiStylingTip != null && aiStylingTip.isNotEmpty)
+          'aiStylingTip': aiStylingTip,
+        if (hairstyleImageUrl != null && hairstyleImageUrl.isNotEmpty)
+          'hairstyleImageUrl': hairstyleImageUrl,
+        if (customerPhone != null && customerPhone.isNotEmpty)
+          'customerPhone': customerPhone,
+        if (barberPhone != null && barberPhone.isNotEmpty)
+          'barberPhone': barberPhone,
         'note': note.trim(),
         'status': AppointmentStatus.pending.toStatusString(),
         'createdAt': FieldValue.serverTimestamp(),
@@ -403,4 +428,106 @@ class BookingRepository {
       }
     });
   }
+
+  /// Thực thi TRANSACTION đổi giờ hẹn nguyên tử (Atomic Reschedule Transaction) (Task Phase 4 - C5)
+  Future<void> rescheduleBooking({
+    required String appointmentId,
+    required String newDate,
+    required String newStartTime,
+    required String newEndTime,
+    required List<String> newSlotIds,
+  }) async {
+    final now = DateTime.now();
+    final newStartTimestamp = DateFormatter.combineDateAndTime(
+      newDate,
+      newStartTime,
+    );
+    final newEndTimestamp = DateFormatter.combineDateAndTime(
+      newDate,
+      newEndTime,
+    );
+
+    if (newStartTimestamp.isBefore(
+      now.add(const Duration(minutes: BusinessConstants.leadTimeMinutes)),
+    )) {
+      throw BookingLeadTimeException();
+    }
+
+    final appointmentRef = _firestore
+        .collection('appointments')
+        .doc(appointmentId);
+
+    await _firestore.runTransaction((transaction) async {
+      final appointmentSnapshot = await transaction.get(appointmentRef);
+      if (!appointmentSnapshot.exists) {
+        throw const BookingException('Lịch hẹn không tồn tại trên hệ thống!');
+      }
+
+      final data = appointmentSnapshot.data()!;
+      final currentStatus = data['status'] as String? ?? '';
+      if (currentStatus != 'pending' && currentStatus != 'confirmed') {
+        throw const BookingException(
+          'Chỉ có thể đổi giờ đối với lịch hẹn đang chờ duyệt hoặc đã tiếp nhận!',
+        );
+      }
+
+      final barberId = data['barberId'] as String;
+      final oldSlotIds = List<String>.from(
+        data['slotIds'] as List<dynamic>? ?? [],
+      );
+
+      // 1. Kiểm tra các slot mới có bị người khác giữ chỗ chưa
+      for (final slotId in newSlotIds) {
+        if (oldSlotIds.contains(slotId)) continue;
+        final slotDocRef = _firestore.collection('bookedSlots').doc(slotId);
+        final slotSnap = await transaction.get(slotDocRef);
+        if (slotSnap.exists) {
+          throw SlotAlreadyBookedException(slotId);
+        }
+      }
+
+      // 2. Xóa các slot cũ không còn sử dụng
+      for (final oldId in oldSlotIds) {
+        if (!newSlotIds.contains(oldId)) {
+          final oldSlotRef = _firestore.collection('bookedSlots').doc(oldId);
+          transaction.delete(oldSlotRef);
+        }
+      }
+
+      // 3. Tạo các slot mới liên kết với appointment này
+      for (final slotId in newSlotIds) {
+        if (!oldSlotIds.contains(slotId)) {
+          final slotDocRef = _firestore.collection('bookedSlots').doc(slotId);
+          final timePart = slotId.split('_').last.replaceAll('-', ':');
+          final subSlotTimestamp = DateFormatter.combineDateAndTime(
+            newDate,
+            timePart,
+          );
+
+          final bookedSlotData = {
+            'barberId': barberId,
+            'date': newDate,
+            'time': timePart,
+            'appointmentId': appointmentId,
+            'startTimestamp': Timestamp.fromDate(subSlotTimestamp),
+            'createdAt': FieldValue.serverTimestamp(),
+          };
+          transaction.set(slotDocRef, bookedSlotData);
+        }
+      }
+
+      // 4. Cập nhật thông tin thời gian mới cho appointment
+      transaction.update(appointmentRef, {
+        'date': newDate,
+        'startTime': newStartTime,
+        'endTime': newEndTime,
+        'slotIds': newSlotIds,
+        'startTimestamp': Timestamp.fromDate(newStartTimestamp),
+        'endTimestamp': Timestamp.fromDate(newEndTimestamp),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
 }
+
+// CreBy: MenBoyBMN

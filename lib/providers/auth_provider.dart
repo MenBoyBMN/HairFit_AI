@@ -129,9 +129,36 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
       return await authRepo.getCurrentUser();
     });
   }
+
+  /// Lưu dáng khuôn mặt AI của khách hàng (Task Phase 3 - C2)
+  Future<void> saveFaceShape(String faceShape) async {
+    final currentUser = state.value;
+    if (currentUser != null) {
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.saveUserFaceShape(currentUser.uid, faceShape);
+      state = AsyncValue.data(currentUser.copyWith(savedFaceShape: faceShape));
+    }
+  }
+
+  /// Thêm hoặc bỏ thợ ruột yêu thích (Task Phase 3 - C3)
+  Future<bool> toggleFavoriteBarber(String barberId) async {
+    final currentUser = state.value;
+    if (currentUser == null) return false;
+    final authRepo = ref.read(authRepositoryProvider);
+    final updatedFavorites = await authRepo.toggleFavoriteBarber(
+      currentUser.uid,
+      barberId,
+    );
+    state = AsyncValue.data(
+      currentUser.copyWith(favoriteBarberIds: updatedFavorites),
+    );
+    return updatedFavorites.contains(barberId);
+  }
 }
 
 /// Provider toàn cục cho Auth State
 final authStateProvider = AsyncNotifierProvider<AuthNotifier, UserModel?>(() {
   return AuthNotifier();
 });
+
+// CreBy: MenBoyBMN

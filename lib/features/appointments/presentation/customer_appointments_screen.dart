@@ -21,6 +21,7 @@ import '../../../models/chat_model.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/appointment_provider.dart';
 import 'widgets/appointment_card.dart';
+import 'widgets/reschedule_bottom_sheet.dart';
 
 /// Màn hình danh sách lịch hẹn của Khách hàng (Task 4.12)
 ///
@@ -356,8 +357,9 @@ class _CustomerAppointmentsScreenState
                   title: emptyTitle,
                   message: emptySubtitle,
                   actionText: !isHistory ? 'Tìm Thợ Cắt Tóc' : null,
-                  onAction:
-                      !isHistory ? () => context.push('/customer/search') : null,
+                  onAction: !isHistory
+                      ? () => context.push('/customer/search')
+                      : null,
                 ),
               ),
             ),
@@ -383,6 +385,10 @@ class _CustomerAppointmentsScreenState
                 appointment: appointment,
                 isBarberView: false,
                 onCancel: () => _confirmAndCancel(appointment),
+                onReschedule: () => RescheduleBottomSheet.show(
+                  context,
+                  appointment: appointment,
+                ),
                 onRate: () => _showRatingDialog(appointment),
                 onChat: () => _openChat(appointment),
               );
@@ -393,3 +399,5 @@ class _CustomerAppointmentsScreenState
     );
   }
 }
+
+// CreBy: MenBoyBMN

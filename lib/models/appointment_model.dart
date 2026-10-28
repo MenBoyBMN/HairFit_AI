@@ -65,6 +65,12 @@ class AppointmentModel {
   final String timezone;
   final List<String> slotIds;
   final String hairstyleId;
+  final String? customerFaceShape;
+  final String? aiStylingTip;
+  final String? hairstyleImageUrl;
+  final String? barberPrivateNote;
+  final String? customerPhone;
+  final String? barberPhone;
   final String note;
   final AppointmentStatus status;
   final int? rating;
@@ -90,6 +96,12 @@ class AppointmentModel {
     this.timezone = 'Asia/Ho_Chi_Minh',
     required this.slotIds,
     this.hairstyleId = '',
+    this.customerFaceShape,
+    this.aiStylingTip,
+    this.hairstyleImageUrl,
+    this.barberPrivateNote,
+    this.customerPhone,
+    this.barberPhone,
     this.note = '',
     this.status = AppointmentStatus.pending,
     this.rating,
@@ -132,6 +144,12 @@ class AppointmentModel {
               .toList() ??
           [],
       hairstyleId: map['hairstyleId'] as String? ?? '',
+      customerFaceShape: map['customerFaceShape'] as String?,
+      aiStylingTip: map['aiStylingTip'] as String?,
+      hairstyleImageUrl: map['hairstyleImageUrl'] as String?,
+      barberPrivateNote: map['barberPrivateNote'] as String?,
+      customerPhone: map['customerPhone'] as String?,
+      barberPhone: map['barberPhone'] as String?,
       note: map['note'] as String? ?? '',
       status: AppointmentStatus.fromString(map['status'] as String?),
       rating: (map['rating'] as num?)?.toInt(),
@@ -170,6 +188,12 @@ class AppointmentModel {
       'timezone': timezone,
       'slotIds': slotIds,
       'hairstyleId': hairstyleId,
+      if (customerFaceShape != null) 'customerFaceShape': customerFaceShape,
+      if (aiStylingTip != null) 'aiStylingTip': aiStylingTip,
+      if (hairstyleImageUrl != null) 'hairstyleImageUrl': hairstyleImageUrl,
+      if (barberPrivateNote != null) 'barberPrivateNote': barberPrivateNote,
+      if (customerPhone != null) 'customerPhone': customerPhone,
+      if (barberPhone != null) 'barberPhone': barberPhone,
       'note': note,
       'status': status.toStatusString(),
       if (rating != null) 'rating': rating,
@@ -201,6 +225,12 @@ class AppointmentModel {
     String? timezone,
     List<String>? slotIds,
     String? hairstyleId,
+    String? customerFaceShape,
+    String? aiStylingTip,
+    String? hairstyleImageUrl,
+    String? barberPrivateNote,
+    String? customerPhone,
+    String? barberPhone,
     String? note,
     AppointmentStatus? status,
     int? rating,
@@ -226,6 +256,12 @@ class AppointmentModel {
       timezone: timezone ?? this.timezone,
       slotIds: slotIds ?? this.slotIds,
       hairstyleId: hairstyleId ?? this.hairstyleId,
+      customerFaceShape: customerFaceShape ?? this.customerFaceShape,
+      aiStylingTip: aiStylingTip ?? this.aiStylingTip,
+      hairstyleImageUrl: hairstyleImageUrl ?? this.hairstyleImageUrl,
+      barberPrivateNote: barberPrivateNote ?? this.barberPrivateNote,
+      customerPhone: customerPhone ?? this.customerPhone,
+      barberPhone: barberPhone ?? this.barberPhone,
       note: note ?? this.note,
       status: status ?? this.status,
       rating: rating ?? this.rating,
@@ -252,3 +288,5 @@ class AppointmentModel {
     return DateTime.now().isBefore(leadTimeCutoff);
   }
 }
+
+// CreBy: MenBoyBMN

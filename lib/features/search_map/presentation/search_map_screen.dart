@@ -157,6 +157,12 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
                     'Dưới 200.000đ',
                     currentMax == 200000,
                   ),
+                  _buildPriceChip(
+                    ctx,
+                    300000,
+                    'Dưới 300.000đ',
+                    currentMax == 300000,
+                  ),
                 ],
               ),
               const SizedBox(height: AppDimensions.lg),
@@ -538,6 +544,62 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
             ),
           ),
 
+          // Chip lọc ⭐ 4.5+ sao (Task Phase 4 - C4)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: FilterChip(
+              avatar: Icon(
+                Icons.star_rounded,
+                size: 14,
+                color: state.minRatingFilter == 4.5
+                    ? Colors.white
+                    : AppColors.warning,
+              ),
+              label: const Text('4.5+ sao'),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: state.minRatingFilter == 4.5
+                    ? Colors.white
+                    : AppColors.textPrimary,
+              ),
+              selected: state.minRatingFilter == 4.5,
+              selectedColor: AppColors.accent,
+              backgroundColor: AppColors.surface,
+              visualDensity: VisualDensity.compact,
+              onSelected: (val) {
+                ref
+                    .read(searchNotifierProvider.notifier)
+                    .setMinRatingFilter(val ? 4.5 : null);
+              },
+            ),
+          ),
+
+          // Chip lọc Đang mở cửa (Task Phase 4 - C4)
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: FilterChip(
+              avatar: Icon(
+                Icons.access_time_rounded,
+                size: 14,
+                color: state.onlyOpenNow ? Colors.white : AppColors.success,
+              ),
+              label: const Text('Đang mở cửa'),
+              labelStyle: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: state.onlyOpenNow ? Colors.white : AppColors.textPrimary,
+              ),
+              selected: state.onlyOpenNow,
+              selectedColor: AppColors.success,
+              backgroundColor: AppColors.surface,
+              visualDensity: VisualDensity.compact,
+              onSelected: (_) {
+                ref.read(searchNotifierProvider.notifier).toggleOnlyOpenNow();
+              },
+            ),
+          ),
+
           // Chip lọc giá đang kích hoạt (nếu có)
           if (state.maxPriceFilter != null) ...[
             Padding(
@@ -873,3 +935,5 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
     );
   }
 }
+
+// CreBy: MenBoyBMN

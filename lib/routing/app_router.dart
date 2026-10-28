@@ -20,7 +20,7 @@ import '../features/auth/presentation/splash_screen.dart';
 import '../features/home/presentation/customer_home_screen.dart';
 import '../features/search_map/presentation/search_map_screen.dart';
 import '../features/search_map/presentation/barber_detail_screen.dart';
-import '../features/admin/presentation/approve_barbers_screen.dart';
+import '../features/admin/presentation/admin_shell_screen.dart';
 import '../features/appointments/presentation/barber_appointments_screen.dart';
 import '../features/appointments/presentation/customer_appointments_screen.dart';
 import '../features/barber_profile/presentation/barber_pending_screen.dart';
@@ -88,7 +88,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 3. Đã đăng nhập mà còn ở trang login/register thì điều hướng về role shell
       if (isAuth && isAuthFormRoute) {
         if (user.isAdmin) {
-          return '/admin/approve-barbers';
+          return '/admin/dashboard';
         } else if (user.isBarber) {
           return '/barber/pending';
         } else {
@@ -102,14 +102,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return user.isBarber ? '/barber/pending' : '/customer/home';
         }
         if (loc.startsWith('/barber') && !user.isBarber) {
-          return user.isAdmin ? '/admin/approve-barbers' : '/customer/home';
+          return user.isAdmin ? '/admin/dashboard' : '/customer/home';
         }
         if (loc.startsWith('/customer') && !user.isCustomer) {
           // Cho phép thợ và admin xem trang hồ sơ tiệm công khai (/customer/barber/:barberId)
           if (loc.startsWith('/customer/barber/')) {
             return null;
           }
-          return user.isAdmin ? '/admin/approve-barbers' : '/barber/pending';
+          return user.isAdmin ? '/admin/dashboard' : '/barber/pending';
         }
       }
 
@@ -164,10 +164,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final barberId = state.pathParameters['barberId'] ?? '';
           final serviceId = state.uri.queryParameters['serviceId'];
           final hairstyleId = state.uri.queryParameters['hairstyleId'];
+          final customerFaceShape = state.uri.queryParameters['faceShape'];
+          final aiStylingTip = state.uri.queryParameters['stylingTip'];
+          final hairstyleImageUrl =
+              state.uri.queryParameters['hairstyleImageUrl'];
+          final customerPhone = state.uri.queryParameters['customerPhone'];
+          final barberPhone = state.uri.queryParameters['barberPhone'];
           return BookingScreen(
             barberId: barberId,
             preselectedServiceId: serviceId,
             hairstyleId: hairstyleId,
+            customerFaceShape: customerFaceShape,
+            aiStylingTip: aiStylingTip,
+            hairstyleImageUrl: hairstyleImageUrl,
+            customerPhone: customerPhone,
+            barberPhone: barberPhone,
           );
         },
       ),
@@ -233,10 +244,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const EditProfileScreen(),
       ),
       // --- ADMIN SHELL ---
+      GoRoute(path: '/admin', redirect: (context, state) => '/admin/dashboard'),
+      GoRoute(
+        path: '/admin/dashboard',
+        name: 'admin_dashboard',
+        builder: (context, state) => const AdminShellScreen(initialTabIndex: 0),
+      ),
       GoRoute(
         path: '/admin/approve-barbers',
         name: 'admin_approve_barbers',
-        builder: (context, state) => const ApproveBarbersScreen(),
+        builder: (context, state) => const AdminShellScreen(initialTabIndex: 1),
       ),
       // --- CHAT 1:1 ---
       GoRoute(
@@ -280,3 +297,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+// CreBy: MenBoyBMN

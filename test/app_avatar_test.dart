@@ -15,12 +15,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AppAvatar(
-              imageUrl: '',
-              name: 'Thợ 1',
-              width: 72,
-              height: 72,
-            ),
+            body: AppAvatar(imageUrl: '', name: 'Thợ 1', width: 72, height: 72),
           ),
         ),
       );
@@ -95,12 +90,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: AppAvatar.circle(
-              radius: 28,
-              name: 'Minh Nhật',
-            ),
-          ),
+          home: Scaffold(body: AppAvatar.circle(radius: 28, name: 'Minh Nhật')),
         ),
       );
 

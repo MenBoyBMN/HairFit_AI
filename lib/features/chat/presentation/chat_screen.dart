@@ -213,7 +213,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         constraints: BoxConstraints(
-          maxWidth: (MediaQuery.of(context).size.width * 0.76).clamp(240.0, 520.0),
+          maxWidth: (MediaQuery.of(context).size.width * 0.76).clamp(
+            240.0,
+            520.0,
+          ),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.md,
@@ -278,8 +281,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildInputBar() {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding =
-        bottomInset > 0 ? 0.0 : MediaQuery.of(context).padding.bottom;
+    final bottomPadding = bottomInset > 0
+        ? 0.0
+        : MediaQuery.of(context).padding.bottom;
 
     return Container(
       padding: EdgeInsets.only(
@@ -306,7 +310,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.md,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(24),
@@ -357,3 +363,5 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 }
+
+// CreBy: MenBoyBMN

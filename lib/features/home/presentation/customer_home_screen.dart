@@ -15,11 +15,15 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/seed_data_service.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_avatar.dart';
-import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/loading_shimmer.dart';
 import '../../../core/widgets/rating_stars.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../models/barber_profile_model.dart';
+import '../../../providers/appointment_provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../../search_map/data/barber_repository.dart';
+import 'widgets/my_ai_hair_profile_card.dart';
+import 'widgets/upcoming_appointment_card.dart';
 
 /// Màn hình chính dành cho khách hàng (Customer Home)
 class CustomerHomeScreen extends ConsumerStatefulWidget {
@@ -34,6 +38,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final upcomingAppointment = ref.watch(upcomingCustomerAppointmentProvider);
+    final currentUser = ref.watch(authStateProvider).value;
+    final favoriteBarbers = ref.watch(favoriteBarbersProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -78,8 +86,16 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAIBanner(),
-                const SizedBox(height: AppDimensions.lg),
+                if (upcomingAppointment != null)
+                  UpcomingAppointmentCard(appointment: upcomingAppointment),
+                MyAIHairProfileCard(
+                  savedFaceShape: currentUser?.savedFaceShape,
+                ),
+                const SizedBox(height: AppDimensions.md),
+                if (favoriteBarbers.isNotEmpty) ...[
+                  _buildFavoriteBarbersSection(favoriteBarbers),
+                  const SizedBox(height: AppDimensions.lg),
+                ],
                 _buildQuickActions(),
                 const SizedBox(height: AppDimensions.xl),
                 _buildHairstyleSection(),
@@ -132,90 +148,137 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  Widget _buildAIBanner() {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.lg,
-        vertical: AppDimensions.md,
-      ),
-      padding: const EdgeInsets.all(AppDimensions.xl),
-      decoration: BoxDecoration(
-        gradient: AppColors.aiBannerGradient,
-        borderRadius: AppDimensions.borderRadiusLg,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildFavoriteBarbersSection(List<BarberProfileModel> barbers) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.9),
-                  borderRadius: AppDimensions.borderRadiusFull,
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-                    SizedBox(width: 4),
-                    Text(
-                      'AI TƯ VẤN KIỂU TÓC',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+              const Row(
+                children: [
+                  Text('Thợ Ruột Của Bạn', style: AppTextStyles.h3),
+                  SizedBox(width: 6),
+                  Icon(
+                    Icons.favorite_rounded,
+                    size: 18,
+                    color: AppColors.error,
+                  ),
+                ],
+              ),
+              Text(
+                '${barbers.length} thợ',
+                style: AppTextStyles.caption.copyWith(color: AppColors.accent),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.md),
-          const Text(
-            'Khuôn mặt bạn hợp kiểu tóc nào nhất?',
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 1.3,
-            ),
+        ),
+        const SizedBox(height: AppDimensions.md),
+        SizedBox(
+          height: 155,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.lg),
+            scrollDirection: Axis.horizontal,
+            itemCount: barbers.length,
+            separatorBuilder: (_, _) => const SizedBox(width: AppDimensions.md),
+            itemBuilder: (context, index) {
+              final barber = barbers[index];
+              return InkWell(
+                borderRadius: AppDimensions.borderRadiusMd,
+                onTap: () => context.push('/customer/barber/${barber.uid}'),
+                child: Container(
+                  width: 220,
+                  padding: const EdgeInsets.all(AppDimensions.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: AppDimensions.borderRadiusMd,
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          AppAvatar(
+                            imageUrl: barber.avatarUrl,
+                            name: barber.displayName,
+                            size: 44,
+                          ),
+                          const SizedBox(width: AppDimensions.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  barber.displayName,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  barber.address,
+                                  style: AppTextStyles.caption,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.star_rounded,
+                                      size: 14,
+                                      color: AppColors.warning,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      barber.ratingAvg.toStringAsFixed(1),
+                                      style: AppTextStyles.caption.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: AppDimensions.borderRadiusSm,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          onPressed: () =>
+                              context.push('/customer/barber/${barber.uid}'),
+                          child: const Text(
+                            'Đặt lịch lại',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-          const SizedBox(height: AppDimensions.xs),
-          Text(
-            'Chỉ cần 1 bức ảnh chân dung, AI sẽ nhận diện dáng mặt và gợi ý kiểu tóc chuẩn xác nhất.',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
-            ),
-          ),
-          const SizedBox(height: AppDimensions.lg),
-          AppButton(
-            text: 'Tư Vấn Ngay Với AI',
-            icon: const Icon(
-              Icons.face_retouching_natural_rounded,
-              size: 18,
-              color: Colors.white,
-            ),
-            width: 220,
-            height: 42,
-            onPressed: () => context.push('/customer/ai-consult'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -585,3 +648,5 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
+
+// CreBy: MenBoyBMN

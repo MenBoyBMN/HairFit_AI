@@ -60,7 +60,17 @@ class AuthRepository {
     );
   }
 
+  Future<void> saveUserFaceShape(String uid, String faceShape) {
+    return _authService.saveUserFaceShape(uid, faceShape);
+  }
+
+  Future<List<String>> toggleFavoriteBarber(String uid, String barberId) {
+    return _authService.toggleFavoriteBarber(uid, barberId);
+  }
+
   Future<void> logout() {
     return _authService.logout();
   }
 }
+
+// CreBy: MenBoyBMN

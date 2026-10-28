@@ -17,6 +17,7 @@ import '../features/ai_consult/domain/ai_consultant_service.dart';
 import '../features/ai_consult/domain/face_shape.dart';
 import '../features/ai_consult/domain/hairstyle_recommendation_engine.dart';
 import '../models/hairstyle_model.dart';
+import 'auth_provider.dart';
 
 /// Provider cung cấp instance điều phối AIConsultantService
 final aiConsultantServiceProvider = Provider<AIConsultantService>((ref) {
@@ -107,16 +108,36 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
   final AIConsultantService consultantService;
   final HairstyleRepository hairstyleRepository;
   final SharedPreferences? prefs;
+  final Ref? ref;
 
   AIConsultNotifier({
     required this.consultantService,
     required this.hairstyleRepository,
     this.prefs,
+    this.ref,
   }) : super(
          AIConsultState(hasConsent: prefs?.getBool(kAiConsentKey) ?? false),
        ) {
     if (prefs == null) {
       _loadConsentFromStorage();
+    }
+  }
+
+  Future<void> _persistSavedFaceShape(String shapeKey) async {
+    try {
+      final p = prefs ?? await SharedPreferences.getInstance();
+      await p.setString('saved_face_shape', shapeKey);
+      if (ref != null) {
+        final authUser = ref!.read(authStateProvider).value;
+        if (authUser != null) {
+          await ref!.read(authStateProvider.notifier).saveFaceShape(shapeKey);
+        }
+      }
+      debugPrint(
+        '💾 [AIConsult] Đã lưu dáng mặt $shapeKey vào Cache & Firestore',
+      );
+    } catch (e) {
+      debugPrint('⚠️ [AIConsult] Lỗi lưu dáng mặt: $e');
     }
   }
 
@@ -244,6 +265,7 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
             executionTimeMs: elapsed,
             clearError: true,
           );
+          _persistSavedFaceShape(consultResult.faceShape.keyName);
         case AIConsultValidationFailed(:final message, :final hint):
           state = state.copyWith(
             isAnalyzing: false,
@@ -337,6 +359,7 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
         executionTimeMs: 5,
         clearError: true,
       );
+      _persistSavedFaceShape(shape.keyName);
     } catch (e) {
       state = state.copyWith(
         isAnalyzing: false,
@@ -364,5 +387,8 @@ final aiConsultProvider =
       return AIConsultNotifier(
         consultantService: consultantService,
         hairstyleRepository: hairstyleRepository,
+        ref: ref,
       );
     });
+
+// CreBy: MenBoyBMN

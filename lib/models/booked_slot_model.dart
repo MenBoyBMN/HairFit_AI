@@ -16,6 +16,8 @@ class BookedSlotModel {
   final String time; // "HH:mm"
   final String appointmentId;
   final DateTime startTimestamp;
+  final bool isBlockedByBarber;
+  final String? blockReason;
   final DateTime? createdAt;
 
   const BookedSlotModel({
@@ -25,6 +27,8 @@ class BookedSlotModel {
     required this.time,
     required this.appointmentId,
     required this.startTimestamp,
+    this.isBlockedByBarber = false,
+    this.blockReason,
     this.createdAt,
   });
 
@@ -53,6 +57,8 @@ class BookedSlotModel {
       time: map['time'] as String? ?? '',
       appointmentId: map['appointmentId'] as String? ?? '',
       startTimestamp: parseTimestamp(map['startTimestamp']),
+      isBlockedByBarber: map['isBlockedByBarber'] as bool? ?? false,
+      blockReason: map['blockReason'] as String?,
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : null,
@@ -72,9 +78,37 @@ class BookedSlotModel {
       'time': time,
       'appointmentId': appointmentId,
       'startTimestamp': Timestamp.fromDate(startTimestamp),
+      'isBlockedByBarber': isBlockedByBarber,
+      if (blockReason != null) 'blockReason': blockReason,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
     };
   }
+
+  BookedSlotModel copyWith({
+    String? id,
+    String? barberId,
+    String? date,
+    String? time,
+    String? appointmentId,
+    DateTime? startTimestamp,
+    bool? isBlockedByBarber,
+    String? blockReason,
+    DateTime? createdAt,
+  }) {
+    return BookedSlotModel(
+      id: id ?? this.id,
+      barberId: barberId ?? this.barberId,
+      date: date ?? this.date,
+      time: time ?? this.time,
+      appointmentId: appointmentId ?? this.appointmentId,
+      startTimestamp: startTimestamp ?? this.startTimestamp,
+      isBlockedByBarber: isBlockedByBarber ?? this.isBlockedByBarber,
+      blockReason: blockReason ?? this.blockReason,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
+
+// CreBy: MenBoyBMN

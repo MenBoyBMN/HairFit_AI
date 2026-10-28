@@ -7,6 +7,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/barber_profile_model.dart';
 import '../../models/hairstyle_model.dart';
@@ -560,4 +561,96 @@ class SeedDataService {
       }
     }
   }
+
+  /// Nạp các lịch hẹn mẫu hôm nay để phục vụ kiểm thử và demo Admin Dashboard
+  Future<void> seedSampleAppointments() async {
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final collection = _firestore.collection('appointments');
+    final sampleApps = [
+      {
+        'id': 'sample_app_1',
+        'customerId': 'customer_demo_1',
+        'customerName': 'Nguyễn Văn An',
+        'barberId': sampleBarbers.first.uid,
+        'barberName': sampleBarbers.first.displayName,
+        'serviceId': 'srv_1',
+        'serviceName': 'Cắt tóc nam tiêu chuẩn',
+        'price': 100000,
+        'durationMinutes': 30,
+        'date': todayStr,
+        'startTime': '09:30',
+        'endTime': '10:00',
+        'startTimestamp': Timestamp.now(),
+        'endTimestamp': Timestamp.now(),
+        'timezone': 'Asia/Ho_Chi_Minh',
+        'slotIds': ['slot_${todayStr}_0930'],
+        'hairstyleId': 'undercut',
+        'note': 'Cắt ngắn 2 bên giúp mình',
+        'status': 'confirmed',
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'id': 'sample_app_2',
+        'customerId': 'customer_demo_2',
+        'customerName': 'Trần Minh Đức',
+        'barberId': sampleBarbers.first.uid,
+        'barberName': sampleBarbers.first.displayName,
+        'serviceId': 'srv_2',
+        'serviceName': 'Combo Cắt + Gội + Massage',
+        'price': 150000,
+        'durationMinutes': 45,
+        'date': todayStr,
+        'startTime': '11:00',
+        'endTime': '11:45',
+        'startTimestamp': Timestamp.now(),
+        'endTimestamp': Timestamp.now(),
+        'timezone': 'Asia/Ho_Chi_Minh',
+        'slotIds': ['slot_${todayStr}_1100'],
+        'hairstyleId': 'side_part',
+        'note': 'Cạo râu luôn',
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'id': 'sample_app_3',
+        'customerId': 'customer_demo_3',
+        'customerName': 'Lê Hoàng Long',
+        'barberId': sampleBarbers.first.uid,
+        'barberName': sampleBarbers.first.displayName,
+        'serviceId': 'srv_1',
+        'serviceName': 'Cắt tóc nam tiêu chuẩn',
+        'price': 100000,
+        'durationMinutes': 30,
+        'date': todayStr,
+        'startTime': '08:00',
+        'endTime': '08:30',
+        'startTimestamp': Timestamp.now(),
+        'endTimestamp': Timestamp.now(),
+        'timezone': 'Asia/Ho_Chi_Minh',
+        'slotIds': ['slot_${todayStr}_0800'],
+        'hairstyleId': 'pompadour',
+        'note': 'Đã hoàn tất thanh toán',
+        'status': 'completed',
+        'createdAt': FieldValue.serverTimestamp(),
+      },
+    ];
+
+    for (final app in sampleApps) {
+      await collection
+          .doc(app['id'] as String)
+          .set(app, SetOptions(merge: true));
+    }
+  }
+
+  /// Xóa các lịch hẹn mẫu thử nghiệm
+  Future<void> clearSampleAppointments() async {
+    final collection = _firestore.collection('appointments');
+    for (final id in ['sample_app_1', 'sample_app_2', 'sample_app_3']) {
+      try {
+        await collection.doc(id).delete();
+      } catch (_) {}
+    }
+  }
 }
+
+// CreBy: MenBoyBMN

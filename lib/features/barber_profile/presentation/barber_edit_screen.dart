@@ -58,6 +58,7 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
   GeoLocation _location = const GeoLocation(latitude: 0, longitude: 0);
   List<ServiceModel> _services = [];
   List<String> _hairstyleIds = [];
+  List<String> _portfolioUrls = [];
   Map<String, DayWorkingHours> _workingHours = {};
 
   @override
@@ -87,6 +88,7 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
     _location = profile.location;
     _services = List.from(profile.services);
     _hairstyleIds = List.from(profile.hairstyleIds);
+    _portfolioUrls = List.from(profile.portfolioUrls);
     _workingHours = Map.from(profile.workingHours);
     _isInitialized = true;
   }
@@ -243,71 +245,71 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppDimensions.md),
             child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.md),
-              const Text('Chọn ảnh bìa tiệm tóc', style: AppTextStyles.h4),
-              const SizedBox(height: AppDimensions.sm),
-              ListTile(
-                leading: const Icon(
-                  Icons.camera_alt_outlined,
-                  color: AppColors.accent,
-                ),
-                title: const Text(
-                  'Chụp ảnh từ máy ảnh',
-                  style: AppTextStyles.bodyMedium,
-                ),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _pickCoverImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.photo_library_outlined,
-                  color: AppColors.accent,
-                ),
-                title: const Text(
-                  'Chọn ảnh từ thư viện',
-                  style: AppTextStyles.bodyMedium,
-                ),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _pickCoverImage(ImageSource.gallery);
-                },
-              ),
-              if (_coverUrl.isNotEmpty || _pickedCoverBytes != null)
+                const SizedBox(height: AppDimensions.md),
+                const Text('Chọn ảnh bìa tiệm tóc', style: AppTextStyles.h4),
+                const SizedBox(height: AppDimensions.sm),
                 ListTile(
                   leading: const Icon(
-                    Icons.delete_outline,
-                    color: AppColors.error,
+                    Icons.camera_alt_outlined,
+                    color: AppColors.accent,
                   ),
                   title: const Text(
-                    'Xóa ảnh bìa',
-                    style: TextStyle(color: AppColors.error),
+                    'Chụp ảnh từ máy ảnh',
+                    style: AppTextStyles.bodyMedium,
                   ),
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    setState(() {
-                      _coverUrl = '';
-                      _pickedCoverBytes = null;
-                    });
+                    _pickCoverImage(ImageSource.camera);
                   },
                 ),
-            ],
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.accent,
+                  ),
+                  title: const Text(
+                    'Chọn ảnh từ thư viện',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _pickCoverImage(ImageSource.gallery);
+                  },
+                ),
+                if (_coverUrl.isNotEmpty || _pickedCoverBytes != null)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline,
+                      color: AppColors.error,
+                    ),
+                    title: const Text(
+                      'Xóa ảnh bìa',
+                      style: TextStyle(color: AppColors.error),
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      setState(() {
+                        _coverUrl = '';
+                        _pickedCoverBytes = null;
+                      });
+                    },
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Future<void> _handleSave(BarberProfileModel originalProfile) async {
@@ -369,6 +371,7 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
         services: _services,
         hairstyleIds: _hairstyleIds,
         workingHours: _workingHours,
+        portfolioUrls: _portfolioUrls,
         priceMin: priceMin,
         priceMax: priceMax,
         updatedAt: DateTime.now(),
@@ -379,9 +382,12 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
 
       // Cập nhật tên và avatar trong tài khoản người dùng nếu có thay đổi
       final nameChanged = _nameController.text.trim() != user.displayName;
-      final avatarChanged = _avatarUrl.trim().isNotEmpty && _avatarUrl.trim() != user.avatarUrl;
+      final avatarChanged =
+          _avatarUrl.trim().isNotEmpty && _avatarUrl.trim() != user.avatarUrl;
       if (nameChanged || avatarChanged) {
-        await ref.read(authStateProvider.notifier).updateProfile(
+        await ref
+            .read(authStateProvider.notifier)
+            .updateProfile(
               displayName: _nameController.text.trim(),
               avatarUrl: _avatarUrl.trim(),
             );
@@ -471,149 +477,155 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: Form(
                   key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Thông tin cơ bản
-                  _buildSectionHeader('1. Thông tin tiệm tóc'),
-                  const SizedBox(height: AppDimensions.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppDimensions.borderRadiusMd,
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildAvatarPicker(),
-                        const SizedBox(height: AppDimensions.lg),
-                        AppTextField(
-                          controller: _nameController,
-                          label: 'Tên tiệm tóc / Nghệ danh',
-                          hintText: 'Ví dụ: HairFit Barber Studio',
-                          prefixIcon: const Icon(Icons.storefront_outlined),
-                          validator: (val) {
-                            if (val == null || val.trim().isEmpty) {
-                              return 'Vui lòng nhập tên tiệm';
-                            }
-                            return null;
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Thông tin cơ bản
+                      _buildSectionHeader('1. Thông tin tiệm tóc'),
+                      const SizedBox(height: AppDimensions.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppDimensions.borderRadiusMd,
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildAvatarPicker(),
+                            const SizedBox(height: AppDimensions.lg),
+                            AppTextField(
+                              controller: _nameController,
+                              label: 'Tên tiệm tóc / Nghệ danh',
+                              hintText: 'Ví dụ: HairFit Barber Studio',
+                              prefixIcon: const Icon(Icons.storefront_outlined),
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'Vui lòng nhập tên tiệm';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppDimensions.md),
+                            AppTextField(
+                              controller: _bioController,
+                              label: 'Giới thiệu ngắn (Bio)',
+                              hintText: 'Kinh nghiệm, phong cách tạo mẫu...',
+                              prefixIcon: const Icon(
+                                Icons.description_outlined,
+                              ),
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: AppDimensions.lg),
+                            _buildCoverImagePicker(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
+
+                      // Địa chỉ & Vị trí bản đồ
+                      _buildSectionHeader('2. Địa chỉ & Vị trí bản đồ'),
+                      const SizedBox(height: AppDimensions.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppDimensions.borderRadiusMd,
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: LocationPicker(
+                          initialAddress: _address,
+                          initialLocation: _location,
+                          onChanged: (addr, loc) {
+                            _address = addr;
+                            _location = loc;
                           },
                         ),
-                        const SizedBox(height: AppDimensions.md),
-                        AppTextField(
-                          controller: _bioController,
-                          label: 'Giới thiệu ngắn (Bio)',
-                          hintText: 'Kinh nghiệm, phong cách tạo mẫu...',
-                          prefixIcon: const Icon(Icons.description_outlined),
-                          maxLines: 3,
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
+
+                      // Dịch vụ cung cấp
+                      _buildSectionHeader('3. Danh sách dịch vụ & Bảng giá'),
+                      const SizedBox(height: AppDimensions.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppDimensions.borderRadiusMd,
+                          border: Border.all(color: AppColors.divider),
                         ),
-                        const SizedBox(height: AppDimensions.lg),
-                        _buildCoverImagePicker(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
+                        child: ServiceEditor(
+                          initialServices: _services,
+                          onChanged: (services) {
+                            _services = services;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
 
-                  // Địa chỉ & Vị trí bản đồ
-                  _buildSectionHeader('2. Địa chỉ & Vị trí bản đồ'),
-                  const SizedBox(height: AppDimensions.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppDimensions.borderRadiusMd,
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: LocationPicker(
-                      initialAddress: _address,
-                      initialLocation: _location,
-                      onChanged: (addr, loc) {
-                        _address = addr;
-                        _location = loc;
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
+                      // Kiểu tóc hỗ trợ
+                      _buildSectionHeader('4. Kiểu tóc chuyên môn'),
+                      const SizedBox(height: AppDimensions.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppDimensions.borderRadiusMd,
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: HairstylePicker(
+                          initialSelectedIds: _hairstyleIds,
+                          onChanged: (ids) {
+                            _hairstyleIds = ids;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
 
-                  // Dịch vụ cung cấp
-                  _buildSectionHeader('3. Danh sách dịch vụ & Bảng giá'),
-                  const SizedBox(height: AppDimensions.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppDimensions.borderRadiusMd,
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: ServiceEditor(
-                      initialServices: _services,
-                      onChanged: (services) {
-                        _services = services;
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
+                      // Giờ làm việc
+                      _buildSectionHeader('5. Giờ làm việc trong tuần'),
+                      const SizedBox(height: AppDimensions.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: AppDimensions.borderRadiusMd,
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: WorkingHoursEditor(
+                          initialHours: _workingHours,
+                          onChanged: (hours) {
+                            _workingHours = hours;
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
 
-                  // Kiểu tóc hỗ trợ
-                  _buildSectionHeader('4. Kiểu tóc chuyên môn'),
-                  const SizedBox(height: AppDimensions.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppDimensions.borderRadiusMd,
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: HairstylePicker(
-                      initialSelectedIds: _hairstyleIds,
-                      onChanged: (ids) {
-                        _hairstyleIds = ids;
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
+                      // Album tác phẩm nổi bật (Portfolio) (Phase 5 - Task B4)
+                      _buildPortfolioSection(),
+                      const SizedBox(height: AppDimensions.xxl),
 
-                  // Giờ làm việc
-                  _buildSectionHeader('5. Giờ làm việc trong tuần'),
-                  const SizedBox(height: AppDimensions.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppDimensions.borderRadiusMd,
-                      border: Border.all(color: AppColors.divider),
-                    ),
-                    child: WorkingHoursEditor(
-                      initialHours: _workingHours,
-                      onChanged: (hours) {
-                        _workingHours = hours;
-                      },
-                    ),
+                      // Nút Lưu thay đổi
+                      AppButton(
+                        text: 'Lưu Cập Nhật Hồ Sơ',
+                        icon: const Icon(Icons.save_outlined, size: 18),
+                        isLoading: _isSaving,
+                        onPressed: () => _handleSave(profile),
+                      ),
+                      const SizedBox(height: AppDimensions.md),
+                      AppButton(
+                        text: 'Hủy Bỏ',
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => context.pop(),
+                      ),
+                      const SizedBox(height: AppDimensions.xl),
+                    ],
                   ),
-                  const SizedBox(height: AppDimensions.xxl),
-
-                  // Nút Lưu thay đổi
-                  AppButton(
-                    text: 'Lưu Cập Nhật Hồ Sơ',
-                    icon: const Icon(Icons.save_outlined, size: 18),
-                    isLoading: _isSaving,
-                    onPressed: () => _handleSave(profile),
-                  ),
-                  const SizedBox(height: AppDimensions.md),
-                  AppButton(
-                    text: 'Hủy Bỏ',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => context.pop(),
-                  ),
-                  const SizedBox(height: AppDimensions.xl),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      );
+          );
         },
       ),
     );
@@ -862,4 +874,274 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
       style: AppTextStyles.h4.copyWith(color: AppColors.primary),
     );
   }
+
+  Future<void> _pickPortfolioImage(ImageSource source) async {
+    if (_portfolioUrls.length >= 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tối đa 8 ảnh trong Album tác phẩm'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 75,
+      );
+
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        setState(() {
+          _portfolioUrls.add(base64String);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể chọn ảnh: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  void _showAddPortfolioImageModal() {
+    if (_portfolioUrls.length >= 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Album đã đạt giới hạn tối đa 8 ảnh'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusLg),
+        ),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimensions.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.md),
+              const Text('Thêm ảnh mẫu tóc đã cắt', style: AppTextStyles.h4),
+              const SizedBox(height: AppDimensions.sm),
+              ListTile(
+                leading: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.accent,
+                ),
+                title: const Text(
+                  'Chụp ảnh mới',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickPortfolioImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.photo_library_outlined,
+                  color: AppColors.accent,
+                ),
+                title: const Text(
+                  'Chọn ảnh từ thư viện',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickPortfolioImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortfolioSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionHeader('6. Album tác phẩm thực tế (Lookbook)'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${_portfolioUrls.length}/8 ảnh',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.accent,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.xs),
+        const Text(
+          'Đăng tải các mẫu tóc đẹp nhất bạn từng tạo kiểu để khách hàng tự tin đặt lịch',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppDimensions.sm),
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.md),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: AppDimensions.borderRadiusMd,
+            border: Border.all(color: AppColors.divider),
+          ),
+          child: Column(
+            children: [
+              if (_portfolioUrls.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.md,
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.collections_outlined,
+                          size: 40,
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: AppDimensions.xs),
+                        const Text(
+                          'Chưa có ảnh tác phẩm nào',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: _portfolioUrls.length,
+                  itemBuilder: (context, index) {
+                    final imgUrl = _portfolioUrls[index];
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: _buildPortfolioImageWidget(imgUrl),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _portfolioUrls.removeAt(index);
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              const SizedBox(height: AppDimensions.sm),
+              if (_portfolioUrls.length < 8)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppDimensions.borderRadiusSm,
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      'Thêm ảnh tác phẩm (+)',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    onPressed: _showAddPortfolioImageModal,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPortfolioImageWidget(String target) {
+    if (target.startsWith('data:image')) {
+      try {
+        final commaIdx = target.indexOf(',');
+        final base64Str = commaIdx != -1
+            ? target.substring(commaIdx + 1)
+            : target;
+        return Image.memory(base64Decode(base64Str), fit: BoxFit.cover);
+      } catch (_) {
+        return Container(color: AppColors.inputBackground);
+      }
+    }
+    return Image.network(
+      target,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => Container(color: AppColors.inputBackground),
+    );
+  }
 }
+
+// CreBy: MenBoyBMN

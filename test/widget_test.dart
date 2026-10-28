@@ -172,9 +172,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: LoadingShimmer(width: 100, height: 20),
-          ),
+          home: Scaffold(body: LoadingShimmer(width: 100, height: 20)),
         ),
       );
 

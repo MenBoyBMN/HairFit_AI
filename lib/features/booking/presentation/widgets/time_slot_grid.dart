@@ -95,7 +95,9 @@ class TimeSlotGrid extends StatelessWidget {
               crossAxisCount: MediaQuery.of(context).size.width > 600 ? 5 : 3,
               mainAxisSpacing: AppDimensions.sm,
               crossAxisSpacing: AppDimensions.sm,
-              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 2.5 : 2.1,
+              childAspectRatio: MediaQuery.of(context).size.width > 600
+                  ? 2.5
+                  : 2.1,
             ),
             itemBuilder: (context, index) {
               final slot = slots[index];
@@ -188,3 +190,5 @@ class TimeSlotGrid extends StatelessWidget {
     );
   }
 }
+
+// CreBy: MenBoyBMN

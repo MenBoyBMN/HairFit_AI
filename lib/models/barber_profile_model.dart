@@ -87,11 +87,15 @@ class BarberProfileModel {
   final String bio;
   final String address;
   final GeoLocation location;
+  final String? phone;
+  final List<String> portfolioUrls;
+  final bool isAcceptingBookingsToday;
   final int priceMin;
   final int priceMax;
   final double ratingAvg;
   final int ratingCount;
-  final String approvalStatus; // "pending" | "approved" | "rejected"
+  final String
+  approvalStatus; // "pending" | "approved" | "rejected" | "suspended"
   final List<String> hairstyleIds;
   final List<ServiceModel> services;
   final Map<String, DayWorkingHours>
@@ -108,6 +112,9 @@ class BarberProfileModel {
     this.bio = '',
     required this.address,
     required this.location,
+    this.phone,
+    this.portfolioUrls = const [],
+    this.isAcceptingBookingsToday = true,
     this.priceMin = 0,
     this.priceMax = 0,
     this.ratingAvg = 0.0,
@@ -170,6 +177,14 @@ class BarberProfileModel {
       location: GeoLocation.fromMap(
         Map<String, dynamic>.from(map['location'] as Map? ?? {}),
       ),
+      phone: map['phone'] as String?,
+      portfolioUrls:
+          (map['portfolioUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      isAcceptingBookingsToday:
+          map['isAcceptingBookingsToday'] as bool? ?? true,
       priceMin: pMin,
       priceMax: pMax,
       ratingAvg: (map['ratingAvg'] as num?)?.toDouble() ?? 0.0,
@@ -214,6 +229,9 @@ class BarberProfileModel {
       'bio': bio,
       'address': address,
       'location': location.toMap(),
+      if (phone != null) 'phone': phone,
+      'portfolioUrls': portfolioUrls,
+      'isAcceptingBookingsToday': isAcceptingBookingsToday,
       'priceMin': calculatedMin > 0 ? calculatedMin : priceMin,
       'priceMax': calculatedMax > 0 ? calculatedMax : priceMax,
       'ratingAvg': ratingAvg,
@@ -235,6 +253,7 @@ class BarberProfileModel {
   bool get isApproved => approvalStatus == 'approved';
   bool get isPending => approvalStatus == 'pending';
   bool get isRejected => approvalStatus == 'rejected';
+  bool get isSuspended => approvalStatus == 'suspended';
 
   BarberProfileModel copyWith({
     String? uid,
@@ -244,6 +263,9 @@ class BarberProfileModel {
     String? bio,
     String? address,
     GeoLocation? location,
+    String? phone,
+    List<String>? portfolioUrls,
+    bool? isAcceptingBookingsToday,
     int? priceMin,
     int? priceMax,
     double? ratingAvg,
@@ -264,6 +286,10 @@ class BarberProfileModel {
       bio: bio ?? this.bio,
       address: address ?? this.address,
       location: location ?? this.location,
+      phone: phone ?? this.phone,
+      portfolioUrls: portfolioUrls ?? this.portfolioUrls,
+      isAcceptingBookingsToday:
+          isAcceptingBookingsToday ?? this.isAcceptingBookingsToday,
       priceMin: priceMin ?? this.priceMin,
       priceMax: priceMax ?? this.priceMax,
       ratingAvg: ratingAvg ?? this.ratingAvg,
@@ -278,3 +304,5 @@ class BarberProfileModel {
     );
   }
 }
+
+// CreBy: MenBoyBMN

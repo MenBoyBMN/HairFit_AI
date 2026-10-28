@@ -174,9 +174,6 @@ class SlotService {
       return [];
     }
 
-    // Tập hợp các ID slot đã bị đặt trước trong ngày
-    final bookedSlotIdSet = existingBookedSlots.map((e) => e.id).toSet();
-
     // ══════════════════════════════════════════════════════════════
     // BƯỚC 3 & 4: SINH SLOT VÀ KIỂM TRA ĐIỀU KIỆN KHẢ DỤNG
     // ══════════════════════════════════════════════════════════════
@@ -231,14 +228,31 @@ class SlotService {
             : 'Quá sát giờ hẹn (tối thiểu 30 phút)';
       }
 
-      // Kiểm tra 2: Có bất kỳ sub-slot 30 phút nào đã có người đặt trước
+      // Kiểm tra 2: Thợ tạm dừng nhận khách hôm nay
+      if (isAvailable &&
+          !barberProfile.isAcceptingBookingsToday &&
+          dateStr == DateFormatter.toIsoDateString(now)) {
+        isAvailable = false;
+        unavailabilityReason = 'Thợ tạm ngưng nhận khách hôm nay';
+      }
+
+      // Kiểm tra 3: Có bất kỳ sub-slot 30 phút nào đã có người đặt trước hoặc thợ khóa
       if (isAvailable) {
-        final hasConflict = requiredSlotIds.any(
-          (slotId) => bookedSlotIdSet.contains(slotId),
+        final conflictSlots = existingBookedSlots.where(
+          (slot) => requiredSlotIds.contains(slot.id),
         );
-        if (hasConflict) {
+        if (conflictSlots.isNotEmpty) {
           isAvailable = false;
-          unavailabilityReason = 'Đã có người đặt';
+          final blockedByBarber = conflictSlots.where(
+            (s) =>
+                s.isBlockedByBarber || s.appointmentId == 'BLOCKED_BY_BARBER',
+          );
+          if (blockedByBarber.isNotEmpty) {
+            unavailabilityReason =
+                blockedByBarber.first.blockReason ?? 'Thợ bận / Giờ nghỉ';
+          } else {
+            unavailabilityReason = 'Đã có người đặt';
+          }
         }
       }
 
@@ -258,3 +272,5 @@ class SlotService {
     return resultSlots;
   }
 }
+
+// CreBy: MenBoyBMN

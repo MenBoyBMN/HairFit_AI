@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+
 import '../../../models/appointment_model.dart';
 import '../../booking/data/booking_repository.dart';
 
@@ -11,9 +12,12 @@ class AppointmentRepository {
   AppointmentRepository({
     FirebaseFirestore? firestore,
     BookingRepository? bookingRepository,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _bookingRepository = bookingRepository ??
-            BookingRepository(firestore: firestore ?? FirebaseFirestore.instance);
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _bookingRepository =
+           bookingRepository ??
+           BookingRepository(
+             firestore: firestore ?? FirebaseFirestore.instance,
+           );
 
   /// Lắng nghe danh sách lịch hẹn của một khách hàng (real-time stream)
   /// Sắp xếp theo startTimestamp mới nhất lên đầu
@@ -53,7 +57,10 @@ class AppointmentRepository {
 
   /// Lấy thông tin chi tiết một lịch hẹn bằng ID
   Future<AppointmentModel?> getAppointmentById(String appointmentId) async {
-    final doc = await _firestore.collection('appointments').doc(appointmentId).get();
+    final doc = await _firestore
+        .collection('appointments')
+        .doc(appointmentId)
+        .get();
     if (!doc.exists) return null;
     return AppointmentModel.fromFirestore(doc);
   }
@@ -69,7 +76,9 @@ class AppointmentRepository {
 
     final currentStatus = snapshot.data()?['status'] as String?;
     if (currentStatus != AppointmentStatus.pending.toStatusString()) {
-      throw BookingException('Chỉ có thể xác nhận lịch hẹn ở trạng thái chờ duyệt');
+      throw BookingException(
+        'Chỉ có thể xác nhận lịch hẹn ở trạng thái chờ duyệt',
+      );
     }
 
     await docRef.update({
@@ -80,12 +89,11 @@ class AppointmentRepository {
 
   /// Thợ từ chối lịch hẹn (pending -> rejected):
   /// Chuyển trạng thái sang rejected VÀ XÓA bookedSlots để giải phóng khung giờ
-  Future<void> rejectAppointment(
-    String appointmentId, {
-    String? reason,
-  }) async {
+  Future<void> rejectAppointment(String appointmentId, {String? reason}) async {
     await _firestore.runTransaction((transaction) async {
-      final appointmentRef = _firestore.collection('appointments').doc(appointmentId);
+      final appointmentRef = _firestore
+          .collection('appointments')
+          .doc(appointmentId);
       final snapshot = await transaction.get(appointmentRef);
 
       if (!snapshot.exists) {
@@ -95,20 +103,25 @@ class AppointmentRepository {
       final data = snapshot.data()!;
       final currentStatus = data['status'] as String?;
       if (currentStatus != AppointmentStatus.pending.toStatusString()) {
-        throw BookingException('Chỉ có thể từ chối lịch hẹn ở trạng thái chờ duyệt');
+        throw BookingException(
+          'Chỉ có thể từ chối lịch hẹn ở trạng thái chờ duyệt',
+        );
       }
 
       // 1. Cập nhật trạng thái appointment
       transaction.update(appointmentRef, {
         'status': AppointmentStatus.rejected.toStatusString(),
-        if (reason != null && reason.trim().isNotEmpty) 'rejectReason': reason.trim(),
+        if (reason != null && reason.trim().isNotEmpty)
+          'rejectReason': reason.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // 2. Xóa các bookedSlots tương ứng để giải phóng khung giờ
       final rawSlotIds = data['slotIds'] as List<dynamic>? ?? [];
       for (final slotId in rawSlotIds) {
-        final slotDocRef = _firestore.collection('bookedSlots').doc(slotId.toString());
+        final slotDocRef = _firestore
+            .collection('bookedSlots')
+            .doc(slotId.toString());
         transaction.delete(slotDocRef);
       }
     });
@@ -147,6 +160,23 @@ class AppointmentRepository {
     );
   }
 
+  /// Khách hàng đổi giờ hẹn (ủy thác qua BookingRepository transaction) (Task Phase 4 - C5)
+  Future<void> rescheduleAppointment({
+    required String appointmentId,
+    required String newDate,
+    required String newStartTime,
+    required String newEndTime,
+    required List<String> newSlotIds,
+  }) async {
+    await _bookingRepository.rescheduleBooking(
+      appointmentId: appointmentId,
+      newDate: newDate,
+      newStartTime: newStartTime,
+      newEndTime: newEndTime,
+      newSlotIds: newSlotIds,
+    );
+  }
+
   /// Đánh giá lịch hẹn và cập nhật điểm trung bình của thợ
   Future<void> rateAppointment({
     required String appointmentId,
@@ -159,8 +189,9 @@ class AppointmentRepository {
     final batch = _firestore.batch();
 
     // 1. Cập nhật appointment
-    final appointmentRef =
-        _firestore.collection('appointments').doc(appointmentId);
+    final appointmentRef = _firestore
+        .collection('appointments')
+        .doc(appointmentId);
     batch.update(appointmentRef, {
       'rating': rating,
       'reviewComment': comment,
@@ -197,9 +228,24 @@ class AppointmentRepository {
         });
       }
     } catch (e) {
-      debugPrint('⚠️ [AppointmentRepository] Không thể cập nhật ratingAvg thợ: $e');
+      debugPrint(
+        '⚠️ [AppointmentRepository] Không thể cập nhật ratingAvg thợ: $e',
+      );
     }
 
     await batch.commit();
   }
+
+  /// Thợ cập nhật ghi chú riêng tư về khách hàng này (Client Notes / Mini CRM - Phase 5 - Task B5)
+  Future<void> updateBarberPrivateNote(
+    String appointmentId,
+    String note,
+  ) async {
+    await _firestore.collection('appointments').doc(appointmentId).update({
+      'barberPrivateNote': note.trim().isEmpty ? null : note.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }
+
+// CreBy: MenBoyBMN

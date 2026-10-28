@@ -64,7 +64,7 @@ void main() {
           close: '20:00',
         ),
         'sun': const DayWorkingHours(
-          closed: true,
+          closed: false,
           open: '08:00',
           close: '20:00',
         ),

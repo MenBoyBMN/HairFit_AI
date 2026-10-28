@@ -13,7 +13,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hairfit_ai/features/admin/presentation/approve_barbers_screen.dart';
 import 'package:hairfit_ai/features/barber_profile/data/barber_profile_repository.dart';
 import 'package:hairfit_ai/features/barber_profile/presentation/barber_pending_screen.dart';
+import 'package:hairfit_ai/models/appointment_model.dart';
 import 'package:hairfit_ai/models/barber_profile_model.dart';
+import 'package:hairfit_ai/models/hairstyle_model.dart';
 import 'package:hairfit_ai/models/service_model.dart';
 import 'package:hairfit_ai/models/user_model.dart';
 import 'package:hairfit_ai/providers/admin_provider.dart';
@@ -39,6 +41,84 @@ class FakeAdminController extends StateNotifier<AsyncValue<void>>
 
   @override
   Future<void> rejectBarber(String uid) async {}
+
+  @override
+  Future<void> suspendBarber(String uid) async {}
+
+  @override
+  Future<void> reactivateBarber(String uid) async {}
+
+  @override
+  Future<void> setBarberStatus(String uid, String status) async {}
+
+  @override
+  Future<void> updateBarberProfileAdmin(
+    String uid, {
+    required String displayName,
+    required String address,
+    String? phone,
+    required String bio,
+    required double latitude,
+    required double longitude,
+    required bool isAcceptingBookingsToday,
+  }) async {}
+
+  @override
+  Future<void> deleteBarberProfile(String uid) async {}
+
+  @override
+  Future<void> setUserBlockStatus(String uid, bool isBlocked) async {}
+
+  @override
+  Future<void> updateUserRole(String uid, String newRole) async {}
+
+  @override
+  Future<void> updateUserInfo(
+    String uid, {
+    required String displayName,
+    String? phone,
+  }) async {}
+
+  @override
+  Future<void> updateBarberLocation(
+    String uid,
+    double latitude,
+    double longitude,
+  ) async {}
+
+  @override
+  Future<void> emergencyCancelAppointment(
+    String appointmentId, {
+    String? reason,
+  }) async {}
+
+  @override
+  Future<void> updateAppointmentStatus(
+    String appointmentId,
+    String newStatus, {
+    String? reason,
+  }) async {}
+
+  @override
+  Future<void> saveHairstyle(HairstyleModel hairstyle) async {}
+
+  @override
+  Future<void> deleteHairstyle(String id) async {}
+
+  @override
+  Future<void> deleteReview(
+    String reviewId,
+    String barberId,
+    int rating, {
+    String? appointmentId,
+  }) async {}
+
+  @override
+  Future<void> saveSystemSettings({
+    required double searchRadiusKm,
+    required int cancelNoticeHours,
+    required bool maintenanceMode,
+  }) async {}
 }
 
 void main() {
@@ -118,6 +198,94 @@ void main() {
       expect(successState.isLoading, false);
       expect(successState.successMessage, 'Thành công');
       expect(successState.errorMessage, isNull);
+    });
+
+    test(
+      'BarberProfileModel handles portfolioUrls and isAcceptingBookingsToday',
+      () {
+        const barber = BarberProfileModel(
+          uid: 'b_lookbook',
+          displayName: 'Master Barber',
+          address: 'Đà Nẵng',
+          location: GeoLocation(latitude: 16.0, longitude: 108.0),
+          portfolioUrls: ['img1.jpg', 'img2.jpg'],
+          isAcceptingBookingsToday: true,
+        );
+
+        expect(barber.portfolioUrls.length, 2);
+        expect(barber.isAcceptingBookingsToday, true);
+
+        final updated = barber.copyWith(
+          portfolioUrls: ['img1.jpg', 'img2.jpg', 'img3.jpg'],
+          isAcceptingBookingsToday: false,
+        );
+
+        expect(updated.portfolioUrls.length, 3);
+        expect(updated.isAcceptingBookingsToday, false);
+
+        final map = updated.toMap();
+        expect((map['portfolioUrls'] as List).length, 3);
+        expect(map['isAcceptingBookingsToday'], false);
+      },
+    );
+
+    test('AppointmentModel handles AI Handshake and Barber Private Notes', () {
+      final now = DateTime.now();
+      final appt = AppointmentModel(
+        id: 'appt_1',
+        customerId: 'cust_1',
+        barberId: 'barber_1',
+        barberName: 'Thợ Tâm',
+        customerName: 'Khách Minh',
+        serviceId: 's1',
+        serviceName: 'Cắt Fade',
+        price: 100000,
+        durationMinutes: 30,
+        date: '2026-10-10',
+        startTime: '10:00',
+        endTime: '10:30',
+        startTimestamp: now,
+        endTimestamp: now.add(const Duration(minutes: 30)),
+        slotIds: ['slot_1'],
+        customerFaceShape: 'round',
+        aiStylingTip: 'Nên cạo High Fade để mặt thanh thoát hơn',
+        hairstyleImageUrl: 'https://example.com/fade.jpg',
+        barberPrivateNote: 'Khách da đầu nhạy cảm, thích dùng sáp nhẹ',
+      );
+
+      expect(appt.customerFaceShape, 'round');
+      expect(appt.aiStylingTip, contains('High Fade'));
+      expect(appt.barberPrivateNote, contains('da đầu nhạy cảm'));
+
+      final updated = appt.copyWith(
+        barberPrivateNote: 'Khách đổi ý thích chải Side Part',
+      );
+      expect(updated.barberPrivateNote, 'Khách đổi ý thích chải Side Part');
+    });
+
+    test('SearchMapState handles minRatingFilter and onlyOpenNow', () {
+      final initialState = SearchMapState(
+        referenceLocation: const LatLng(16.0, 108.0),
+      );
+
+      expect(initialState.minRatingFilter, isNull);
+      expect(initialState.onlyOpenNow, false);
+
+      final updated = initialState.copyWith(
+        minRatingFilter: 4.5,
+        onlyOpenNow: true,
+      );
+
+      expect(updated.minRatingFilter, 4.5);
+      expect(updated.onlyOpenNow, true);
+
+      final cleared = updated.copyWith(
+        clearRatingFilter: true,
+        onlyOpenNow: false,
+      );
+
+      expect(cleared.minRatingFilter, isNull);
+      expect(cleared.onlyOpenNow, false);
     });
 
     testWidgets(

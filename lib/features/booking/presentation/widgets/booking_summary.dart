@@ -24,6 +24,9 @@ class BookingSummary extends StatelessWidget {
   final AvailableSlot? selectedSlot;
   final String note;
   final ValueChanged<String> onNoteChanged;
+  final String? customerFaceShape;
+  final String? aiStylingTip;
+  final String? hairstyleName;
 
   const BookingSummary({
     super.key,
@@ -33,6 +36,9 @@ class BookingSummary extends StatelessWidget {
     required this.selectedSlot,
     required this.note,
     required this.onNoteChanged,
+    this.customerFaceShape,
+    this.aiStylingTip,
+    this.hairstyleName,
   });
 
   @override
@@ -79,6 +85,25 @@ class BookingSummary extends StatelessWidget {
                     : 'Chưa chọn khung giờ',
                 highlightValue: selectedSlot != null,
               ),
+              if (customerFaceShape != null &&
+                  customerFaceShape!.isNotEmpty) ...[
+                const Divider(height: 16),
+                _buildRow(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Dáng mặt AI',
+                  value: customerFaceShape!,
+                  highlightValue: true,
+                ),
+              ],
+              if (hairstyleName != null && hairstyleName!.isNotEmpty) ...[
+                const Divider(height: 16),
+                _buildRow(
+                  icon: Icons.face_retouching_natural_rounded,
+                  label: 'Kiểu tóc mẫu AI',
+                  value: hairstyleName!,
+                  highlightValue: true,
+                ),
+              ],
               const Divider(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -138,3 +163,5 @@ class BookingSummary extends StatelessWidget {
     );
   }
 }
+
+// CreBy: MenBoyBMN

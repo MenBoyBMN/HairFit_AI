@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -12,7 +13,10 @@ import '../../../models/appointment_model.dart';
 import '../../../models/chat_model.dart';
 import '../../../providers/appointment_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../features/barber_profile/data/barber_profile_repository.dart';
 import 'widgets/appointment_card.dart';
+import 'widgets/barber_daily_earnings.dart';
+import 'widgets/quick_break_dialog.dart';
 
 /// Màn hình quản lý lịch hẹn dành riêng cho thợ cắt tóc (Task 4.13)
 ///
@@ -101,7 +105,10 @@ class _BarberAppointmentsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Đóng', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Đóng',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -131,7 +138,8 @@ class _BarberAppointmentsScreenState
       SnackBar(
         content: Text(
           success
-              ? (actionState.successMessage ?? 'Đã từ chối lịch hẹn và giải phóng slot!')
+              ? (actionState.successMessage ??
+                    'Đã từ chối lịch hẹn và giải phóng slot!')
               : (actionState.errorMessage ?? 'Không thể từ chối lịch hẹn!'),
         ),
         backgroundColor: success ? AppColors.success : AppColors.error,
@@ -154,7 +162,10 @@ class _BarberAppointmentsScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Chưa xong', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Chưa xong',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -205,9 +216,36 @@ class _BarberAppointmentsScreenState
     );
   }
 
+  Future<void> _handleUpdatePrivateNote(
+    AppointmentModel appointment,
+    String note,
+  ) async {
+    final success = await ref
+        .read(appointmentActionProvider.notifier)
+        .updateBarberPrivateNote(appointmentId: appointment.id, note: note);
+
+    if (!mounted) return;
+
+    final actionState = ref.read(appointmentActionProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? (actionState.successMessage ?? 'Đã lưu ghi chú khách hàng!')
+              : (actionState.errorMessage ?? 'Không thể lưu ghi chú!'),
+        ),
+        backgroundColor: success ? AppColors.success : AppColors.error,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appointmentsAsync = ref.watch(barberAppointmentsProvider);
+    final profileAsync = ref.watch(currentBarberProfileStreamProvider);
+    final barberProfile = profileAsync.valueOrNull;
+    final isAcceptingBookings = barberProfile?.isAcceptingBookingsToday ?? true;
+    final user = ref.watch(authStateProvider).value;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -263,9 +301,16 @@ class _BarberAppointmentsScreenState
                 value: 'preview',
                 child: Row(
                   children: [
-                    Icon(Icons.visibility_outlined, size: 20, color: AppColors.accent),
+                    Icon(
+                      Icons.visibility_outlined,
+                      size: 20,
+                      color: AppColors.accent,
+                    ),
                     SizedBox(width: AppDimensions.sm),
-                    Text('Xem trang tiệm công khai', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Xem trang tiệm công khai',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -273,7 +318,11 @@ class _BarberAppointmentsScreenState
                 value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline_rounded, size: 20, color: AppColors.primary),
+                    Icon(
+                      Icons.person_outline_rounded,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: AppDimensions.sm),
                     Text('Hồ sơ thợ', style: AppTextStyles.bodyMedium),
                   ],
@@ -283,7 +332,11 @@ class _BarberAppointmentsScreenState
                 value: 'store',
                 child: Row(
                   children: [
-                    Icon(Icons.storefront_outlined, size: 20, color: AppColors.primary),
+                    Icon(
+                      Icons.storefront_outlined,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: AppDimensions.sm),
                     Text('Trang cửa tiệm', style: AppTextStyles.bodyMedium),
                   ],
@@ -293,9 +346,16 @@ class _BarberAppointmentsScreenState
                 value: 'chat',
                 child: Row(
                   children: [
-                    Icon(Icons.chat_outlined, size: 20, color: AppColors.accent),
+                    Icon(
+                      Icons.chat_outlined,
+                      size: 20,
+                      color: AppColors.accent,
+                    ),
                     SizedBox(width: AppDimensions.sm),
-                    Text('Tin nhắn khách hàng', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Tin nhắn khách hàng',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -304,7 +364,11 @@ class _BarberAppointmentsScreenState
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout_rounded, size: 20, color: AppColors.error),
+                    Icon(
+                      Icons.logout_rounded,
+                      size: 20,
+                      color: AppColors.error,
+                    ),
                     SizedBox(width: AppDimensions.sm),
                     Text('Đăng xuất', style: TextStyle(color: AppColors.error)),
                   ],
@@ -323,7 +387,9 @@ class _BarberAppointmentsScreenState
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.accent,
           indicatorWeight: 3,
-          labelStyle: AppTextStyles.labelMedium.copyWith(fontWeight: FontWeight.bold),
+          labelStyle: AppTextStyles.labelMedium.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
           tabs: [
             Tab(
               child: Row(
@@ -331,10 +397,16 @@ class _BarberAppointmentsScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Chờ duyệt'),
-                  if (appointmentsAsync.valueOrNull != null && appointmentsAsync.valueOrNull!.where((a) => a.isPending).isNotEmpty) ...[
+                  if (appointmentsAsync.valueOrNull != null &&
+                      appointmentsAsync.valueOrNull!
+                          .where((a) => a.isPending)
+                          .isNotEmpty) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.error,
                         borderRadius: BorderRadius.circular(10),
@@ -358,10 +430,16 @@ class _BarberAppointmentsScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Đã nhận'),
-                  if (appointmentsAsync.valueOrNull != null && appointmentsAsync.valueOrNull!.where((a) => a.isConfirmed).isNotEmpty) ...[
+                  if (appointmentsAsync.valueOrNull != null &&
+                      appointmentsAsync.valueOrNull!
+                          .where((a) => a.isConfirmed)
+                          .isNotEmpty) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(10),
@@ -385,7 +463,13 @@ class _BarberAppointmentsScreenState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Lịch sử'),
-                  if (appointmentsAsync.valueOrNull != null && appointmentsAsync.valueOrNull!.where((a) => a.isCompleted || a.isCancelled || a.isRejected).isNotEmpty) ...[
+                  if (appointmentsAsync.valueOrNull != null &&
+                      appointmentsAsync.valueOrNull!
+                          .where(
+                            (a) =>
+                                a.isCompleted || a.isCancelled || a.isRejected,
+                          )
+                          .isNotEmpty) ...[
                     const SizedBox(width: 4),
                     Text(
                       '(${appointmentsAsync.valueOrNull!.where((a) => a.isCompleted || a.isCancelled || a.isRejected).length})',
@@ -398,53 +482,98 @@ class _BarberAppointmentsScreenState
           ],
         ),
       ),
-      body: appointmentsAsync.when(
-        loading: () => ListView.separated(
-          padding: const EdgeInsets.all(AppDimensions.lg),
-          itemCount: 3,
-          separatorBuilder: (_, _) => const SizedBox(height: AppDimensions.md),
-          itemBuilder: (_, _) => LoadingShimmer.card(height: 140),
-        ),
-        error: (err, _) => Center(
-          child: ErrorRetry(
-            errorMessage: 'Lỗi tải danh sách lịch hẹn: $err',
-            onRetry: () => ref.refresh(barberAppointmentsProvider),
-          ),
-        ),
-        data: (appointments) {
-          final pendingList = appointments.where((a) => a.isPending).toList();
-          final confirmedList =
-              appointments.where((a) => a.isConfirmed).toList();
-          final historyList = appointments
-              .where((a) => a.isCompleted || a.isCancelled || a.isRejected)
-              .toList();
-
-          return AnimatedBuilder(
-            animation: _tabController,
-            builder: (context, _) {
-              final activeIndex = _tabController.index;
-              if (activeIndex == 1) {
-                return _buildList(
-                  appointments: confirmedList,
-                  emptyTitle: 'Chưa có lịch hẹn nào đã nhận',
-                  emptySubtitle: 'Lịch hẹn được tiếp nhận sẽ hiển thị tại đây.',
-                );
-              } else if (activeIndex == 2) {
-                return _buildList(
-                  appointments: historyList,
-                  emptyTitle: 'Chưa có lịch sử lịch hẹn',
-                  emptySubtitle: 'Các lịch hẹn hoàn thành hoặc đã hủy sẽ hiển thị ở đây.',
-                );
-              } else {
-                return _buildList(
-                  appointments: pendingList,
-                  emptyTitle: 'Không có yêu cầu đặt lịch nào đang chờ',
-                  emptySubtitle: 'Khách hàng đặt lịch mới sẽ hiển thị tại đây.',
-                );
+      body: Column(
+        children: [
+          BarberDailyEarnings(
+            appointments: appointmentsAsync.valueOrNull ?? const [],
+            isAcceptingBookingsToday: isAcceptingBookings,
+            onToggleAcceptingBookings: (val) async {
+              if (user != null) {
+                await ref
+                    .read(barberProfileRepositoryProvider)
+                    .updateAcceptingBookingsToday(user.uid, val);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        val
+                            ? 'Đã mở nhận khách đặt lịch hôm nay'
+                            : 'Đã tạm ngưng nhận khách đặt lịch hôm nay',
+                      ),
+                      backgroundColor: val
+                          ? AppColors.success
+                          : AppColors.warning,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
               }
             },
-          );
-        },
+            onQuickBreak: () {
+              if (user != null) {
+                QuickBreakDialog.show(context, barberId: user.uid);
+              }
+            },
+          ),
+          Expanded(
+            child: appointmentsAsync.when(
+              loading: () => ListView.separated(
+                padding: const EdgeInsets.all(AppDimensions.lg),
+                itemCount: 3,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppDimensions.md),
+                itemBuilder: (_, _) => LoadingShimmer.card(height: 140),
+              ),
+              error: (err, _) => Center(
+                child: ErrorRetry(
+                  errorMessage: 'Lỗi tải danh sách lịch hẹn: $err',
+                  onRetry: () => ref.refresh(barberAppointmentsProvider),
+                ),
+              ),
+              data: (appointments) {
+                final pendingList = appointments
+                    .where((a) => a.isPending)
+                    .toList();
+                final confirmedList = appointments
+                    .where((a) => a.isConfirmed)
+                    .toList();
+                final historyList = appointments
+                    .where(
+                      (a) => a.isCompleted || a.isCancelled || a.isRejected,
+                    )
+                    .toList();
+
+                return AnimatedBuilder(
+                  animation: _tabController,
+                  builder: (context, _) {
+                    final activeIndex = _tabController.index;
+                    if (activeIndex == 1) {
+                      return _buildList(
+                        appointments: confirmedList,
+                        emptyTitle: 'Chưa có lịch hẹn nào đã nhận',
+                        emptySubtitle:
+                            'Lịch hẹn được tiếp nhận sẽ hiển thị tại đây.',
+                      );
+                    } else if (activeIndex == 2) {
+                      return _buildList(
+                        appointments: historyList,
+                        emptyTitle: 'Chưa có lịch sử lịch hẹn',
+                        emptySubtitle: 'Các lịch hẹn hoàn thành hoặc đã hủy sẽ hiển thị ở đây.',
+                      );
+                    } else {
+                      return _buildList(
+                        appointments: pendingList,
+                        emptyTitle: 'Không có yêu cầu đặt lịch nào đang chờ',
+                        emptySubtitle:
+                            'Khách hàng đặt lịch mới sẽ hiển thị tại đây.',
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
@@ -533,6 +662,8 @@ class _BarberAppointmentsScreenState
                 onReject: () => _handleReject(appointment),
                 onComplete: () => _handleComplete(appointment),
                 onChat: () => _openChat(appointment),
+                onUpdatePrivateNote: (note) =>
+                    _handleUpdatePrivateNote(appointment, note),
               );
             },
           ),
@@ -541,3 +672,5 @@ class _BarberAppointmentsScreenState
     );
   }
 }
+
+// CreBy: MenBoyBMN

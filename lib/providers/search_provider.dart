@@ -52,6 +52,8 @@ class SearchMapState {
   final String? selectedHairstyleId;
   final String searchQuery;
   final int? maxPriceFilter;
+  final double? minRatingFilter;
+  final bool onlyOpenNow;
   final List<BarberProfileModel> allApprovedBarbers;
   final List<BarberWithDistance> displayBarbers;
   final BarberProfileModel? selectedBarber;
@@ -66,6 +68,8 @@ class SearchMapState {
     this.selectedHairstyleId,
     this.searchQuery = '',
     this.maxPriceFilter,
+    this.minRatingFilter,
+    this.onlyOpenNow = false,
     this.allApprovedBarbers = const [],
     this.displayBarbers = const [],
     this.selectedBarber,
@@ -94,6 +98,9 @@ class SearchMapState {
     String? searchQuery,
     int? maxPriceFilter,
     bool clearPriceFilter = false,
+    double? minRatingFilter,
+    bool clearRatingFilter = false,
+    bool? onlyOpenNow,
     List<BarberProfileModel>? allApprovedBarbers,
     List<BarberWithDistance>? displayBarbers,
     BarberProfileModel? selectedBarber,
@@ -113,6 +120,10 @@ class SearchMapState {
       maxPriceFilter: clearPriceFilter
           ? null
           : (maxPriceFilter ?? this.maxPriceFilter),
+      minRatingFilter: clearRatingFilter
+          ? null
+          : (minRatingFilter ?? this.minRatingFilter),
+      onlyOpenNow: onlyOpenNow ?? this.onlyOpenNow,
       allApprovedBarbers: allApprovedBarbers ?? this.allApprovedBarbers,
       displayBarbers: displayBarbers ?? this.displayBarbers,
       selectedBarber: clearSelectedBarber
@@ -164,17 +175,43 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
     );
   }
 
-  /// Tính toán khoảng cách và sắp xếp danh sách thợ (Task 3.3, 3.4, 3.9, 6.11)
+  /// Kiểm tra thợ có đang trong khung giờ mở cửa hôm nay không (Task Phase 4 - C4)
+  static bool isBarberOpenNow(BarberProfileModel barber) {
+    if (!barber.isAcceptingBookingsToday) return false;
+    final now = DateTime.now();
+    final dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    final weekdayKey = dayKeys[now.weekday - 1];
+    final dayHours = barber.workingHours[weekdayKey];
+    if (dayHours == null || dayHours.closed) return false;
+
+    final openParts = dayHours.open.split(':');
+    final closeParts = dayHours.close.split(':');
+    if (openParts.length != 2 || closeParts.length != 2) return true;
+
+    final openMin =
+        (int.tryParse(openParts[0]) ?? 9) * 60 +
+        (int.tryParse(openParts[1]) ?? 0);
+    final closeMin =
+        (int.tryParse(closeParts[0]) ?? 19) * 60 +
+        (int.tryParse(closeParts[1]) ?? 0);
+    final currentMin = now.hour * 60 + now.minute;
+
+    return currentMin >= openMin && currentMin < closeMin;
+  }
+
+  /// Tính toán khoảng cách và sắp xếp danh sách thợ (Task 3.3, 3.4, 3.9, 6.11, Phase 4)
   List<BarberWithDistance> _computeAndSortBarbers({
     required List<BarberProfileModel> barbers,
     required LatLng refLocation,
     required String? hairstyleId,
     required String query,
     int? maxPrice,
+    double? minRating,
+    bool onlyOpenNow = false,
   }) {
     final cleanQuery = query.trim().toLowerCase();
 
-    // 1. Lọc theo từ khoá tìm kiếm và khoảng giá tối đa
+    // 1. Lọc theo từ khoá tìm kiếm, khoảng giá, rating và giờ mở cửa
     final filtered = barbers.where((b) {
       if (cleanQuery.isNotEmpty) {
         final matchName = b.displayName.toLowerCase().contains(cleanQuery);
@@ -183,6 +220,12 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
       }
       if (maxPrice != null && maxPrice > 0) {
         if (b.priceMin > maxPrice) return false;
+      }
+      if (minRating != null && minRating > 0) {
+        if (b.ratingAvg < minRating) return false;
+      }
+      if (onlyOpenNow) {
+        if (!isBarberOpenNow(b)) return false;
       }
       return true;
     }).toList();
@@ -231,6 +274,8 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
         hairstyleId: hairstyleId,
         query: currentState.searchQuery,
         maxPrice: currentState.maxPriceFilter,
+        minRating: currentState.minRatingFilter,
+        onlyOpenNow: currentState.onlyOpenNow,
       );
 
       state = AsyncValue.data(
@@ -252,6 +297,8 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
         hairstyleId: currentState.selectedHairstyleId,
         query: currentState.searchQuery,
         maxPrice: maxPrice,
+        minRating: currentState.minRatingFilter,
+        onlyOpenNow: currentState.onlyOpenNow,
       );
 
       state = AsyncValue.data(
@@ -260,6 +307,49 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
           clearPriceFilter: maxPrice == null,
           displayBarbers: processed,
         ),
+      );
+    });
+  }
+
+  /// Cập nhật bộ lọc đánh giá sao tối thiểu (Task Phase 4 - C4)
+  void setMinRatingFilter(double? minRating) {
+    state.whenData((currentState) {
+      final processed = _computeAndSortBarbers(
+        barbers: currentState.allApprovedBarbers,
+        refLocation: currentState.referenceLocation,
+        hairstyleId: currentState.selectedHairstyleId,
+        query: currentState.searchQuery,
+        maxPrice: currentState.maxPriceFilter,
+        minRating: minRating,
+        onlyOpenNow: currentState.onlyOpenNow,
+      );
+
+      state = AsyncValue.data(
+        currentState.copyWith(
+          minRatingFilter: minRating,
+          clearRatingFilter: minRating == null,
+          displayBarbers: processed,
+        ),
+      );
+    });
+  }
+
+  /// Bật/tắt bộ lọc thợ đang mở cửa (Task Phase 4 - C4)
+  void toggleOnlyOpenNow() {
+    state.whenData((currentState) {
+      final newVal = !currentState.onlyOpenNow;
+      final processed = _computeAndSortBarbers(
+        barbers: currentState.allApprovedBarbers,
+        refLocation: currentState.referenceLocation,
+        hairstyleId: currentState.selectedHairstyleId,
+        query: currentState.searchQuery,
+        maxPrice: currentState.maxPriceFilter,
+        minRating: currentState.minRatingFilter,
+        onlyOpenNow: newVal,
+      );
+
+      state = AsyncValue.data(
+        currentState.copyWith(onlyOpenNow: newVal, displayBarbers: processed),
       );
     });
   }
@@ -273,6 +363,8 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
         hairstyleId: currentState.selectedHairstyleId,
         query: query,
         maxPrice: currentState.maxPriceFilter,
+        minRating: currentState.minRatingFilter,
+        onlyOpenNow: currentState.onlyOpenNow,
       );
 
       state = AsyncValue.data(
@@ -290,6 +382,8 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
         hairstyleId: currentState.selectedHairstyleId,
         query: currentState.searchQuery,
         maxPrice: currentState.maxPriceFilter,
+        minRating: currentState.minRatingFilter,
+        onlyOpenNow: currentState.onlyOpenNow,
       );
 
       state = AsyncValue.data(
@@ -316,6 +410,9 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
       refLocation: locResult.coordinates,
       hairstyleId: currentState.selectedHairstyleId,
       query: currentState.searchQuery,
+      maxPrice: currentState.maxPriceFilter,
+      minRating: currentState.minRatingFilter,
+      onlyOpenNow: currentState.onlyOpenNow,
     );
 
     state = AsyncValue.data(
@@ -363,3 +460,5 @@ final searchNotifierProvider =
     AsyncNotifierProvider<SearchNotifier, SearchMapState>(() {
       return SearchNotifier();
     });
+
+// CreBy: MenBoyBMN

@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/services/firebase_service.dart';
 import 'core/services/tile_server_config.dart';
@@ -18,6 +19,10 @@ import 'routing/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 0. Khởi tạo dữ liệu định dạng ngày tháng ngôn ngữ tiếng Việt (tránh LocaleDataException)
+  await initializeDateFormatting('vi_VN', null);
+  await initializeDateFormatting('vi', null);
 
   // 1. Tải các biến môi trường từ file .env (nếu có)
   try {
@@ -54,3 +59,4 @@ class HairFitApp extends ConsumerWidget {
     );
   }
 }
+// CreBy: MenBoyBMN

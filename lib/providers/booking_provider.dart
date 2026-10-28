@@ -34,6 +34,11 @@ class BookingState {
   final AvailableSlot? selectedSlot;
   final String note;
   final String hairstyleId;
+  final String? customerFaceShape;
+  final String? aiStylingTip;
+  final String? hairstyleImageUrl;
+  final String? customerPhone;
+  final String? barberPhone;
   final bool isLoadingSlots;
   final bool isSubmitting;
   final String? errorMessage;
@@ -46,6 +51,11 @@ class BookingState {
     this.selectedSlot,
     this.note = '',
     this.hairstyleId = '',
+    this.customerFaceShape,
+    this.aiStylingTip,
+    this.hairstyleImageUrl,
+    this.customerPhone,
+    this.barberPhone,
     this.isLoadingSlots = false,
     this.isSubmitting = false,
     this.errorMessage,
@@ -60,6 +70,11 @@ class BookingState {
     bool clearSelectedSlot = false,
     String? note,
     String? hairstyleId,
+    String? customerFaceShape,
+    String? aiStylingTip,
+    String? hairstyleImageUrl,
+    String? customerPhone,
+    String? barberPhone,
     bool? isLoadingSlots,
     bool? isSubmitting,
     String? errorMessage,
@@ -75,6 +90,11 @@ class BookingState {
           : (selectedSlot ?? this.selectedSlot),
       note: note ?? this.note,
       hairstyleId: hairstyleId ?? this.hairstyleId,
+      customerFaceShape: customerFaceShape ?? this.customerFaceShape,
+      aiStylingTip: aiStylingTip ?? this.aiStylingTip,
+      hairstyleImageUrl: hairstyleImageUrl ?? this.hairstyleImageUrl,
+      customerPhone: customerPhone ?? this.customerPhone,
+      barberPhone: barberPhone ?? this.barberPhone,
       isLoadingSlots: isLoadingSlots ?? this.isLoadingSlots,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
@@ -103,6 +123,11 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required BarberProfileModel barber,
     ServiceModel? preselectedService,
     String? hairstyleId,
+    String? customerFaceShape,
+    String? aiStylingTip,
+    String? hairstyleImageUrl,
+    String? customerPhone,
+    String? barberPhone,
     DateTime? initialDate,
   }) {
     final now = DateTime.now();
@@ -117,6 +142,11 @@ class BookingNotifier extends StateNotifier<BookingState> {
       selectedService: service,
       selectedDate: date,
       hairstyleId: hairstyleId ?? '',
+      customerFaceShape: customerFaceShape,
+      aiStylingTip: aiStylingTip,
+      hairstyleImageUrl: hairstyleImageUrl,
+      customerPhone: customerPhone,
+      barberPhone: barberPhone ?? barber.phone,
       isLoadingSlots: true,
     );
 
@@ -238,6 +268,11 @@ class BookingNotifier extends StateNotifier<BookingState> {
         endTime: slot.endTime,
         slotIds: slot.slotIds,
         hairstyleId: state.hairstyleId,
+        customerFaceShape: state.customerFaceShape ?? customer.savedFaceShape,
+        aiStylingTip: state.aiStylingTip,
+        hairstyleImageUrl: state.hairstyleImageUrl,
+        customerPhone: state.customerPhone ?? customer.phone,
+        barberPhone: state.barberPhone ?? barber.phone,
         note: state.note,
       );
 
@@ -271,3 +306,5 @@ final bookingNotifierProvider =
         bookingRepository: bookingRepo,
       );
     });
+
+// CreBy: MenBoyBMN

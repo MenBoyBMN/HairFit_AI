@@ -237,7 +237,9 @@ class _BarberRegistrationScreenState
       final avatarChanged =
           effectiveAvatar.isNotEmpty && effectiveAvatar != user.avatarUrl;
       if (nameChanged || avatarChanged) {
-        await ref.read(authStateProvider.notifier).updateProfile(
+        await ref
+            .read(authStateProvider.notifier)
+            .updateProfile(
               displayName: _nameCtrl.text.trim(),
               avatarUrl: effectiveAvatar,
             );
@@ -281,212 +283,218 @@ class _BarberRegistrationScreenState
                 child: Stepper(
                   type: StepperType.vertical,
                   physics: const ClampingScrollPhysics(),
-              currentStep: _currentStep,
-              onStepContinue: () {
-                if (_currentStep == 0) {
-                  if (!_step0FormKey.currentState!.validate()) return;
-                }
+                  currentStep: _currentStep,
+                  onStepContinue: () {
+                    if (_currentStep == 0) {
+                      if (!_step0FormKey.currentState!.validate()) return;
+                    }
 
-                if (_currentStep < 3) {
-                  setState(() => _currentStep += 1);
-                } else {
-                  _submit();
-                }
-              },
-              onStepCancel: () {
-                if (_currentStep > 0) {
-                  setState(() => _currentStep -= 1);
-                }
-              },
-              onStepTapped: (step) {
-                setState(() => _currentStep = step);
-              },
-              controlsBuilder: (context, details) {
-                final isLastStep = _currentStep == 3;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: details.onStepContinue,
-                          child: Text(
-                            isLastStep ? 'Hoàn tất & Gửi duyệt' : 'Tiếp tục',
+                    if (_currentStep < 3) {
+                      setState(() => _currentStep += 1);
+                    } else {
+                      _submit();
+                    }
+                  },
+                  onStepCancel: () {
+                    if (_currentStep > 0) {
+                      setState(() => _currentStep -= 1);
+                    }
+                  },
+                  onStepTapped: (step) {
+                    setState(() => _currentStep = step);
+                  },
+                  controlsBuilder: (context, details) {
+                    final isLastStep = _currentStep == 3;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: details.onStepContinue,
+                              child: Text(
+                                isLastStep
+                                    ? 'Hoàn tất & Gửi duyệt'
+                                    : 'Tiếp tục',
+                              ),
+                            ),
                           ),
-                        ),
+                          if (_currentStep > 0) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: details.onStepCancel,
+                                child: const Text('Quay lại'),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      if (_currentStep > 0) ...[
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: details.onStepCancel,
-                            child: const Text('Quay lại'),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-              steps: [
-                // ===== STEP 1: Thông tin cơ bản =====
-                Step(
-                  title: const Text('Thông tin cơ bản'),
-                  content: Form(
-                    key: _step0FormKey,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 8),
-                        // Avatar picker
-                        Center(
-                          child: GestureDetector(
-                            onTap: _showAvatarImageSourceModal,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                if (_pickedAvatarBytes != null)
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(40),
-                                    child: Image.memory(
-                                      _pickedAvatarBytes!,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                else
-                                  AppAvatar(
-                                    imageUrl: _avatarUrl,
-                                    name: _nameCtrl.text.isNotEmpty
-                                        ? _nameCtrl.text
-                                        : 'Thợ',
-                                    shape: BoxShape.circle,
-                                    size: 80,
-                                    fallbackIcon: Icons.camera_alt_outlined,
-                                  ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accent,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2,
+                    );
+                  },
+                  steps: [
+                    // ===== STEP 1: Thông tin cơ bản =====
+                    Step(
+                      title: const Text('Thông tin cơ bản'),
+                      content: Form(
+                        key: _step0FormKey,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            // Avatar picker
+                            Center(
+                              child: GestureDetector(
+                                onTap: _showAvatarImageSourceModal,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    if (_pickedAvatarBytes != null)
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(40),
+                                        child: Image.memory(
+                                          _pickedAvatarBytes!,
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    else
+                                      AppAvatar(
+                                        imageUrl: _avatarUrl,
+                                        name: _nameCtrl.text.isNotEmpty
+                                            ? _nameCtrl.text
+                                            : 'Thợ',
+                                        shape: BoxShape.circle,
+                                        size: 80,
+                                        fallbackIcon: Icons.camera_alt_outlined,
+                                      ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.accent,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.camera_alt,
+                                          size: 14,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
-                                    child: const Icon(
-                                      Icons.camera_alt,
-                                      size: 14,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        TextButton(
-                          onPressed: _showAvatarImageSourceModal,
-                          child: Text(
-                            _avatarUrl.isNotEmpty || _pickedAvatarBytes != null
-                                ? 'Đổi ảnh đại diện'
-                                : 'Chọn ảnh đại diện tiệm / thợ',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(height: 6),
+                            TextButton(
+                              onPressed: _showAvatarImageSourceModal,
+                              child: Text(
+                                _avatarUrl.isNotEmpty ||
+                                        _pickedAvatarBytes != null
+                                    ? 'Đổi ảnh đại diện'
+                                    : 'Chọn ảnh đại diện tiệm / thợ',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Tên hiển thị',
+                                hintText: 'VD: Tiệm tóc Minh Nhật',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                              validator: (val) =>
+                                  val == null || val.trim().isEmpty
+                                  ? 'Không được để trống'
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _bioCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Giới thiệu ngắn',
+                                hintText: 'VD: 5 năm kinh nghiệm, chuyên tóc nam Hàn Quốc',
+                                prefixIcon: Icon(Icons.info_outline),
+                                alignLabelWithHint: true,
+                              ),
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _nameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Tên hiển thị',
-                            hintText: 'VD: Tiệm tóc Minh Nhật',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
-                          validator: (val) => val == null || val.trim().isEmpty
-                              ? 'Không được để trống'
-                              : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _bioCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Giới thiệu ngắn',
-                            hintText: 'VD: 5 năm kinh nghiệm, chuyên tóc nam Hàn Quốc',
-                            prefixIcon: Icon(Icons.info_outline),
-                            alignLabelWithHint: true,
-                          ),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                      ),
+                      isActive: _currentStep >= 0,
+                      state: _currentStep > 0
+                          ? StepState.complete
+                          : StepState.indexed,
                     ),
-                  ),
-                  isActive: _currentStep >= 0,
-                  state: _currentStep > 0
-                      ? StepState.complete
-                      : StepState.indexed,
-                ),
-                // ===== STEP 2: Vị trí bản đồ =====
-                Step(
-                  title: const Text('Vị trí & Địa chỉ'),
-                  content: LocationPicker(
-                    initialAddress: _address,
-                    initialLocation: _location,
-                    onChanged: (addr, loc) {
-                      _address = addr;
-                      _location = loc;
-                    },
-                  ),
-                  isActive: _currentStep >= 1,
-                  state: _currentStep > 1
-                      ? StepState.complete
-                      : StepState.indexed,
-                ),
-                // ===== STEP 3: Dịch vụ & Kiểu tóc =====
-                Step(
-                  title: const Text('Dịch vụ & Kiểu tóc'),
-                  content: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ServiceEditor(
-                        initialServices: _services,
-                        onChanged: (services) => _services = services,
+                    // ===== STEP 2: Vị trí bản đồ =====
+                    Step(
+                      title: const Text('Vị trí & Địa chỉ'),
+                      content: LocationPicker(
+                        initialAddress: _address,
+                        initialLocation: _location,
+                        onChanged: (addr, loc) {
+                          _address = addr;
+                          _location = loc;
+                        },
                       ),
-                      const SizedBox(height: 24),
-                      const Divider(),
-                      const SizedBox(height: 16),
-                      HairstylePicker(
-                        initialSelectedIds: _hairstyleIds,
-                        onChanged: (ids) => _hairstyleIds = ids,
+                      isActive: _currentStep >= 1,
+                      state: _currentStep > 1
+                          ? StepState.complete
+                          : StepState.indexed,
+                    ),
+                    // ===== STEP 3: Dịch vụ & Kiểu tóc =====
+                    Step(
+                      title: const Text('Dịch vụ & Kiểu tóc'),
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ServiceEditor(
+                            initialServices: _services,
+                            onChanged: (services) => _services = services,
+                          ),
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 16),
+                          HairstylePicker(
+                            initialSelectedIds: _hairstyleIds,
+                            onChanged: (ids) => _hairstyleIds = ids,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  isActive: _currentStep >= 2,
-                  state: _currentStep > 2
-                      ? StepState.complete
-                      : StepState.indexed,
+                      isActive: _currentStep >= 2,
+                      state: _currentStep > 2
+                          ? StepState.complete
+                          : StepState.indexed,
+                    ),
+                    // ===== STEP 4: Giờ làm việc =====
+                    Step(
+                      title: const Text('Giờ làm việc'),
+                      content: WorkingHoursEditor(
+                        initialHours: _workingHours,
+                        onChanged: (hours) => _workingHours = hours,
+                      ),
+                      isActive: _currentStep >= 3,
+                    ),
+                  ],
                 ),
-                // ===== STEP 4: Giờ làm việc =====
-                Step(
-                  title: const Text('Giờ làm việc'),
-                  content: WorkingHoursEditor(
-                    initialHours: _workingHours,
-                    onChanged: (hours) => _workingHours = hours,
-                  ),
-                  isActive: _currentStep >= 3,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
     );
   }
 }
+
+// CreBy: MenBoyBMN

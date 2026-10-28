@@ -44,6 +44,10 @@ class UserModel {
   final String avatarUrl;
   final UserRole role;
   final bool isBlocked;
+  final String? phone;
+  final String? savedFaceShape;
+  final List<String> savedHairstyleIds;
+  final List<String> favoriteBarberIds;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -54,6 +58,10 @@ class UserModel {
     this.avatarUrl = '',
     this.role = UserRole.customer,
     this.isBlocked = false,
+    this.phone,
+    this.savedFaceShape,
+    this.savedHairstyleIds = const [],
+    this.favoriteBarberIds = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -72,6 +80,18 @@ class UserModel {
       avatarUrl: map['avatarUrl'] as String? ?? '',
       role: UserRole.fromString(map['role'] as String?),
       isBlocked: map['isBlocked'] as bool? ?? false,
+      phone: map['phone'] as String?,
+      savedFaceShape: map['savedFaceShape'] as String?,
+      savedHairstyleIds:
+          (map['savedHairstyleIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      favoriteBarberIds:
+          (map['favoriteBarberIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       createdAt: parseTimestamp(map['createdAt']),
       updatedAt: parseTimestamp(map['updatedAt']),
     );
@@ -90,6 +110,10 @@ class UserModel {
       'avatarUrl': avatarUrl,
       'role': role.toRoleString(),
       'isBlocked': isBlocked,
+      if (phone != null) 'phone': phone,
+      if (savedFaceShape != null) 'savedFaceShape': savedFaceShape,
+      'savedHairstyleIds': savedHairstyleIds,
+      'favoriteBarberIds': favoriteBarberIds,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
@@ -106,6 +130,10 @@ class UserModel {
     String? avatarUrl,
     UserRole? role,
     bool? isBlocked,
+    String? phone,
+    String? savedFaceShape,
+    List<String>? savedHairstyleIds,
+    List<String>? favoriteBarberIds,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -116,6 +144,10 @@ class UserModel {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       isBlocked: isBlocked ?? this.isBlocked,
+      phone: phone ?? this.phone,
+      savedFaceShape: savedFaceShape ?? this.savedFaceShape,
+      savedHairstyleIds: savedHairstyleIds ?? this.savedHairstyleIds,
+      favoriteBarberIds: favoriteBarberIds ?? this.favoriteBarberIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -125,3 +157,5 @@ class UserModel {
   bool get isBarber => role == UserRole.barber;
   bool get isAdmin => role == UserRole.admin;
 }
+
+// CreBy: MenBoyBMN

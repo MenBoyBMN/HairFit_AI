@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/barber_profile_model.dart';
 import '../../../providers/app_providers.dart';
+import '../../../providers/auth_provider.dart';
 
 final barberProfileRepositoryProvider = Provider<BarberProfileRepository>((
   ref,
@@ -22,6 +23,20 @@ final barberProfileProvider =
       return ref.watch(barberProfileRepositoryProvider).getBarberProfile(uid);
     });
 
+/// StreamProvider lắng nghe hồ sơ của thợ cắt tóc đang đăng nhập theo thời gian thực
+final currentBarberProfileStreamProvider =
+    StreamProvider.autoDispose<BarberProfileModel?>((ref) {
+      final authUser = ref.watch(authStateProvider).value;
+      final uid =
+          authUser?.uid ??
+          ref.watch(currentUserModelProvider).value?.uid ??
+          ref.watch(firebaseAuthProvider).currentUser?.uid;
+      if (uid == null) return const Stream.empty();
+      return ref
+          .watch(barberProfileRepositoryProvider)
+          .streamBarberProfile(uid);
+    });
+
 class BarberProfileRepository {
   final FirebaseFirestore _firestore;
 
@@ -29,6 +44,25 @@ class BarberProfileRepository {
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('barberProfiles');
+
+  /// Lắng nghe hồ sơ thợ cắt tóc theo thời gian thực
+  Stream<BarberProfileModel?> streamBarberProfile(String uid) {
+    return _collection.doc(uid).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) return null;
+      return BarberProfileModel.fromFirestore(doc);
+    });
+  }
+
+  /// Cập nhật trạng thái nhận khách đặt lịch hôm nay (Task 2.3)
+  Future<void> updateAcceptingBookingsToday(
+    String uid,
+    bool isAccepting,
+  ) async {
+    await _collection.doc(uid).update({
+      'isAcceptingBookingsToday': isAccepting,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 
   Future<BarberProfileModel?> getBarberProfile(String uid) async {
     final doc = await _collection.doc(uid).get();
@@ -86,11 +120,12 @@ class BarberProfileRepository {
       var item = BarberProfileModel.fromMap(doc.data(), id: doc.id);
       if (item.avatarUrl.trim().isEmpty) {
         try {
-          final userDoc =
-              await _firestore.collection('users').doc(doc.id).get();
+          final userDoc = await _firestore
+              .collection('users')
+              .doc(doc.id)
+              .get();
           if (userDoc.exists) {
-            final userAvatar =
-                userDoc.data()?['avatarUrl'] as String? ?? '';
+            final userAvatar = userDoc.data()?['avatarUrl'] as String? ?? '';
             if (userAvatar.trim().isNotEmpty) {
               item = item.copyWith(avatarUrl: userAvatar.trim());
               _collection
@@ -113,3 +148,5 @@ class BarberProfileRepository {
     });
   }
 }
+
+// CreBy: MenBoyBMN

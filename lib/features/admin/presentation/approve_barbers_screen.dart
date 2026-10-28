@@ -18,7 +18,9 @@ import '../../../../providers/admin_provider.dart';
 import '../../../../providers/auth_provider.dart';
 
 class ApproveBarbersScreen extends ConsumerWidget {
-  const ApproveBarbersScreen({super.key});
+  final bool embedded;
+
+  const ApproveBarbersScreen({super.key, this.embedded = false});
 
   static const Map<String, String> _dayLabels = {
     'mon': 'Thứ Hai',
@@ -64,21 +66,24 @@ class ApproveBarbersScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin - Duyệt hồ sơ thợ'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Làm mới danh sách',
-            onPressed: () => ref.invalidate(pendingBarbersProvider),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Đăng xuất',
-            onPressed: () => ref.read(authStateProvider.notifier).logout(),
-          ),
-        ],
-      ),
+      appBar: embedded
+          ? null
+          : AppBar(
+              title: const Text('Admin - Duyệt hồ sơ thợ'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: 'Làm mới danh sách',
+                  onPressed: () => ref.invalidate(pendingBarbersProvider),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: 'Đăng xuất',
+                  onPressed: () =>
+                      ref.read(authStateProvider.notifier).logout(),
+                ),
+              ],
+            ),
       body: adminState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : pendingBarbers.when(
@@ -108,215 +113,220 @@ class ApproveBarbersScreen extends ConsumerWidget {
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: barbers.length,
-                  itemBuilder: (context, index) {
-                    final barber = barbers[index];
-                    final currencyFormatter = NumberFormat.currency(
-                      locale: 'vi_VN',
-                      symbol: 'đ',
-                    );
+                      itemBuilder: (context, index) {
+                        final barber = barbers[index];
+                        final currencyFormatter = NumberFormat.currency(
+                          locale: 'vi_VN',
+                          symbol: 'đ',
+                        );
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // === Header Card ===
-                            Row(
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                AppAvatar(
-                                  shape: BoxShape.circle,
-                                  size: 48,
-                                  imageUrl: barber.avatarUrl,
-                                  fallbackUrl: barber.coverUrl,
-                                  name: barber.displayName,
-                                  fallbackIcon: Icons.storefront_rounded,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        barber.displayName,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Row(
+                                // === Header Card ===
+                                Row(
+                                  children: [
+                                    AppAvatar(
+                                      shape: BoxShape.circle,
+                                      size: 48,
+                                      imageUrl: barber.avatarUrl,
+                                      fallbackUrl: barber.coverUrl,
+                                      name: barber.displayName,
+                                      fallbackIcon: Icons.storefront_rounded,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(
-                                            Icons.location_on,
-                                            size: 14,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(width: 2),
-                                          Expanded(
-                                            child: Text(
-                                              barber.address.isEmpty
-                                                  ? 'Chưa có địa chỉ'
-                                                  : barber.address,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                          Text(
+                                            barber.displayName,
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.bold,
                                             ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.location_on,
+                                                size: 14,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Expanded(
+                                                child: Text(
+                                                  barber.address.isEmpty
+                                                      ? 'Chưa có địa chỉ'
+                                                      : barber.address,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.warningLight,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'Chờ duyệt',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.warning,
-                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warningLight,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        'Chờ duyệt',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.warning,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            const Divider(height: 1),
-                            const SizedBox(height: 12),
+                                const SizedBox(height: 14),
+                                const Divider(height: 1),
+                                const SizedBox(height: 12),
 
-                            // === Tóm tắt thông tin nhanh ===
-                            if (barber.bio.isNotEmpty) ...[
-                              _buildInfoRow(
-                                Icons.info_outline,
-                                'Giới thiệu',
-                                barber.bio,
-                              ),
-                              const SizedBox(height: 8),
-                            ],
-                            _buildInfoRow(
-                              Icons.payments_outlined,
-                              'Khoảng giá',
-                              '${currencyFormatter.format(barber.priceMin)} - ${currencyFormatter.format(barber.priceMax)}',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow(
-                              Icons.design_services_outlined,
-                              'Dịch vụ',
-                              '${barber.services.length} dịch vụ đăng ký',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow(
-                              Icons.content_cut_rounded,
-                              'Kiểu tóc',
-                              '${barber.hairstyleIds.length} kiểu tóc hỗ trợ',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoRow(
-                              Icons.schedule_rounded,
-                              'Giờ làm việc',
-                              '${barber.workingHours.length} ngày trong tuần',
-                            ),
-
-                            const SizedBox(height: 14),
-
-                            // === Nút xem chi tiết toàn bộ hồ sơ ===
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showBarberDetailsModal(
-                                  context,
-                                  ref,
-                                  barber,
-                                ),
-                                icon: const Icon(
-                                  Icons.visibility_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('Xem chi tiết hồ sơ đầy đủ'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.primary,
-                                  side: const BorderSide(
-                                    color: AppColors.primary,
+                                // === Tóm tắt thông tin nhanh ===
+                                if (barber.bio.isNotEmpty) ...[
+                                  _buildInfoRow(
+                                    Icons.info_outline,
+                                    'Giới thiệu',
+                                    barber.bio,
                                   ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                                _buildInfoRow(
+                                  Icons.payments_outlined,
+                                  'Khoảng giá',
+                                  '${currencyFormatter.format(barber.priceMin)} - ${currencyFormatter.format(barber.priceMax)}',
                                 ),
-                              ),
-                            ),
+                                const SizedBox(height: 8),
+                                _buildInfoRow(
+                                  Icons.design_services_outlined,
+                                  'Dịch vụ',
+                                  '${barber.services.length} dịch vụ đăng ký',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildInfoRow(
+                                  Icons.content_cut_rounded,
+                                  'Kiểu tóc',
+                                  '${barber.hairstyleIds.length} kiểu tóc hỗ trợ',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildInfoRow(
+                                  Icons.schedule_rounded,
+                                  'Giờ làm việc',
+                                  '${barber.workingHours.length} ngày trong tuần',
+                                ),
 
-                            const SizedBox(height: 12),
+                                const SizedBox(height: 14),
 
-                            // === Nút duyệt / từ chối nhanh ===
-                            Row(
-                              children: [
-                                Expanded(
+                                // === Nút xem chi tiết toàn bộ hồ sơ ===
+                                SizedBox(
+                                  width: double.infinity,
                                   child: OutlinedButton.icon(
-                                    onPressed: () => _showRejectConfirm(
+                                    onPressed: () => _showBarberDetailsModal(
                                       context,
                                       ref,
-                                      barber.uid,
+                                      barber,
                                     ),
-                                    icon: const Icon(Icons.close, size: 18),
-                                    label: const Text('Từ chối'),
+                                    icon: const Icon(
+                                      Icons.visibility_outlined,
+                                      size: 18,
+                                    ),
+                                    label: const Text(
+                                      'Xem chi tiết hồ sơ đầy đủ',
+                                    ),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.error,
+                                      foregroundColor: AppColors.primary,
                                       side: const BorderSide(
-                                        color: AppColors.error,
+                                        color: AppColors.primary,
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                         vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => ref
-                                        .read(adminControllerProvider.notifier)
-                                        .approveBarber(barber.uid),
-                                    icon: const Icon(Icons.check, size: 18),
-                                    label: const Text('Duyệt'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.success,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 10,
+
+                                const SizedBox(height: 12),
+
+                                // === Nút duyệt / từ chối nhanh ===
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => _showRejectConfirm(
+                                          context,
+                                          ref,
+                                          barber.uid,
+                                        ),
+                                        icon: const Icon(Icons.close, size: 18),
+                                        label: const Text('Từ chối'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.error,
+                                          side: const BorderSide(
+                                            color: AppColors.error,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () => ref
+                                            .read(
+                                              adminControllerProvider.notifier,
+                                            )
+                                            .approveBarber(barber.uid),
+                                        icon: const Icon(Icons.check, size: 18),
+                                        label: const Text('Duyệt'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.success,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            );
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
               },
               loading: () => ListView.builder(
                 itemCount: 4,
@@ -910,3 +920,5 @@ class ApproveBarbersScreen extends ConsumerWidget {
     );
   }
 }
+
+// CreBy: MenBoyBMN
