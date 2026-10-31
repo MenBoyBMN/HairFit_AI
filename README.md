@@ -23,60 +23,75 @@
 - **👑 Cổng Quản Trị Hệ Thống (Admin Portal):** Dashboard biểu đồ doanh thu, duyệt hồ sơ thợ cắt tóc mới, giám sát toàn bộ lịch hẹn và kiểm duyệt đánh giá.
 
 ## 🛠️ 3. Công Nghệ Sử Dụng
-HairFit AI được xây dựng theo tiêu chuẩn phát triển ứng dụng di động hiện đại:
-- **Nền tảng phát triển:** Flutter 3.x (Dart 3.x) - ứng dụng đa nền tảng mượt mà trên Android và iOS.
-- **Trí tuệ nhân tạo (AI):** Google ML Kit (`google_mlkit_face_mesh_detection`) - xử lý trực tiếp trên thiết bị (On-Device), không phụ thuộc Cloud API trả phí.
-- **Cơ sở dữ liệu & Xác thực:** Firebase Serverless (Authentication & Cloud Firestore) - tối ưu chi phí 0đ gói Spark Free Tier, giao dịch ACID an toàn.
+HairFit AI được xây dựng theo kiến trúc **2 tầng tách biệt (Frontend Flutter & Backend ASP.NET Core Web API)**:
+- **Frontend (Ứng dụng đa nền tảng):** Flutter 3.x (Dart 3.x) nằm trong thư mục `frontend/`.
+- **Backend (RESTful Web API):** ASP.NET Core 8.0 Web API + Entity Framework Core + SQL Server (LocalDB) nằm trong thư mục `backend/`.
+- **Trí tuệ nhân tạo (AI):** Google ML Kit (`google_mlkit_face_detection`) - xử lý trực tiếp trên thiết bị (On-Device), không phụ thuộc Cloud API trả phí.
+- **Xác thực & Chat thời gian thực:** Firebase Authentication (cấp phát JWT ID Token xác thực trên ASP.NET Core) & Cloud Firestore (cho Chat 1:1 thời gian thực).
 - **Bản đồ số:** OpenStreetMap kết hợp thư viện Flutter Map (không tốn chi phí Google Maps API).
 - **Quản lý trạng thái:** Riverpod 2.x (`flutter_riverpod`).
 - **Điều hướng:** GoRouter 14.x với cơ chế bảo vệ phân quyền (Redirect Guards).
 
 ## 📂 4. Cấu Trúc Tổng Quan Của Dự Án
-Dự án được phân chia thư mục theo chuẩn **Feature-First** (Nhóm theo tính năng):
+Dự án được tách thành 2 tầng độc lập `frontend/` và `backend/`:
 
 ```text
 HairFit_AI/
 ├── .AGENTS/            # Quy chuẩn kỹ thuật, luật lệ kiến trúc & kỹ năng dành cho AI Agent
 ├── About System/       # Tài liệu đặc tả kế hoạch cải tiến, tính năng hệ thống
-├── lib/
-│   ├── core/           # Nền tảng dùng chung: Màu sắc, kích thước, nút bấm, tiện ích ngày giờ, gọi điện thoại...
-│   ├── features/       # Các module tính năng nghiệp vụ:
-│   │   ├── admin/          # Cổng quản trị (Dashboard, Duyệt thợ, Quản lý lịch hẹn, Người dùng, Đánh giá)
-│   │   ├── ai_consult/     # Quét mặt On-device & tư vấn kiểu tóc chuẩn khuôn mặt
-│   │   ├── appointments/   # Quản lý lịch hẹn, Thẻ AI Handshake, Doanh thu ngày, Đổi lịch
-│   │   ├── auth/           # Đăng nhập, Đăng ký, Quên mật khẩu, Phân quyền người dùng
-│   │   ├── barber_profile/ # Hồ sơ thợ, Giờ làm việc định kỳ, Album tác phẩm Lookbook
-│   │   ├── booking/        # Thuật toán tính slot, Luồng đặt lịch, Tóm tắt, Xử lý dời lịch
-│   │   ├── chat/           # Hệ thống nhắn tin trực tiếp khách - thợ
-│   │   ├── home/           # Trang chủ khách hàng, Thẻ lịch sắp tới, Hồ sơ tóc AI, Salon ruột
-│   │   ├── profile/        # Hồ sơ cá nhân & chỉnh sửa thông tin người dùng
-│   │   └── search_map/     # Bản đồ tìm kiếm salon & bộ lọc đa tiêu chí
-│   ├── models/         # Các Data Models bất biến (UserModel, AppointmentModel, BarberProfileModel...)
-│   ├── providers/      # Các Riverpod Providers & StateNotifiers tầng ứng dụng
-│   └── routing/        # Cấu hình GoRouter và điều hướng phân quyền
-└── test/               # 100+ kịch bản kiểm thử tự động (Unit test, Widget test)
+├── backend/            # Tầng Backend: ASP.NET Core 8.0 Web API + EF Core + SQL Server
+│   ├── HairFit.Backend.sln
+│   └── HairFit.Api/
+│       ├── Controllers/    # REST API Controllers (Users, Barbers, Bookings, Appointments, Hairstyles, Admin, Seed)
+│       ├── Data/           # AppDbContext & DbInitializer (tự động tạo DB & nạp dữ liệu mẫu)
+│       ├── DTOs/           # Data Transfer Objects
+│       ├── Models/         # SQL Server Entities (User, BarberProfile, Appointment, BookedSlot, Review, Hairstyle, SystemSetting)
+│       └── Program.cs      # Cấu hình DI, SQL Server, Firebase JWT Auth, CORS, Swagger UI
+└── frontend/           # Tầng Frontend: Ứng dụng Flutter (Feature-First)
+    ├── lib/
+    │   ├── core/           # Nền tảng dùng chung: ApiClient, Màu sắc, kích thước, nút bấm, tiện ích...
+    │   ├── features/       # Các module tính năng nghiệp vụ:
+    │   │   ├── admin/          # Cổng quản trị (Dashboard, Duyệt thợ, Quản lý lịch hẹn, Người dùng, Đánh giá)
+    │   │   ├── ai_consult/     # Quét mặt On-device & tư vấn kiểu tóc chuẩn khuôn mặt
+    │   │   ├── appointments/   # Quản lý lịch hẹn, Thẻ AI Handshake, Doanh thu ngày, Đổi lịch
+    │   │   ├── auth/           # Đăng nhập, Đăng ký, Quên mật khẩu, Phân quyền người dùng
+    │   │   ├── barber_profile/ # Hồ sơ thợ, Giờ làm việc định kỳ, Album tác phẩm Lookbook
+    │   │   ├── booking/        # Thuật toán tính slot, Luồng đặt lịch, Tóm tắt, Xử lý dời lịch
+    │   │   ├── chat/           # Hệ thống nhắn tin trực tiếp khách - thợ
+    │   │   ├── home/           # Trang chủ khách hàng, Thẻ lịch sắp tới, Hồ sơ tóc AI, Salon ruột
+    │   │   ├── profile/        # Hồ sơ cá nhân & chỉnh sửa thông tin người dùng
+    │   │   └── search_map/     # Bản đồ tìm kiếm salon & bộ lọc đa tiêu chí
+    │   ├── models/         # Các Data Models bất biến (UserModel, AppointmentModel, BarberProfileModel...)
+    │   ├── providers/      # Các Riverpod Providers & StateNotifiers tầng ứng dụng
+    │   └── routing/        # Cấu hình GoRouter và điều hướng phân quyền
+    └── test/               # 100+ kịch bản kiểm thử tự động (Unit test, Widget test)
 ```
 
 ## 🚀 5. Hướng Dẫn Cài Đặt (Dành Cho Lập Trình Viên)
 Để khởi chạy mã nguồn trên máy tính của bạn:
 
 **Bước 1: Chuẩn bị môi trường**
+- Đảm bảo máy tính đã cài đặt [.NET 8.0+ SDK](https://dotnet.microsoft.com/download) & SQL Server LocalDB (đi kèm Visual Studio / SQL Server Express).
 - Đảm bảo máy tính đã cài đặt [Flutter SDK](https://docs.flutter.dev/get-started/install) (phiên bản 3.x trở lên).
-- Cài đặt IDE (Visual Studio Code hoặc Android Studio) kèm extension Flutter & Dart.
 
-**Bước 2: Cài đặt thư viện**
+**Bước 2: Khởi chạy Backend (ASP.NET Core Web API)**
 ```bash
-flutter pub get
+cd backend/HairFit.Api
+dotnet run
 ```
+*(Khi chạy lần đầu, hệ thống tự động khởi tạo CSDL `HairFitAiDb` trên `(localdb)\mssqllocaldb` và nạp sẵn 10 kiểu tóc mẫu + 5 Barber mẫu tại Đà Nẵng. Tài liệu Swagger UI khả dụng tại `http://localhost:5000/swagger`).*
 
-**Bước 3: Kiểm tra chất lượng mã nguồn**
+**Bước 3: Cài đặt & Kiểm tra Frontend (Flutter)**
 ```bash
+cd frontend
+flutter pub get
 flutter analyze
 flutter test
 ```
 
-**Bước 4: Chạy ứng dụng**
+**Bước 4: Chạy ứng dụng Flutter**
 ```bash
+cd frontend
 flutter run
 ```
 
