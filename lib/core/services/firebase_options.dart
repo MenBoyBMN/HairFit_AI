@@ -1,3 +1,10 @@
+// ============================================================================
+// File: lib/core/services/firebase_options.dart
+// Mục đích: Cung cấp dịch vụ hạ tầng (firebase_options.dart).
+// Kết cấu:
+//  - Lớp Service xử lý giao tiếp với các hệ thống bên ngoài hoặc phần cứng (Firebase, Location, API).
+// ============================================================================
+
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
@@ -18,10 +25,12 @@ class DefaultFirebaseOptions {
   /// Cần thay thế các giá trị bên dưới bằng thông tin từ Firebase Console của bạn
   /// hoặc chạy lệnh: flutterfire configure
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCOboPC2qhJ3thYS4P2PCIHALjdPV7HuLg',
-    appId: '1:982039538312:android:7de345c2c72f275c708d3d',
-    messagingSenderId: '982039538312',
-    projectId: 'hairfit-ai-a970f',
-    storageBucket: 'hairfit-ai-a970f.firebasestorage.app',
+    apiKey: 'AIzaSyDpzCa0ifuszmNpzAhsrDVwNcqRjFvFW14',
+    appId: '1:533272743401:android:92647daf12c7b455128f78',
+    messagingSenderId: '533272743401',
+    projectId: 'hairfitai-c4855',
+    storageBucket: 'hairfitai-c4855.firebasestorage.app',
   );
 }
+
+// CreBy: MenBoyBMN

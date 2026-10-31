@@ -1,3 +1,10 @@
+// ============================================================================
+// File: lib/core/constants/business_constants.dart
+// Mục đích: Lưu trữ các hằng số dùng chung toàn ứng dụng.
+// Kết cấu:
+//  - Các biến static const như màu sắc, kích thước, text style hoặc business rules.
+// ============================================================================
+
 /// Hằng số nghiệp vụ toàn hệ thống HairFit AI
 class BusinessConstants {
   BusinessConstants._();
@@ -29,4 +36,11 @@ class BusinessConstants {
 
   /// Tối đa số gợi ý kiểu tóc trả về từ AI Recommendation Engine
   static const int maxHairstyleSuggestions = 3;
+
+  /// Toạ độ mặc định trung tâm TP. Đà Nẵng (dành cho fallback bản đồ khi từ chối GPS)
+  static const double defaultLatitude = 16.0544;
+  static const double defaultLongitude = 108.2022;
+  static const String defaultCityName = 'Đà Nẵng';
 }
+
+// CreBy: MenBoyBMN

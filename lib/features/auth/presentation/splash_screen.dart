@@ -1,9 +1,18 @@
+// ============================================================================
+// File: lib/features/auth/presentation/splash_screen.dart
+// Mục đích: Màn hình giao diện (Screen) chính của tính năng auth.
+// Kết cấu:
+//  - Sử dụng ConsumerWidget/StatefulWidget, kết nối UI với Provider để hiển thị trạng thái và xử lý sự kiện người dùng.
+// ============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../providers/auth_provider.dart';
 
 /// Màn hình Splash khởi động ứng dụng và kiểm tra trạng thái đăng nhập
 class SplashScreen extends ConsumerStatefulWidget {
@@ -25,8 +34,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
-    // Tạm thời điều hướng tới Home (hoặc Login nếu chưa đăng nhập)
-    context.go('/customer/home');
+    final user = ref.read(authStateProvider).value;
+    if (user == null) {
+      context.go('/login');
+    } else if (user.isAdmin) {
+      context.go('/admin/approve-barbers');
+    } else if (user.isBarber) {
+      context.go('/barber/pending');
+    } else {
+      context.go('/customer/home');
+    }
   }
 
   @override
@@ -89,3 +106,5 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     );
   }
 }
+
+// CreBy: MenBoyBMN

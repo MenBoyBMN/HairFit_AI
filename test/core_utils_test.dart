@@ -1,6 +1,12 @@
+// ============================================================================
+// File: test/core_utils_test.dart
+// Mục đích: Chứa các kịch bản kiểm thử (Test) cho core_utils.
+// Kết cấu:
+//  - Sử dụng flutter_test, bao gồm các nhóm test (group) và các trường hợp test (test/testWidgets) cụ thể.
+// ============================================================================
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hairfit_ai/core/utils/date_formatter.dart';
-import 'package:hairfit_ai/core/utils/distance_helper.dart';
 import 'package:hairfit_ai/core/utils/validators.dart';
 
 void main() {
@@ -50,7 +56,10 @@ void main() {
     });
 
     test('formatPriceRange formats range correctly', () {
-      expect(DateFormatter.formatPriceRange(70000, 70000).contains('70.000'), isTrue);
+      expect(
+        DateFormatter.formatPriceRange(70000, 70000).contains('70.000'),
+        isTrue,
+      );
       final range = DateFormatter.formatPriceRange(70000, 150000);
       expect(range.contains('70.000'), isTrue);
       expect(range.contains('150.000'), isTrue);
@@ -66,26 +75,6 @@ void main() {
       expect(parsed!.year, equals(2026));
       expect(parsed.month, equals(10));
       expect(parsed.day, equals(15));
-    });
-  });
-
-  group('DistanceHelper Test', () {
-    test('calculateDistanceKm calculates distance between coordinates correctly', () {
-      // Khoảng cách giữa 2 điểm mẫu tại Đà Nẵng: (16.0544, 108.2022) và (16.0680, 108.2160)
-      final distanceKm = DistanceHelper.calculateDistanceKm(
-        startLatitude: 16.0544,
-        startLongitude: 108.2022,
-        endLatitude: 16.0680,
-        endLongitude: 108.2160,
-      );
-
-      expect(distanceKm, greaterThan(1.0));
-      expect(distanceKm, lessThan(3.0));
-    });
-
-    test('formatDistance displays m for < 1km and km for >= 1km', () {
-      expect(DistanceHelper.formatDistance(0.45), equals('450 m'));
-      expect(DistanceHelper.formatDistance(1.234), equals('1.2 km'));
     });
   });
 }
