@@ -6,9 +6,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_retry.dart';
 import '../../../core/widgets/loading_shimmer.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/appointment_model.dart';
 import '../../../models/chat_model.dart';
 import '../../../providers/appointment_provider.dart';
@@ -246,274 +248,347 @@ class _BarberAppointmentsScreenState
     final barberProfile = profileAsync.valueOrNull;
     final isAcceptingBookings = barberProfile?.isAcceptingBookingsToday ?? true;
     final user = ref.watch(authStateProvider).value;
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Quản Lý Lịch Hẹn', style: AppTextStyles.h3),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Làm mới',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => ref.refresh(barberAppointmentsProvider),
-          ),
-          IconButton(
-            tooltip: 'Tin nhắn',
-            icon: const Icon(Icons.chat_outlined, color: AppColors.accent),
-            onPressed: () => context.push('/conversations'),
-          ),
-          IconButton(
-            tooltip: 'Quản lý tiệm tóc',
-            icon: const Icon(Icons.storefront_outlined),
-            onPressed: () => context.push('/barber/profile-edit'),
-          ),
-          PopupMenuButton<String>(
-            tooltip: 'Tùy chọn',
-            icon: const Icon(Icons.more_vert_rounded),
-            shape: RoundedRectangleBorder(
-              borderRadius: AppDimensions.borderRadiusMd,
-            ),
-            onSelected: (value) {
-              switch (value) {
-                case 'preview':
-                  final user = ref.read(authStateProvider).value;
-                  if (user != null) {
-                    context.push('/customer/barber/${user.uid}');
-                  }
-                  break;
-                case 'profile':
-                  context.push('/barber/profile');
-                  break;
-                case 'store':
-                  context.push('/barber/profile-edit');
-                  break;
-                case 'chat':
-                  context.push('/conversations');
-                  break;
-                case 'logout':
-                  ref.read(authStateProvider.notifier).logout();
-                  break;
-              }
-            },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'preview',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.visibility_outlined,
-                      size: 20,
-                      color: AppColors.accent,
-                    ),
-                    SizedBox(width: AppDimensions.sm),
-                    Text(
-                      'Xem trang tiệm công khai',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                  ],
+      appBar: isDesktop
+          ? const WebTopNavBar(
+              currentRoute: '/barber/appointments',
+              isBarber: true,
+            )
+          : AppBar(
+              title: const Text('Quản Lý Lịch Hẹn', style: AppTextStyles.h3),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  tooltip: 'Làm mới',
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: () => ref.refresh(barberAppointmentsProvider),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline_rounded,
-                      size: 20,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: AppDimensions.sm),
-                    Text('Hồ sơ thợ', style: AppTextStyles.bodyMedium),
-                  ],
+                IconButton(
+                  tooltip: 'Tin nhắn',
+                  icon: const Icon(
+                    Icons.chat_outlined,
+                    color: AppColors.accent,
+                  ),
+                  onPressed: () => context.push('/conversations'),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'store',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.storefront_outlined,
-                      size: 20,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: AppDimensions.sm),
-                    Text('Trang cửa tiệm', style: AppTextStyles.bodyMedium),
-                  ],
+                IconButton(
+                  tooltip: 'Quản lý tiệm tóc',
+                  icon: const Icon(Icons.storefront_outlined),
+                  onPressed: () => context.push('/barber/profile-edit'),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'chat',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.chat_outlined,
-                      size: 20,
-                      color: AppColors.accent,
-                    ),
-                    SizedBox(width: AppDimensions.sm),
-                    Text(
-                      'Tin nhắn khách hàng',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      size: 20,
-                      color: AppColors.error,
-                    ),
-                    SizedBox(width: AppDimensions.sm),
-                    Text('Đăng xuất', style: TextStyle(color: AppColors.error)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          onTap: (index) {
-            _tabController.animateTo(index);
-            if (mounted) setState(() {});
-          },
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.accent,
-          indicatorWeight: 3,
-          labelStyle: AppTextStyles.labelMedium.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Chờ duyệt'),
-                  if (appointmentsAsync.valueOrNull != null &&
-                      appointmentsAsync.valueOrNull!
-                          .where((a) => a.isPending)
-                          .isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                PopupMenuButton<String>(
+                  tooltip: 'Tùy chọn',
+                  icon: const Icon(Icons.more_vert_rounded),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppDimensions.borderRadiusMd,
+                  ),
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'preview':
+                        final user = ref.read(authStateProvider).value;
+                        if (user != null) {
+                          context.push('/customer/barber/${user.uid}');
+                        }
+                        break;
+                      case 'profile':
+                        context.push('/barber/profile');
+                        break;
+                      case 'store':
+                        context.push('/barber/profile-edit');
+                        break;
+                      case 'chat':
+                        context.push('/conversations');
+                        break;
+                      case 'logout':
+                        ref.read(authStateProvider.notifier).logout();
+                        break;
+                    }
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(
+                      value: 'preview',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.visibility_outlined,
+                            size: 20,
+                            color: AppColors.accent,
+                          ),
+                          SizedBox(width: AppDimensions.sm),
+                          Text(
+                            'Xem trang tiệm công khai',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ],
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(10),
+                    ),
+                    const PopupMenuItem(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: AppDimensions.sm),
+                          Text('Hồ sơ thợ', style: AppTextStyles.bodyMedium),
+                        ],
                       ),
-                      child: Text(
-                        '${appointmentsAsync.valueOrNull!.where((a) => a.isPending).length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'store',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.storefront_outlined,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: AppDimensions.sm),
+                          Text(
+                            'Trang cửa tiệm',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'chat',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.chat_outlined,
+                            size: 20,
+                            color: AppColors.accent,
+                          ),
+                          SizedBox(width: AppDimensions.sm),
+                          Text(
+                            'Tin nhắn khách hàng',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.logout_rounded,
+                            size: 20,
+                            color: AppColors.error,
+                          ),
+                          SizedBox(width: AppDimensions.sm),
+                          Text(
+                            'Đăng xuất',
+                            style: TextStyle(color: AppColors.error),
+                          ),
+                        ],
                       ),
                     ),
                   ],
+                ),
+              ],
+              bottom: TabBar(
+                controller: _tabController,
+                onTap: (index) {
+                  _tabController.animateTo(index);
+                  if (mounted) setState(() {});
+                },
+                labelColor: AppColors.accent,
+                unselectedLabelColor: AppColors.textSecondary,
+                indicatorColor: AppColors.accent,
+                indicatorWeight: 3,
+                labelStyle: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Chờ duyệt'),
+                        if (appointmentsAsync.valueOrNull != null &&
+                            appointmentsAsync.valueOrNull!
+                                .where((a) => a.isPending)
+                                .isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${appointmentsAsync.valueOrNull!.where((a) => a.isPending).length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Đã nhận'),
+                        if (appointmentsAsync.valueOrNull != null &&
+                            appointmentsAsync.valueOrNull!
+                                .where((a) => a.isConfirmed)
+                                .isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${appointmentsAsync.valueOrNull!.where((a) => a.isConfirmed).length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Lịch sử'),
+                        if (appointmentsAsync.valueOrNull != null &&
+                            appointmentsAsync.valueOrNull!
+                                .where(
+                                  (a) =>
+                                      a.isCompleted ||
+                                      a.isCancelled ||
+                                      a.isRejected,
+                                )
+                                .isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${appointmentsAsync.valueOrNull!.where((a) => a.isCompleted || a.isCancelled || a.isRejected).length})',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Đã nhận'),
-                  if (appointmentsAsync.valueOrNull != null &&
-                      appointmentsAsync.valueOrNull!
-                          .where((a) => a.isConfirmed)
-                          .isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${appointmentsAsync.valueOrNull!.where((a) => a.isConfirmed).length}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Lịch sử'),
-                  if (appointmentsAsync.valueOrNull != null &&
-                      appointmentsAsync.valueOrNull!
-                          .where(
-                            (a) =>
-                                a.isCompleted || a.isCancelled || a.isRejected,
-                          )
-                          .isNotEmpty) ...[
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${appointmentsAsync.valueOrNull!.where((a) => a.isCompleted || a.isCancelled || a.isRejected).length})',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
       body: Column(
         children: [
-          BarberDailyEarnings(
-            appointments: appointmentsAsync.valueOrNull ?? const [],
-            isAcceptingBookingsToday: isAcceptingBookings,
-            onToggleAcceptingBookings: (val) async {
-              if (user != null) {
-                await ref
-                    .read(barberProfileRepositoryProvider)
-                    .updateAcceptingBookingsToday(user.uid, val);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        val
-                            ? 'Đã mở nhận khách đặt lịch hôm nay'
-                            : 'Đã tạm ngưng nhận khách đặt lịch hôm nay',
+          if (isDesktop)
+            Container(
+              color: AppColors.surface,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: PlatformHelper.maxWebContentWidth,
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: AppDimensions.lg),
+                      const Text('Quản Lý Lịch Hẹn', style: AppTextStyles.h3),
+                      const SizedBox(width: AppDimensions.xl),
+                      Expanded(
+                        child: TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          onTap: (index) {
+                            _tabController.animateTo(index);
+                            if (mounted) setState(() {});
+                          },
+                          labelColor: AppColors.accent,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          indicatorColor: AppColors.accent,
+                          indicatorWeight: 3,
+                          labelStyle: AppTextStyles.labelMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          tabs: const [
+                            Tab(text: 'Chờ duyệt'),
+                            Tab(text: 'Đã nhận'),
+                            Tab(text: 'Lịch sử'),
+                          ],
+                        ),
                       ),
-                      backgroundColor: val
-                          ? AppColors.success
-                          : AppColors.warning,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                }
-              }
-            },
-            onQuickBreak: () {
-              if (user != null) {
-                QuickBreakDialog.show(context, barberId: user.uid);
-              }
-            },
+                      IconButton(
+                        tooltip: 'Làm mới',
+                        icon: const Icon(Icons.refresh_rounded),
+                        onPressed: () =>
+                            ref.refresh(barberAppointmentsProvider),
+                      ),
+                      const SizedBox(width: AppDimensions.md),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isDesktop
+                    ? PlatformHelper.maxWebContentWidth
+                    : double.infinity,
+              ),
+              child: BarberDailyEarnings(
+                appointments: appointmentsAsync.valueOrNull ?? const [],
+                isAcceptingBookingsToday: isAcceptingBookings,
+                onToggleAcceptingBookings: (val) async {
+                  if (user != null) {
+                    await ref
+                        .read(barberProfileRepositoryProvider)
+                        .updateAcceptingBookingsToday(user.uid, val);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            val
+                                ? 'Đã mở nhận khách đặt lịch hôm nay'
+                                : 'Đã tạm ngưng nhận khách đặt lịch hôm nay',
+                          ),
+                          backgroundColor: val
+                              ? AppColors.success
+                              : AppColors.warning,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  }
+                },
+                onQuickBreak: () {
+                  if (user != null) {
+                    QuickBreakDialog.show(context, barberId: user.uid);
+                  }
+                },
+              ),
+            ),
           ),
           Expanded(
             child: appointmentsAsync.when(
@@ -575,43 +650,45 @@ class _BarberAppointmentsScreenState
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.accent,
-        unselectedItemColor: AppColors.textSecondary,
-        onTap: (index) {
-          if (index == 1) {
-            context.push('/barber/profile-edit');
-          } else if (index == 2) {
-            context.push('/conversations');
-          } else if (index == 3) {
-            context.push('/barber/profile');
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month_rounded),
-            label: 'Lịch hẹn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
-            activeIcon: Icon(Icons.storefront_rounded),
-            label: 'Cửa tiệm',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_outlined),
-            activeIcon: Icon(Icons.chat_rounded),
-            label: 'Tin nhắn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            activeIcon: Icon(Icons.person_rounded),
-            label: 'Hồ sơ',
-          ),
-        ],
-      ),
+      bottomNavigationBar: isDesktop
+          ? null
+          : BottomNavigationBar(
+              currentIndex: 0,
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: AppColors.accent,
+              unselectedItemColor: AppColors.textSecondary,
+              onTap: (index) {
+                if (index == 1) {
+                  context.push('/barber/profile-edit');
+                } else if (index == 2) {
+                  context.push('/conversations');
+                } else if (index == 3) {
+                  context.push('/barber/profile');
+                }
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  activeIcon: Icon(Icons.calendar_month_rounded),
+                  label: 'Lịch hẹn',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.storefront_outlined),
+                  activeIcon: Icon(Icons.storefront_rounded),
+                  label: 'Cửa tiệm',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_outlined),
+                  activeIcon: Icon(Icons.chat_rounded),
+                  label: 'Tin nhắn',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline_rounded),
+                  activeIcon: Icon(Icons.person_rounded),
+                  label: 'Hồ sơ',
+                ),
+              ],
+            ),
     );
   }
 
@@ -637,6 +714,49 @@ class _BarberAppointmentsScreenState
               ),
             ),
           ],
+        ),
+      );
+    }
+
+    if (PlatformHelper.isDesktopLayout(context)) {
+      return RefreshIndicator(
+        onRefresh: () async => ref.refresh(barberAppointmentsProvider),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppDimensions.xl),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: PlatformHelper.maxWebContentWidth,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth =
+                      (constraints.maxWidth - AppDimensions.lg) / 2;
+                  return Wrap(
+                    spacing: AppDimensions.lg,
+                    runSpacing: AppDimensions.lg,
+                    children: appointments.map((appointment) {
+                      return SizedBox(
+                        width: cardWidth,
+                        child: AppointmentCard(
+                          key: ValueKey(appointment.id),
+                          appointment: appointment,
+                          isBarberView: true,
+                          onConfirm: () => _handleConfirm(appointment),
+                          onReject: () => _handleReject(appointment),
+                          onComplete: () => _handleComplete(appointment),
+                          onChat: () => _openChat(appointment),
+                          onUpdatePrivateNote: (note) =>
+                              _handleUpdatePrivateNote(appointment, note),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       );
     }

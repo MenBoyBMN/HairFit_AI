@@ -65,20 +65,22 @@ class FaceValidationResult {
 
 /// Dịch vụ kiểm tra và xác thực khuôn mặt on-device bằng Google ML Kit
 class FaceValidationService {
-  final FaceDetector _faceDetector;
+  final FaceDetector? _faceDetector;
 
   FaceValidationService({FaceDetector? customDetector})
     : _faceDetector =
           customDetector ??
-          FaceDetector(
-            options: FaceDetectorOptions(
-              enableLandmarks: true,
-              enableContours: true,
-              enableClassification: true,
-              performanceMode: FaceDetectorMode.accurate,
-              minFaceSize: 0.15,
-            ),
-          );
+          (kIsWeb
+              ? null
+              : FaceDetector(
+                  options: FaceDetectorOptions(
+                    enableLandmarks: true,
+                    enableContours: true,
+                    enableClassification: true,
+                    performanceMode: FaceDetectorMode.accurate,
+                    minFaceSize: 0.15,
+                  ),
+                ));
 
   /// Kiểm tra ảnh khuôn mặt theo các tiêu chí:
   /// 1. Có khuôn mặt nào không (faces.isNotEmpty)
@@ -87,8 +89,16 @@ class FaceValidationService {
   /// 4. Góc quay dọc Euler X không vượt quá 15 độ (đầu không ngửa/cúi)
   /// 5. Kích thước khuôn mặt đủ lớn (chiều rộng bounding box >= 100px)
   Future<FaceValidationResult> validateFace(InputImage image) async {
+    final detector = _faceDetector;
+    if (detector == null) {
+      return FaceValidationResult.invalid(
+        error: 'Trình duyệt Web không hỗ trợ quét Camera ML Kit trực tiếp',
+        hint: 'Vui lòng sử dụng công cụ chọn dáng mặt trực quan trên Web',
+      );
+    }
+
     try {
-      final faces = await _faceDetector.processImage(image);
+      final faces = await detector.processImage(image);
 
       // Trường hợp 1: Không tìm thấy khuôn mặt nào
       if (faces.isEmpty) {
@@ -167,6 +177,7 @@ class FaceValidationService {
 
   /// Giải phóng bộ nhớ của ML Kit khi không sử dụng
   Future<void> dispose() async {
+    if (kIsWeb || _faceDetector == null) return;
     try {
       await _faceDetector.close();
     } catch (_) {}

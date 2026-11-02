@@ -42,7 +42,8 @@ class ReminderNotifier extends StateNotifier<ReminderState> {
 
   /// Ẩn một thông báo nhắc nhở cụ thể
   void dismissReminder(String reminderId) {
-    final updated = Set<String>.from(state.dismissedReminderIds)..add(reminderId);
+    final updated = Set<String>.from(state.dismissedReminderIds)
+      ..add(reminderId);
     state = state.copyWith(dismissedReminderIds: updated);
   }
 
@@ -59,23 +60,24 @@ final reminderNotifierProvider =
     });
 
 /// Provider tính toán thông báo nhắc lịch hẹn tự động khẩn cấp nhất hiện tại
-final activeAutoReminderProvider = Provider.autoDispose<AppointmentReminderNotice?>((ref) {
-  final reminderState = ref.watch(reminderNotifierProvider);
-  if (!reminderState.autoRemindersEnabled) return null;
+final activeAutoReminderProvider =
+    Provider.autoDispose<AppointmentReminderNotice?>((ref) {
+      final reminderState = ref.watch(reminderNotifierProvider);
+      if (!reminderState.autoRemindersEnabled) return null;
 
-  final appointmentsAsync = ref.watch(customerAppointmentsProvider);
-  final appointments = appointmentsAsync.valueOrNull ?? [];
-  if (appointments.isEmpty) return null;
+      final appointmentsAsync = ref.watch(customerAppointmentsProvider);
+      final appointments = appointmentsAsync.valueOrNull ?? [];
+      if (appointments.isEmpty) return null;
 
-  final service = NotificationService();
-  final reminders = service.generateReminders(appointments);
+      final service = NotificationService();
+      final reminders = service.generateReminders(appointments);
 
-  final activeReminders = reminders.where(
-    (r) => !reminderState.dismissedReminderIds.contains(r.id),
-  ).toList();
+      final activeReminders = reminders
+          .where((r) => !reminderState.dismissedReminderIds.contains(r.id))
+          .toList();
 
-  if (activeReminders.isEmpty) return null;
-  return activeReminders.first;
-});
+      if (activeReminders.isEmpty) return null;
+      return activeReminders.first;
+    });
 
 // CreBy: MenBoyBMN

@@ -13,9 +13,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/error_retry.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/barber_profile_model.dart';
 import '../../../models/service_model.dart';
 import '../../../providers/app_providers.dart';
@@ -187,13 +189,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     final barberAsync = ref.watch(barberDetailProvider(widget.barberId));
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Đặt Lịch Cắt Tóc', style: AppTextStyles.h3),
-        centerTitle: true,
-      ),
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/search')
+          : AppBar(
+              title: const Text('Đặt Lịch Cắt Tóc', style: AppTextStyles.h3),
+              centerTitle: true,
+            ),
       body: barberAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.accent),
@@ -217,6 +222,79 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           _initBookingState(barber);
           final bookingState = ref.watch(bookingNotifierProvider);
           final bookingNotifier = ref.read(bookingNotifierProvider.notifier);
+
+          if (isDesktop) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimensions.xl),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: PlatformHelper.maxWebContentWidth,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Cột trái (7 phần): Chọn dịch vụ, ngày và khung giờ
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildBarberHeader(barber),
+                            const SizedBox(height: AppDimensions.lg),
+                            ServiceSelector(
+                              services: barber.services,
+                              selectedService: bookingState.selectedService,
+                              onServiceSelected: (service) => bookingNotifier
+                                  .selectService(service, barber),
+                            ),
+                            const SizedBox(height: AppDimensions.xl),
+                            BookingDatePicker(
+                              selectedDate: bookingState.selectedDate,
+                              barber: barber,
+                              onDateSelected: (date) =>
+                                  bookingNotifier.selectDate(date, barber),
+                            ),
+                            const SizedBox(height: AppDimensions.xl),
+                            TimeSlotGrid(
+                              slots: bookingState.availableSlots,
+                              selectedSlot: bookingState.selectedSlot,
+                              isLoading: bookingState.isLoadingSlots,
+                              onSlotSelected: bookingNotifier.selectSlot,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.xl),
+                      // Cột phải (5 phần): Tóm tắt đặt lịch & Nút xác nhận
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          children: [
+                            BookingSummary(
+                              barber: barber,
+                              service: bookingState.selectedService,
+                              selectedDate: bookingState.selectedDate,
+                              selectedSlot: bookingState.selectedSlot,
+                              note: bookingState.note,
+                              onNoteChanged: bookingNotifier.setNote,
+                              customerFaceShape: bookingState.customerFaceShape,
+                              aiStylingTip: bookingState.aiStylingTip,
+                            ),
+                            const SizedBox(height: AppDimensions.md),
+                            ClipRRect(
+                              borderRadius: AppDimensions.borderRadiusMd,
+                              child: _buildBottomBar(barber, bookingState),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
 
           return Column(
             children: [

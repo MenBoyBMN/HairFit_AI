@@ -2,11 +2,13 @@
 // File: lib/features/ai_consult/presentation/ai_consult_screen.dart
 // Mục đích: Màn hình giao diện (Screen) chính của tính năng ai_consult.
 // Kết cấu:
-//  - Sử dụng ConsumerWidget/StatefulWidget, kết nối UI với Provider để hiển thị trạng thái và xử lý sự kiện người dùng.
+//  - Trên Mobile: Hỗ trợ chụp ảnh Camera, chọn từ thư viện, phân tích On-Device < 60ms.
+//  - Trên Web: Tự động loại bỏ Camera, chuyển sang Studio chọn dáng mặt & sở thích trực quan.
 // ============================================================================
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,15 +17,18 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/platform_helper.dart';
+import '../../../core/widgets/antigravity_card.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/staggered_reveal.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../providers/ai_consult_provider.dart';
 import '../domain/ai_consult_result.dart';
+import '../domain/face_shape.dart';
 import 'widgets/face_camera_overlay.dart';
 import 'widgets/hair_info_selector.dart';
 
 /// Màn hình chính của luồng AI Tư Vấn Kiểu Tóc (Task 5.8, 5.9, 5.11, 5.15)
-/// Hỗ trợ: Consent popup bảo mật, chụp ảnh camera, chọn từ thư viện,
-/// chọn sở thích tóc, overlay căn chỉnh khuôn mặt, và phân tích On-Device < 60ms.
 class AIConsultScreen extends ConsumerStatefulWidget {
   const AIConsultScreen({super.key});
 
@@ -34,13 +39,16 @@ class AIConsultScreen extends ConsumerStatefulWidget {
 class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _showCameraOverlayGuide = false;
+  FaceShape _selectedWebShape = FaceShape.oval;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkConsentRequirement();
-    });
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkConsentRequirement();
+      });
+    }
   }
 
   void _checkConsentRequirement() {
@@ -50,7 +58,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
     }
   }
 
-  /// Hiển thị Popup xác nhận quyền riêng tư trước khi xử lý ảnh (Task 5.8)
+  /// Hiển thị Popup xác nhận quyền riêng tư trước khi xử lý ảnh trên thiết bị di động (Task 5.8)
   void _showConsentDialog() {
     showDialog(
       context: context,
@@ -113,20 +121,21 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                // Nếu từ chối, điều hướng sang màn hình chọn thủ công
                 context.push('/customer/manual-select');
               },
               child: Text(
                 'Chọn thủ công',
-                style: AppTextStyles.buttonMedium.copyWith(
+                style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.of(dialogContext).pop();
                 await ref.read(aiConsultProvider.notifier).grantConsent();
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accent,
@@ -135,7 +144,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
                   borderRadius: AppDimensions.borderRadiusSm,
                 ),
               ),
-              child: const Text('Tôi đồng ý'),
+              child: const Text('Tôi đồng ý & Tiếp tục'),
             ),
           ],
         );
@@ -198,7 +207,6 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
     if (!mounted) return;
 
     if (result is AIConsultSuccess) {
-      // Chuyển tiếp sang màn hình kết quả (Task 5.12)
       context.push('/customer/ai-result');
     } else if (result is AIConsultValidationFailed) {
       _showFaceValidationErrorDialog(result.message, result.hint);
@@ -208,6 +216,14 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
         'Không thể nhận diện được khuôn mặt từ bức ảnh này. Vui lòng chọn ảnh chụp rõ mặt nhìn thẳng hoặc thử chọn dáng mặt thủ công.',
       );
     }
+  }
+
+  Future<void> _onRunWebStudioConsultation() async {
+    await ref
+        .read(aiConsultProvider.notifier)
+        .selectManualFaceShape(_selectedWebShape);
+    if (!mounted) return;
+    context.push('/customer/ai-result');
   }
 
   void _showFaceValidationErrorDialog(String title, String message) {
@@ -287,6 +303,12 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
   @override
   Widget build(BuildContext context) {
     final aiState = ref.watch(aiConsultProvider);
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
+
+    // Nếu chạy trên trình duyệt Web hoặc màn hình Desktop rộng -> Hiển thị Studio Tư vấn Web không cần Camera
+    if (kIsWeb || isDesktop) {
+      return _buildWebStudioScaffold(context, aiState, isDesktop);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -448,8 +470,340 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
     );
   }
 
+  /// Giao diện Studio Tư Vấn Kiểu Tóc chuyên biệt cho Web / Desktop (không dùng Camera)
+  Widget _buildWebStudioScaffold(
+    BuildContext context,
+    AIConsultState aiState,
+    bool isDesktop,
+  ) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/ai-consult')
+          : AppBar(
+              title: const Text(
+                'Studio Tư Vấn Kiểu Tóc',
+                style: AppTextStyles.h3,
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => context.pop(),
+              ),
+            ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? AppDimensions.xl : AppDimensions.md,
+          vertical: AppDimensions.xl,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: PlatformHelper.maxWebContentWidth,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Hero Banner
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(
+                    isDesktop ? AppDimensions.xl : AppDimensions.lg,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.aiBannerGradient,
+                    borderRadius: AppDimensions.borderRadiusXl,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.16),
+                        blurRadius: 28,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(AppDimensions.md),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: AppDimensions.borderRadiusLg,
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.lg),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'HairFit AI Styling Studio',
+                              style:
+                                  (isDesktop
+                                          ? AppTextStyles.h1
+                                          : AppTextStyles.h3)
+                                      .copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Chọn dáng khuôn mặt và đặc điểm mái tóc của bạn để hệ thống chuyên gia đề xuất những kiểu tóc chuẩn tỉ lệ vàng, sẵn sàng đặt lịch với Barber ngay trên Web.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.xl),
+
+                // Main Content: 2-Column on Desktop, 1-Column on smaller Web
+                if (isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 7, child: _buildWebFaceShapeGrid()),
+                      const SizedBox(width: AppDimensions.xl),
+                      Expanded(
+                        flex: 5,
+                        child: _buildWebPreferencesAndActionCard(aiState),
+                      ),
+                    ],
+                  )
+                else ...[
+                  _buildWebFaceShapeGrid(),
+                  const SizedBox(height: AppDimensions.lg),
+                  _buildWebPreferencesAndActionCard(aiState),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebFaceShapeGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                borderRadius: AppDimensions.borderRadiusSm,
+              ),
+              child: const Icon(
+                Icons.face_retouching_natural_rounded,
+                color: AppColors.accent,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppDimensions.sm),
+            const Expanded(
+              child: Text(
+                'Bước 1: Chọn dáng khuôn mặt của bạn',
+                style: AppTextStyles.h3,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppDimensions.md),
+        ...FaceShape.values.asMap().entries.map((entry) {
+          final index = entry.key;
+          final shape = entry.value;
+          final isSelected = _selectedWebShape == shape;
+          return StaggeredReveal(
+            index: index,
+            child: AntigravityCard(
+              margin: const EdgeInsets.only(bottom: AppDimensions.md),
+              padding: const EdgeInsets.all(AppDimensions.md),
+              enable3DTilt: false,
+              borderColor: isSelected ? AppColors.accent : AppColors.border,
+              backgroundColor: isSelected
+                  ? AppColors.accent.withValues(alpha: 0.05)
+                  : AppColors.surface,
+              onTap: () => setState(() => _selectedWebShape = shape),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.accent
+                          : AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: AppDimensions.borderRadiusMd,
+                    ),
+                    child: Icon(
+                      _getFaceShapeIcon(shape),
+                      color: isSelected ? Colors.white : AppColors.primary,
+                      size: 26,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              shape.displayNameVi,
+                              style: AppTextStyles.h4.copyWith(
+                                color: isSelected
+                                    ? AppColors.accent
+                                    : AppColors.primary,
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.accent,
+                                size: 22,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          shape.descriptionVi,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  IconData _getFaceShapeIcon(FaceShape shape) {
+    switch (shape) {
+      case FaceShape.oval:
+        return Icons.egg_outlined;
+      case FaceShape.round:
+        return Icons.circle_outlined;
+      case FaceShape.square:
+        return Icons.crop_square_rounded;
+      case FaceShape.heart:
+        return Icons.favorite_border_rounded;
+      case FaceShape.oblong:
+        return Icons.stay_current_portrait_rounded;
+    }
+  }
+
+  Widget _buildWebPreferencesAndActionCard(AIConsultState aiState) {
+    return AntigravityCard(
+      enable3DTilt: false,
+      enableHoverLift: false,
+      padding: const EdgeInsets.all(AppDimensions.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: AppDimensions.borderRadiusSm,
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.sm),
+              const Expanded(
+                child: Text(
+                  'Bước 2: Tùy chỉnh đặc điểm tóc',
+                  style: AppTextStyles.h4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.md),
+          HairInfoSelector(
+            selectedGender: aiState.selectedGender,
+            selectedLength: aiState.selectedLength,
+            selectedTexture: aiState.selectedTexture,
+            onGenderChanged: (val) {
+              ref.read(aiConsultProvider.notifier).setPreferences(gender: val);
+            },
+            onLengthChanged: (val) {
+              ref.read(aiConsultProvider.notifier).setPreferences(length: val);
+            },
+            onTextureChanged: (val) {
+              ref.read(aiConsultProvider.notifier).setPreferences(texture: val);
+            },
+          ),
+          const SizedBox(height: AppDimensions.xl),
+          Container(
+            padding: const EdgeInsets.all(AppDimensions.md),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: AppDimensions.borderRadiusMd,
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.verified_outlined,
+                  color: AppColors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: AppDimensions.sm),
+                Expanded(
+                  child: Text(
+                    'Đang chọn: ${_selectedWebShape.displayNameVi}',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimensions.lg),
+          AppButton(
+            text: aiState.isAnalyzing
+                ? 'Đang tổng hợp gợi ý...'
+                : 'Khám Phá Kiểu Tóc Phù Hợp Ngay',
+            icon: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            isLoading: aiState.isAnalyzing,
+            onPressed: aiState.isAnalyzing ? null : _onRunWebStudioConsultation,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPhotoCard(AIConsultState state) {
-    final hasImage = state.imagePath != null && state.imagePath!.isNotEmpty;
+    final hasImage =
+        !kIsWeb && state.imagePath != null && state.imagePath!.isNotEmpty;
 
     return Container(
       width: double.infinity,

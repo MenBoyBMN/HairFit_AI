@@ -18,11 +18,13 @@ import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/distance_helper.dart';
+import '../../../../core/utils/platform_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_retry.dart';
 import '../../../../core/widgets/rating_stars.dart';
+import '../../../../core/widgets/web_nav_shell.dart';
 import '../../ai_consult/data/hairstyle_repository.dart';
 import '../../../../models/barber_profile_model.dart';
 import '../../../../models/chat_model.dart';
@@ -47,15 +49,19 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
   Widget build(BuildContext context) {
     final barberAsync = ref.watch(barberDetailProvider(widget.barberId));
     final searchState = ref.watch(searchNotifierProvider).valueOrNull;
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/search')
+          : null,
       body: barberAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.accent),
         ),
         error: (error, _) => Scaffold(
-          appBar: AppBar(title: const Text('Chi tiết thợ')),
+          appBar: isDesktop ? null : AppBar(title: const Text('Chi tiết thợ')),
           body: Center(
             child: ErrorRetry(
               errorMessage: 'Không thể tải thông tin thợ: $error',
@@ -66,7 +72,9 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
         data: (barber) {
           if (barber == null) {
             return Scaffold(
-              appBar: AppBar(title: const Text('Chi tiết thợ')),
+              appBar: isDesktop
+                  ? null
+                  : AppBar(title: const Text('Chi tiết thợ')),
               body: Center(
                 child: EmptyState(
                   icon: Icons.person_off_outlined,
@@ -90,6 +98,110 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
               lon2: barber.location.longitude,
             );
             distanceFormatted = DistanceHelper.formatDistance(d);
+          }
+
+          if (isDesktop) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimensions.lg),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: PlatformHelper.maxWebContentWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Ảnh bìa banner trên Desktop
+                      ClipRRect(
+                        borderRadius: AppDimensions.borderRadiusLg,
+                        child: SizedBox(
+                          height: 260,
+                          width: double.infinity,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              _buildCoverImageWidget(barber),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.2),
+                                      Colors.black.withValues(alpha: 0.65),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: AppDimensions.lg,
+                                bottom: AppDimensions.md,
+                                child: TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: Colors.white.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                    foregroundColor: AppColors.primary,
+                                  ),
+                                  onPressed: () {
+                                    if (context.canPop()) {
+                                      context.pop();
+                                    } else {
+                                      context.go('/customer/search');
+                                    }
+                                  },
+                                  icon: const Icon(Icons.arrow_back, size: 18),
+                                  label: const Text('Quay lại danh sách'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.lg),
+                      // Bố cục 2 cột trên Desktop
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Cột trái (60%): Thông tin tiệm, Lookbook, Kiểu tóc, Đánh giá
+                          Expanded(
+                            flex: 6,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeaderCard(barber, distanceFormatted),
+                                const SizedBox(height: AppDimensions.md),
+                                _buildPortfolioCard(barber),
+                                const SizedBox(height: AppDimensions.md),
+                                _buildSupportedHairstylesCard(barber),
+                                const SizedBox(height: AppDimensions.md),
+                                _buildReviewsCard(barber),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppDimensions.lg),
+                          // Cột phải (40%): Bảng giá, Giờ làm việc & Nút Đặt lịch / Nhắn tin
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildStickyBottomBar(barber),
+                                const SizedBox(height: AppDimensions.md),
+                                _buildServicesCard(barber),
+                                const SizedBox(height: AppDimensions.md),
+                                _buildWorkingHoursCard(barber),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimensions.xxxl),
+                    ],
+                  ),
+                ),
+              ),
+            );
           }
 
           return CustomScrollView(
@@ -137,7 +249,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
           );
         },
       ),
-      bottomNavigationBar: barberAsync.valueOrNull != null
+      bottomNavigationBar: (!isDesktop && barberAsync.valueOrNull != null)
           ? _buildStickyBottomBar(barberAsync.valueOrNull!)
           : null,
     );
@@ -322,15 +434,17 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
           ),
           const SizedBox(height: AppDimensions.xs),
 
-          // Rating và khoảng cách
-          Row(
+          // Rating và khoảng cách (Wrap chống tràn trên màn hình nhỏ)
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
             children: [
               RatingStars(
                 rating: barber.ratingAvg,
                 starSize: 16,
                 showRatingNumber: false,
               ),
-              const SizedBox(width: 6),
               Text(
                 barber.ratingAvg.toStringAsFixed(1),
                 style: const TextStyle(
@@ -347,7 +461,6 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
                 ),
               ),
               if (distanceFormatted != null) ...[
-                const SizedBox(width: AppDimensions.md),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -1239,9 +1352,11 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
           heightFactor: 1.0,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
-            child: Row(
-              children: [
-                Column(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 360;
+
+                final priceWidget = Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1264,31 +1379,53 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(width: AppDimensions.md),
-                IconButton(
+                );
+
+                final chatButton = IconButton(
                   tooltip: 'Nhắn tin với thợ',
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                   ),
                   icon: const Icon(
                     Icons.chat_bubble_outline_rounded,
                     color: AppColors.primary,
                   ),
                   onPressed: () => _openChat(barber),
-                ),
-                const SizedBox(width: AppDimensions.sm),
-                Expanded(
-                  child: AppButton(
-                    text: 'Đặt Lịch Hẹn',
-                    icon: const Icon(Icons.calendar_today_rounded, size: 18),
-                    onPressed: () {
-                      context.push('/customer/booking/${barber.uid}');
-                    },
-                  ),
-                ),
-              ],
+                );
+
+                final bookButton = AppButton(
+                  text: 'Đặt Lịch Hẹn',
+                  icon: const Icon(Icons.calendar_today_rounded, size: 18),
+                  onPressed: () {
+                    context.push('/customer/booking/${barber.uid}');
+                  },
+                );
+
+                if (isCompact) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [priceWidget, chatButton],
+                      ),
+                      const SizedBox(height: AppDimensions.xs),
+                      SizedBox(width: double.infinity, child: bookButton),
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    priceWidget,
+                    const SizedBox(width: AppDimensions.md),
+                    chatButton,
+                    const SizedBox(width: AppDimensions.sm),
+                    Expanded(child: bookButton),
+                  ],
+                );
+              },
             ),
           ),
         ),

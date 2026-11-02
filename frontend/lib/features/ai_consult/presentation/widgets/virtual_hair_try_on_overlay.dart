@@ -7,6 +7,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -127,7 +128,8 @@ class _VirtualHairTryOnOverlayState extends State<VirtualHairTryOnOverlay> {
                 alignment: Alignment.center,
                 children: [
                   // 1. Ảnh khuôn mặt người dùng
-                  if (widget.imagePath != null &&
+                  if (!kIsWeb &&
+                      widget.imagePath != null &&
                       widget.imagePath!.isNotEmpty &&
                       File(widget.imagePath!).existsSync())
                     Image.file(
@@ -174,7 +176,9 @@ class _VirtualHairTryOnOverlayState extends State<VirtualHairTryOnOverlay> {
                           ),
                           child: CustomPaint(
                             size: const Size(200, 140),
-                            painter: _HairStylePainter(styleId: currentStyle.id),
+                            painter: _HairStylePainter(
+                              styleId: currentStyle.id,
+                            ),
                           ),
                         ),
                       ),
@@ -330,13 +334,18 @@ class _VirtualHairTryOnOverlayState extends State<VirtualHairTryOnOverlay> {
               InkWell(
                 onTap: () => setState(() => _isFlipped = !_isFlipped),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.flip_rounded,
                         size: 14,
-                        color: _isFlipped ? AppColors.accent : AppColors.textSecondary,
+                        color: _isFlipped
+                            ? AppColors.accent
+                            : AppColors.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -344,7 +353,9 @@ class _VirtualHairTryOnOverlayState extends State<VirtualHairTryOnOverlay> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: _isFlipped ? AppColors.accent : AppColors.textSecondary,
+                          color: _isFlipped
+                              ? AppColors.accent
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],

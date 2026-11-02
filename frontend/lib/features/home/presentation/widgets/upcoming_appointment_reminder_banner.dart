@@ -26,12 +26,15 @@ class UpcomingAppointmentReminderBanner extends ConsumerWidget {
     final isUrgent = activeNotice.isUrgent;
     final bannerBg = isUrgent
         ? const LinearGradient(
-            colors: [Color(0xFFEA2027), Color(0xFFC0392B)],
+            colors: [
+              AppColors.urgentRedGradientStart,
+              AppColors.urgentRedGradientEnd,
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
         : const LinearGradient(
-            colors: [AppColors.primary, Color(0xFF1E272E)],
+            colors: [AppColors.primary, AppColors.surfaceDarkGradient],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           );
@@ -171,34 +174,36 @@ class UpcomingAppointmentReminderBanner extends ConsumerWidget {
 
           const SizedBox(height: AppDimensions.sm),
 
-          // 3 Nút hành động nhanh: Chỉ đường, Gọi điện, Xem lịch hẹn
-          Row(
+          // Nút hành động nhanh: Chỉ đường, Gọi điện, Xem lịch hẹn (Wrap chống tràn)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppDimensions.borderRadiusSm,
-                    ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                  icon: const Icon(Icons.directions_outlined, size: 14),
-                  label: const Text(
-                    'Chỉ đường',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppDimensions.borderRadiusSm,
                   ),
-                  onPressed: () {
-                    UrlHelper.openMapDirections(title: activeNotice.barberName);
-                  },
                 ),
+                icon: const Icon(Icons.directions_outlined, size: 14),
+                label: const Text(
+                  'Chỉ đường',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  UrlHelper.openMapDirections(title: activeNotice.barberName);
+                },
               ),
-              if (activeNotice.barberPhone.isNotEmpty) ...[
-                const SizedBox(width: 6),
+              if (activeNotice.barberPhone.isNotEmpty)
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
@@ -217,17 +222,12 @@ class UpcomingAppointmentReminderBanner extends ConsumerWidget {
                   icon: const Icon(Icons.phone_in_talk_rounded, size: 14),
                   label: const Text(
                     'Gọi tiệm',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
                     UrlHelper.makePhoneCall(activeNotice.barberPhone);
                   },
                 ),
-              ],
-              const SizedBox(width: 6),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,

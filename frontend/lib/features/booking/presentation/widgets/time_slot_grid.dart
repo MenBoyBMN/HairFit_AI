@@ -87,102 +87,114 @@ class TimeSlotGrid extends StatelessWidget {
             ),
           )
         else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: slots.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 5 : 3,
-              mainAxisSpacing: AppDimensions.sm,
-              crossAxisSpacing: AppDimensions.sm,
-              childAspectRatio: MediaQuery.of(context).size.width > 600
-                  ? 2.5
-                  : 2.1,
-            ),
-            itemBuilder: (context, index) {
-              final slot = slots[index];
-              final isSelected = selectedSlot?.startTime == slot.startTime;
-              final isAvailable = slot.isAvailable;
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = (constraints.maxWidth / 95).floor().clamp(
+                2,
+                6,
+              );
+              final childAspectRatio = constraints.maxWidth > 500 ? 2.5 : 2.1;
 
-              return InkWell(
-                onTap: isAvailable ? () => onSlotSelected(slot) : null,
-                borderRadius: AppDimensions.borderRadiusSm,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.xs,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.accent
-                        : (isAvailable
-                              ? AppColors.surface
-                              : AppColors.background.withValues(alpha: 0.8)),
-                    borderRadius: AppDimensions.borderRadiusSm,
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.accent
-                          : (isAvailable
-                                ? AppColors.divider
-                                : AppColors.divider.withValues(alpha: 0.5)),
-                      width: isSelected ? 1.5 : 1.0,
-                    ),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          slot.startTime,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected || isAvailable
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected
-                                ? Colors.white
-                                : (isAvailable
-                                      ? AppColors.textPrimary
-                                      : AppColors.textSecondary.withValues(
-                                          alpha: 0.5,
-                                        )),
-                            decoration: isAvailable
-                                ? TextDecoration.none
-                                : TextDecoration.lineThrough,
-                          ),
-                        ),
-                        Text(
-                          isAvailable
-                              ? 'Trống'
-                              : (slot.unavailabilityReason?.contains('sát') ??
-                                        false
-                                    ? 'Sát giờ'
-                                    : (slot.unavailabilityReason?.contains(
-                                                'Đã qua',
-                                              ) ??
-                                              false
-                                          ? 'Quá giờ'
-                                          : 'Đã đặt')),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                            color: isSelected
-                                ? Colors.white70
-                                : (isAvailable
-                                      ? AppColors.success
-                                      : AppColors.textSecondary.withValues(
-                                          alpha: 0.6,
-                                        )),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: slots.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: AppDimensions.sm,
+                  crossAxisSpacing: AppDimensions.sm,
+                  childAspectRatio: childAspectRatio,
                 ),
+                itemBuilder: (context, index) {
+                  final slot = slots[index];
+                  final isSelected = selectedSlot?.startTime == slot.startTime;
+                  final isAvailable = slot.isAvailable;
+
+                  return InkWell(
+                    onTap: isAvailable ? () => onSlotSelected(slot) : null,
+                    borderRadius: AppDimensions.borderRadiusSm,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.xs,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.accent
+                            : (isAvailable
+                                  ? AppColors.surface
+                                  : AppColors.background.withValues(
+                                      alpha: 0.8,
+                                    )),
+                        borderRadius: AppDimensions.borderRadiusSm,
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.accent
+                              : (isAvailable
+                                    ? AppColors.divider
+                                    : AppColors.divider.withValues(alpha: 0.5)),
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              slot.startTime,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected || isAvailable
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isAvailable
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary.withValues(
+                                              alpha: 0.5,
+                                            )),
+                                decoration: isAvailable
+                                    ? TextDecoration.none
+                                    : TextDecoration.lineThrough,
+                              ),
+                            ),
+                            Text(
+                              isAvailable
+                                  ? 'Trống'
+                                  : (slot.unavailabilityReason?.contains(
+                                              'sát',
+                                            ) ??
+                                            false
+                                        ? 'Sát giờ'
+                                        : (slot.unavailabilityReason?.contains(
+                                                    'Đã qua',
+                                                  ) ??
+                                                  false
+                                              ? 'Quá giờ'
+                                              : 'Đã đặt')),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.white70
+                                    : (isAvailable
+                                          ? AppColors.success
+                                          : AppColors.textSecondary.withValues(
+                                              alpha: 0.6,
+                                            )),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

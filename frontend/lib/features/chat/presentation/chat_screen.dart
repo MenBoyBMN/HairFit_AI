@@ -27,6 +27,7 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String customerName;
   final String barberId;
   final String barberName;
+  final bool isEmbedded;
 
   const ChatScreen({
     super.key,
@@ -37,6 +38,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     required this.customerName,
     required this.barberId,
     required this.barberName,
+    this.isEmbedded = false,
   });
 
   @override
@@ -107,7 +109,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        titleSpacing: 0,
+        automaticallyImplyLeading: !widget.isEmbedded,
+        titleSpacing: widget.isEmbedded ? AppDimensions.md : 0,
         title: Row(
           children: [
             CircleAvatar(

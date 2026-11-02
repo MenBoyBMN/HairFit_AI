@@ -6,8 +6,8 @@
 // ============================================================================
 
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -126,20 +126,21 @@ class _BarberRegistrationScreenState
                   style: AppTextStyles.h4,
                 ),
                 const SizedBox(height: AppDimensions.sm),
-                ListTile(
-                  leading: const Icon(
-                    Icons.camera_alt_outlined,
-                    color: AppColors.accent,
+                if (!kIsWeb)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.camera_alt_outlined,
+                      color: AppColors.accent,
+                    ),
+                    title: const Text(
+                      'Chụp ảnh từ máy ảnh',
+                      style: AppTextStyles.bodyMedium,
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _pickAvatarImage(ImageSource.camera);
+                    },
                   ),
-                  title: const Text(
-                    'Chụp ảnh từ máy ảnh',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _pickAvatarImage(ImageSource.camera);
-                  },
-                ),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library_outlined,

@@ -1,11 +1,11 @@
 {
-    "name": "hairfit_ai",
-    "short_name": "hairfit_ai",
+    "name": "HairFit AI — Tư Vấn Kiểu Tóc & Đặt Lịch Salon",
+    "short_name": "HairFit AI",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1A1A2E",
+    "theme_color": "#1A1A2E",
+    "description": "Nền tảng đặt lịch cắt tóc thông minh, tìm kiếm salon & tư vấn kiểu tóc nam chuẩn tỉ lệ khuôn mặt.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

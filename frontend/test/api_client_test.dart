@@ -114,6 +114,71 @@ void main() {
         expect(stats.completionRate, 75.0);
       },
     );
+
+    test(
+      'ApiClient.getCandidateUrls returns non-empty priority candidates',
+      () {
+        final candidates = ApiClient.getCandidateUrls();
+        expect(candidates, isNotEmpty);
+        expect(candidates.any((url) => url.contains('5000')), isTrue);
+      },
+    );
+
+    test(
+      'ApiClient.probe detects active endpoint and sets discoveredBaseUrl',
+      () async {
+        ApiClient.resetDiscoveredBaseUrl();
+
+        final mockHttp = MockClient((request) async {
+          if (request.url.path.contains('/health')) {
+            return http.Response('{"status":"healthy"}', 200);
+          }
+          return http.Response('Not found', 404);
+        });
+
+        final detected = await ApiClient.probe(
+          client: mockHttp,
+          timeout: const Duration(milliseconds: 200),
+        );
+
+        expect(detected, isNotNull);
+        expect(ApiClient.discoveredBaseUrl, detected);
+
+        final client = ApiClient(httpClient: mockHttp);
+        expect(client.baseUrl, detected);
+
+        ApiClient.resetDiscoveredBaseUrl();
+      },
+    );
+
+    test('ApiClient auto-failover switches to alive candidate when current endpoint fails', () async {
+      ApiClient.resetDiscoveredBaseUrl();
+      ApiClient.setDiscoveredBaseUrl('http://unreachable-host:9999');
+
+      final mockHttp = MockClient((request) async {
+        if (request.url.host == 'unreachable-host') {
+          throw http.ClientException('Connection refused');
+        }
+        if (request.url.path == '/api/health' ||
+            request.url.path == '/health') {
+          return http.Response('{"status":"healthy"}', 200);
+        }
+        if (request.url.path == '/api/test') {
+          return http.Response(jsonEncode({'success': true}), 200);
+        }
+        return http.Response('OK', 200);
+      });
+
+      final client = ApiClient(httpClient: mockHttp);
+      final response = await client.get('/api/test');
+      expect(response['success'], isTrue);
+      expect(
+        ApiClient.discoveredBaseUrl,
+        isNot('http://unreachable-host:9999'),
+      );
+
+      ApiClient.resetDiscoveredBaseUrl();
+    });
   });
 }
 

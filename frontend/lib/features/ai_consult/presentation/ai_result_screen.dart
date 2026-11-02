@@ -12,7 +12,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../providers/ai_consult_provider.dart';
 import '../domain/face_shape.dart';
 import '../domain/face_shape_analyzer.dart';
@@ -70,168 +72,234 @@ class _AIResultScreenState extends ConsumerState<AIResultScreen> {
     final displayedList = allRecommendations.take(_visibleCount).toList();
     final canLoadMore =
         allRecommendations.length > _visibleCount && _visibleCount < 10;
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Kết Quả AI Tư Vấn', style: AppTextStyles.h3),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Chọn thủ công',
-            icon: const Icon(Icons.tune_rounded),
-            onPressed: () => context.push('/customer/manual-select'),
-          ),
-        ],
-      ),
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/ai-consult')
+          : AppBar(
+              title: const Text('Kết Quả AI Tư Vấn', style: AppTextStyles.h3),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => context.pop(),
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Chọn thủ công',
+                  icon: const Icon(Icons.tune_rounded),
+                  onPressed: () => context.push('/customer/manual-select'),
+                ),
+              ],
+            ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimensions.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Header Banner: Dáng mặt được xác định + Thời gian phân tích On-Device
-            _buildFaceShapeHeader(context, shape, executionMs),
-            const SizedBox(height: AppDimensions.lg),
-
-            // 2. Chỉ số hình học nhân trắc (nếu phân tích từ camera ML Kit)
-            if (metrics != null) ...[
-              _buildMetricsCard(metrics),
-              const SizedBox(height: AppDimensions.lg),
-            ],
-
-            // 3. Lời khuyên vàng & Điều nên tránh
-            _buildAdviceCard(
-              generalAdvice: recommendation.generalAdviceVi,
-              avoidAdvice: recommendation.avoidAdviceVi,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: PlatformHelper.maxWebContentWidth,
             ),
-            const SizedBox(height: AppDimensions.xl),
-
-            // 4. Danh sách các kiểu tóc đề xuất chính (Top Recommendations)
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.stars_rounded,
-                  color: AppColors.accent,
-                  size: 22,
-                ),
-                const SizedBox(width: AppDimensions.xs),
-                Expanded(
-                  child: Text(
-                    'Top Kiểu Tóc Phù Hợp Nhất',
-                    style: AppTextStyles.h3.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: AppDimensions.xs),
-                Text(
-                  '${displayedList.length}/${allRecommendations.length.clamp(0, 10)} kiểu',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimensions.sm),
-            Text(
-              'Được tính toán và xếp hạng theo ma trận quy tắc chuyên gia kết hợp hình học khuôn mặt của bạn.',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: AppDimensions.md),
+                // 1. Header Banner: Dáng mặt được xác định + Thời gian phân tích On-Device
+                _buildFaceShapeHeader(context, shape, executionMs),
+                const SizedBox(height: AppDimensions.lg),
 
-            ...displayedList.asMap().entries.map((entry) {
-              final index = entry.key;
-              final rec = entry.value;
-              return HairstyleResultCard(
-                rank: index + 1,
-                recommendation: rec,
-                onFindBarbers: () {
-                  // Chuyển tiếp sang bản đồ tìm thợ có filter theo kiểu tóc này (Task 5.14)
-                  context.push('/customer/search?hairstyleId=${rec.style.id}');
-                },
-              );
-            }),
+                // 2. Chỉ số hình học nhân trắc (nếu phân tích từ camera ML Kit)
+                if (metrics != null) ...[
+                  _buildMetricsCard(metrics),
+                  const SizedBox(height: AppDimensions.lg),
+                ],
 
-            // Nút xem thêm kiểu tóc (Tối đa 10 thẻ kết quả)
-            if (canLoadMore) ...[
-              const SizedBox(height: AppDimensions.sm),
-              Center(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _visibleCount = (_visibleCount + 5).clamp(5, 10);
-                    });
-                  },
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.accent,
-                  ),
-                  label: const Text(
-                    'Xem thêm kiểu tóc phù hợp (Tối đa 10 kiểu)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                // 3. Lời khuyên vàng & Điều nên tránh
+                _buildAdviceCard(
+                  generalAdvice: recommendation.generalAdviceVi,
+                  avoidAdvice: recommendation.avoidAdviceVi,
+                ),
+                const SizedBox(height: AppDimensions.xl),
+
+                // 4. Danh sách các kiểu tóc đề xuất chính (Top Recommendations)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.stars_rounded,
                       color: AppColors.accent,
+                      size: 22,
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.accent, width: 1.5),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+                    const SizedBox(width: AppDimensions.xs),
+                    Expanded(
+                      child: Text(
+                        'Top Kiểu Tóc Phù Hợp Nhất',
+                        style: AppTextStyles.h3.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                    const SizedBox(width: AppDimensions.xs),
+                    Text(
+                      '${displayedList.length}/${allRecommendations.length.clamp(0, 10)} kiểu',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    backgroundColor: AppColors.accent.withValues(alpha: 0.05),
+                  ],
+                ),
+                const SizedBox(height: AppDimensions.sm),
+                Text(
+                  'Được tính toán và xếp hạng theo ma trận quy tắc chuyên gia kết hợp hình học khuôn mặt của bạn.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
                   ),
                 ),
-              ),
-              const SizedBox(height: AppDimensions.md),
-            ],
+                const SizedBox(height: AppDimensions.md),
 
-            const SizedBox(height: AppDimensions.xl),
+                if (isDesktop)
+                  LayoutBuilder(
+                    builder: (context, gridConstraints) {
+                      final colWidth =
+                          (gridConstraints.maxWidth - AppDimensions.lg) / 2;
+                      return Wrap(
+                        spacing: AppDimensions.lg,
+                        runSpacing: AppDimensions.sm,
+                        children: displayedList.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final rec = entry.value;
+                          return SizedBox(
+                            width: colWidth,
+                            child: HairstyleResultCard(
+                              rank: index + 1,
+                              recommendation: rec,
+                              onFindBarbers: () {
+                                context.push(
+                                  '/customer/search?hairstyleId=${rec.style.id}',
+                                );
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  )
+                else
+                  ...displayedList.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final rec = entry.value;
+                    return HairstyleResultCard(
+                      rank: index + 1,
+                      recommendation: rec,
+                      onFindBarbers: () {
+                        context.push(
+                          '/customer/search?hairstyleId=${rec.style.id}',
+                        );
+                      },
+                    );
+                  }),
 
-            // 6. Nút hành động phụ
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.pop(),
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Phân tích ảnh khác'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.divider),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                // Nút xem thêm kiểu tóc (Tối đa 10 thẻ kết quả)
+                if (canLoadMore) ...[
+                  const SizedBox(height: AppDimensions.sm),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _visibleCount = (_visibleCount + 5).clamp(5, 10);
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.accent,
+                      ),
+                      label: const Text(
+                        'Xem thêm kiểu tóc phù hợp (Tối đa 10 kiểu)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accent,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: AppColors.accent,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        backgroundColor: AppColors.accent.withValues(
+                          alpha: 0.05,
+                        ),
+                      ),
                     ),
                   ),
+                  const SizedBox(height: AppDimensions.md),
+                ],
+
+                const SizedBox(height: AppDimensions.xl),
+
+                // 6. Nút hành động phụ (Responsive Layout)
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = constraints.maxWidth < 450;
+
+                    final changePreferencesBtn = OutlinedButton.icon(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Chọn lại dáng mặt / sở thích'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.divider),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    );
+
+                    final exploreBarbersBtn = ElevatedButton.icon(
+                      onPressed: () => context.push('/customer/search'),
+                      icon: const Icon(Icons.explore_outlined),
+                      label: const Text('Xem tất cả thợ'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    );
+
+                    if (isCompact) {
+                      return Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: changePreferencesBtn,
+                          ),
+                          const SizedBox(height: AppDimensions.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: exploreBarbersBtn,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: changePreferencesBtn),
+                        const SizedBox(width: AppDimensions.md),
+                        Expanded(child: exploreBarbersBtn),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(width: AppDimensions.md),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.push('/customer/search'),
-                    icon: const Icon(Icons.explore_outlined),
-                    label: const Text('Xem tất cả thợ'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: AppDimensions.xxl),
               ],
             ),
-            const SizedBox(height: AppDimensions.xxl),
-          ],
+          ),
         ),
       ),
     );

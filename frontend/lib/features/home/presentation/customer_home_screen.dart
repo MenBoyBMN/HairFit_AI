@@ -14,10 +14,14 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/seed_data_service.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/platform_helper.dart';
+import '../../../core/widgets/antigravity_card.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/loading_shimmer.dart';
 import '../../../core/widgets/rating_stars.dart';
+import '../../../core/widgets/staggered_reveal.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/barber_profile_model.dart';
 import '../../../providers/appointment_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -41,56 +45,89 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final upcomingAppointment = ref.watch(upcomingCustomerAppointmentProvider);
     final currentUser = ref.watch(authStateProvider).value;
     final favoriteBarbers = ref.watch(favoriteBarbersProvider);
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.xs),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: AppDimensions.borderRadiusSm,
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/home')
+          : AppBar(
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.xs),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: AppDimensions.borderRadiusSm,
+                    ),
+                    child: const Icon(
+                      Icons.content_cut_rounded,
+                      size: 20,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.sm),
+                  const Text('HairFit AI', style: AppTextStyles.h3),
+                ],
               ),
-              child: const Icon(
-                Icons.content_cut_rounded,
-                size: 20,
-                color: AppColors.accent,
-              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Tin nhắn',
+                  icon: const Icon(
+                    Icons.chat_outlined,
+                    color: AppColors.accent,
+                  ),
+                  onPressed: () => context.push('/conversations'),
+                ),
+                IconButton(
+                  tooltip: 'Lịch hẹn của tôi',
+                  icon: const Icon(
+                    Icons.calendar_month_outlined,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: () => context.push('/customer/appointments'),
+                ),
+              ],
             ),
-            const SizedBox(width: AppDimensions.sm),
-            const Text('HairFit AI', style: AppTextStyles.h3),
-          ],
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Tin nhắn',
-            icon: const Icon(Icons.chat_outlined, color: AppColors.accent),
-            onPressed: () => context.push('/conversations'),
-          ),
-          IconButton(
-            tooltip: 'Lịch hẹn của tôi',
-            icon: const Icon(
-              Icons.calendar_month_outlined,
-              color: AppColors.textPrimary,
-            ),
-            onPressed: () => context.push('/customer/appointments'),
-          ),
-        ],
-      ),
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? PlatformHelper.maxWebContentWidth : 800,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (upcomingAppointment != null)
-                  UpcomingAppointmentCard(appointment: upcomingAppointment),
-                MyAIHairProfileCard(
-                  savedFaceShape: currentUser?.savedFaceShape,
-                ),
+                if (isDesktop) const SizedBox(height: AppDimensions.md),
+                if (isDesktop && upcomingAppointment != null)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: StaggeredReveal(
+                          index: 0,
+                          child: UpcomingAppointmentCard(
+                            appointment: upcomingAppointment,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: StaggeredReveal(
+                          index: 1,
+                          child: MyAIHairProfileCard(
+                            savedFaceShape: currentUser?.savedFaceShape,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  if (upcomingAppointment != null)
+                    UpcomingAppointmentCard(appointment: upcomingAppointment),
+                  MyAIHairProfileCard(
+                    savedFaceShape: currentUser?.savedFaceShape,
+                  ),
+                ],
                 const SizedBox(height: AppDimensions.md),
                 if (favoriteBarbers.isNotEmpty) ...[
                   _buildFavoriteBarbersSection(favoriteBarbers),
@@ -107,44 +144,46 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          if (index == 1) {
-            context.push('/customer/search');
-          } else if (index == 2) {
-            context.push('/customer/appointments');
-          } else if (index == 3) {
-            context.push('/customer/profile');
-          } else {
-            setState(() {
-              _currentNavIndex = index;
-            });
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map),
-            label: 'Bản đồ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Lịch hẹn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Tài khoản',
-          ),
-        ],
-      ),
+      bottomNavigationBar: isDesktop
+          ? null
+          : BottomNavigationBar(
+              currentIndex: _currentNavIndex,
+              onTap: (index) {
+                if (index == 1) {
+                  context.push('/customer/search');
+                } else if (index == 2) {
+                  context.push('/customer/appointments');
+                } else if (index == 3) {
+                  context.push('/customer/profile');
+                } else {
+                  setState(() {
+                    _currentNavIndex = index;
+                  });
+                }
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Trang chủ',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.map_outlined),
+                  activeIcon: Icon(Icons.map),
+                  label: 'Bản đồ',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  activeIcon: Icon(Icons.calendar_month),
+                  label: 'Lịch hẹn',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: 'Tài khoản',
+                ),
+              ],
+            ),
     );
   }
 
@@ -490,6 +529,36 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 );
               }
 
+              if (PlatformHelper.isDesktopLayout(context)) {
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth =
+                        (constraints.maxWidth - AppDimensions.md) / 2;
+                    return Wrap(
+                      spacing: AppDimensions.md,
+                      runSpacing: AppDimensions.md,
+                      children: barbers.asMap().entries.map((entry) {
+                        final idx = entry.key;
+                        final barber = entry.value;
+                        return SizedBox(
+                          width: cardWidth,
+                          child: StaggeredReveal(
+                            index: idx,
+                            child: AntigravityCard(
+                              padding: const EdgeInsets.all(AppDimensions.md),
+                              onTap: () => context.push(
+                                '/customer/barber/${barber.uid}',
+                              ),
+                              child: _buildBarberCardContent(barber),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                );
+              }
+
               return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -508,71 +577,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         borderRadius: AppDimensions.borderRadiusMd,
                         border: Border.all(color: AppColors.divider),
                       ),
-                      child: Row(
-                        children: [
-                          AppAvatar(
-                            imageUrl: barber.avatarUrl,
-                            fallbackUrl: barber.coverUrl,
-                            name: barber.displayName,
-                            width: 72,
-                            height: 72,
-                            borderRadius: AppDimensions.borderRadiusSm,
-                            fit: BoxFit.cover,
-                            fallbackIcon: Icons.person,
-                          ),
-                          const SizedBox(width: AppDimensions.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        barber.displayName,
-                                        style: AppTextStyles.h4,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const StatusBadge.approval(
-                                      status: 'approved',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: AppDimensions.xxs),
-                                Text(
-                                  barber.address,
-                                  style: AppTextStyles.bodySmall,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: AppDimensions.xs),
-                                Row(
-                                  children: [
-                                    RatingStars(
-                                      rating: barber.ratingAvg,
-                                      reviewCount: barber.ratingCount,
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      DateFormatter.formatPriceRange(
-                                        barber.priceMin,
-                                        barber.priceMax,
-                                      ),
-                                      style: AppTextStyles.badgeText.copyWith(
-                                        color: AppColors.accent,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: _buildBarberCardContent(barber),
                     ),
                   );
                 },
@@ -581,6 +586,74 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBarberCardContent(BarberProfileModel barber) {
+    return Row(
+      children: [
+        AppAvatar(
+          imageUrl: barber.avatarUrl,
+          fallbackUrl: barber.coverUrl,
+          name: barber.displayName,
+          width: 72,
+          height: 72,
+          borderRadius: AppDimensions.borderRadiusSm,
+          fit: BoxFit.cover,
+          fallbackIcon: Icons.person,
+        ),
+        const SizedBox(width: AppDimensions.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      barber.displayName,
+                      style: AppTextStyles.h4,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const StatusBadge.approval(status: 'approved'),
+                ],
+              ),
+              const SizedBox(height: AppDimensions.xxs),
+              Text(
+                barber.address,
+                style: AppTextStyles.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppDimensions.xs),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AppDimensions.xs,
+                runSpacing: 2,
+                children: [
+                  RatingStars(
+                    rating: barber.ratingAvg,
+                    reviewCount: barber.ratingCount,
+                  ),
+                  Text(
+                    DateFormatter.formatPriceRange(
+                      barber.priceMin,
+                      barber.priceMax,
+                    ),
+                    style: AppTextStyles.badgeText.copyWith(
+                      color: AppColors.accent,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

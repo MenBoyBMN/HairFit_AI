@@ -6,8 +6,8 @@
 // ============================================================================
 
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -143,23 +143,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     _pickImage(ImageSource.gallery);
                   },
                 ),
-                ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: AppColors.background,
-                    child: Icon(
-                      Icons.camera_alt_rounded,
-                      color: AppColors.accent,
+                if (!kIsWeb)
+                  ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: AppColors.background,
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        color: AppColors.accent,
+                      ),
                     ),
+                    title: const Text(
+                      'Chụp ảnh mới',
+                      style: AppTextStyles.bodyLarge,
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _pickImage(ImageSource.camera);
+                    },
                   ),
-                  title: const Text(
-                    'Chụp ảnh mới',
-                    style: AppTextStyles.bodyLarge,
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
                 if (_pickedImageBytes != null ||
                     (_currentAvatarUrl?.isNotEmpty ?? false))
                   ListTile(

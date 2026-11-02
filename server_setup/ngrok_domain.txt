@@ -1,0 +1,7 @@
+# ==============================================================================
+# HairFit AI - Cấu hình tên miền tĩnh Ngrok
+# Bạn có thể thay đổi tên miền tĩnh miễn phí đã claim trên Dashboard ngrok.com
+# Hoặc để trống file này để Ngrok tự sinh URL ngẫu nhiên mỗi lần chạy.
+# ==============================================================================
+clothing-similarly-delicacy.ngrok-free.dev
+# CreBy: MenBoyBMN

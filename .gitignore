@@ -1,9 +1,31 @@
-# Miscellaneous
+# ==============================================================================
+# HairFit AI - Root Git Ignore Configuration
+# ==============================================================================
+
+# Operating System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*~
+*.swp
+*.swo
+
+# Miscellaneous & Temporary Files
 *.class
 *.log
 *.pyc
-*.swp
-.DS_Store
+*.bak
+*.tmp
+*.temp
 .atom/
 .build/
 .buildlog/
@@ -12,44 +34,71 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ / Visual Studio related
+# IntelliJ IDEA & Visual Studio
 *.iml
 *.ipr
 *.iws
 .idea/
 .vs/
 *.user
+*.userosv
 *.suo
+*.sln.docstates
+*.code-workspace
 
-# Flutter/Dart/Pub related (frontend/)
+# Node.js & npm (backend / scripts)
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Flutter / Dart / Pub (frontend/)
 **/doc/api/
 **/ios/Flutter/.last_build_id
 **/.dart_tool/
+**/.flutter-plugins
 **/.flutter-plugins-dependencies
 **/.pub-cache/
 **/.pub/
+**/.packages
 **/build/
 **/coverage/
 **/.widget_preview/
+**/flutter_*.png
 
-# Symbolication & Obfuscation related
+# Symbolication & Obfuscation
 app.*.symbols
 app.*.map.json
 
-# Android Studio build artifacts
+# Android Studio & Gradle Build Artifacts
+**/.gradle/
+**/local.properties
+**/GeneratedPluginRegistrant.java
+**/.cxx/
+**/captures/
+**/*.keystore
+**/*.jks
+**/key.properties
+**/*.apk
+**/*.aab
 **/android/app/debug
 **/android/app/profile
 **/android/app/release
 
-# ASP.NET Core / .NET related (backend/)
+# ASP.NET Core & .NET (backend/)
+**/bin/
+**/obj/
 backend/**/bin/
 backend/**/obj/
+*.mdf
+*.ldf
 
 # Environment Variables & Secrets
 **/.env
 **/.env.*
 !**/.env.example
 **/google-services.json
+server_setup/ngrok_token.txt
 
-About System/
 # CreBy: MenBoyBMN

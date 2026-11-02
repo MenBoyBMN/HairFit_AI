@@ -3,6 +3,7 @@
 // Mục đích: Thẻ hiển thị hồ sơ dáng mặt AI và gợi ý kiểu tóc cá nhân hóa (Task Phase 3 - C2).
 // ============================================================================
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -50,7 +51,7 @@ class MyAIHairProfileCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C5CE7).withValues(alpha: 0.22),
+            color: AppColors.aiHandshake.withValues(alpha: 0.22),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -63,32 +64,39 @@ class MyAIHairProfileCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: AppColors.accent,
+                        size: 16,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: AppColors.accent,
-                      size: 16,
+                    const SizedBox(width: AppDimensions.xs),
+                    const Expanded(
+                      child: Text(
+                        'HỒ SƠ DÁNG MẶT AI CỦA BẠN',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                          color: AppColors.accent,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppDimensions.xs),
-                  const Text(
-                    'HỒ SƠ DÁNG MẶT AI CỦA BẠN',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: AppDimensions.xs),
               TextButton.icon(
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
@@ -97,8 +105,11 @@ class MyAIHairProfileCard extends StatelessWidget {
                   foregroundColor: Colors.white70,
                 ),
                 icon: const Icon(Icons.refresh_rounded, size: 14),
-                label: const Text('Quét lại', style: TextStyle(fontSize: 11)),
-                onPressed: () => context.push('/ai-consult'),
+                label: Text(
+                  kIsWeb ? 'Đổi dáng mặt' : 'Quét lại',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                onPressed: () => context.push('/customer/ai-consult'),
               ),
             ],
           ),
@@ -279,9 +290,11 @@ class MyAIHairProfileCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Quét mặt với AI on-device bảo mật để lưu dáng mặt và nhận gợi ý chuẩn xác.',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                Text(
+                  kIsWeb
+                      ? 'Chọn dáng khuôn mặt và chất tóc trên Web Studio để nhận gợi ý chuẩn xác.'
+                      : 'Quét mặt với AI on-device bảo mật để lưu dáng mặt và nhận gợi ý chuẩn xác.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton.icon(
@@ -302,7 +315,7 @@ class MyAIHairProfileCard extends StatelessWidget {
                     'Khám phá ngay',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () => context.push('/ai-consult'),
+                  onPressed: () => context.push('/customer/ai-consult'),
                 ),
               ],
             ),

@@ -7,6 +7,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,8 +15,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -137,23 +140,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(authStateProvider);
-
     final currentUser = userAsync.value;
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Hồ Sơ Của Tôi', style: AppTextStyles.h3),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Làm mới',
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => ref.read(authStateProvider.notifier).refreshUser(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: currentUser == null
+      appBar: isDesktop
+          ? WebTopNavBar(
+              currentRoute: currentUser?.isBarber == true
+                  ? '/barber/profile'
+                  : '/customer/profile',
+              isBarber: currentUser?.isBarber == true,
+            )
+          : AppBar(
+              title: const Text('Hồ Sơ Của Tôi', style: AppTextStyles.h3),
+              centerTitle: true,
+              actions: [
+                IconButton(
+                  tooltip: 'Làm mới',
+                  icon: const Icon(Icons.refresh_rounded),
+                  onPressed: () =>
+                      ref.read(authStateProvider.notifier).refreshUser(),
+                ),
+              ],
+            ),
+      bottomNavigationBar: (isDesktop || currentUser == null)
           ? null
           : _buildBottomNav(context, currentUser),
       body: userAsync.when(
@@ -232,7 +243,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           _ActionItem(
                             icon: Icons.face_retouching_natural_rounded,
                             title: 'Tư vấn kiểu tóc AI',
-                            subtitle: 'Phân tích dáng mặt 100% On-Device',
+                            subtitle: kIsWeb
+                                ? 'Studio chọn dáng mặt & chất tóc trực quan'
+                                : 'Phân tích dáng mặt 100% On-Device',
                             onTap: () {
                               try {
                                 context.push('/customer/ai-consult');
