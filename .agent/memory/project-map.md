@@ -6,7 +6,7 @@
 | Đường dẫn | Nội dung |
 | :--- | :--- |
 | `frontend/` | Ứng dụng Flutter (`pubspec.yaml`, `analysis_options.yaml`, `firestore.rules`, `.env`) |
-| `backend/HairFit.Api/` | ASP.NET Core 8 Web API (Backend duy nhất của hệ thống) |
+| `backend/HairFit.Api/` | ASP.NET Core 10 Web API (Backend duy nhất của hệ thống) |
 | `backend/HairFit.Api.Tests/` | xUnit + EF InMemory (`ApiIntegrationTests.cs`) |
 | `server_setup/` | Script `.bat` cài tool / chạy server ASP.NET / ngrok / adb reverse |
 | `About System/` | Tài liệu đặc tả & kế hoạch (có thể lỗi thời — tin code hơn) |

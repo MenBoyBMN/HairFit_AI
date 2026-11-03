@@ -9,7 +9,7 @@
 | Tầng | Công nghệ thực tế | Thư mục |
 | :--- | :--- | :--- |
 | Frontend | Flutter 3.x / Dart 3, Riverpod 2, GoRouter 14, `flutter_map` (OSM) | `frontend/` |
-| Backend | ASP.NET Core 8 Web API + EF Core + SQL Server LocalDB, port `5000` | `backend/HairFit.Api/` |
+| Backend | ASP.NET Core 10 Web API + EF Core + SQL Server LocalDB, port `5000` | `backend/HairFit.Api/` |
 | Auth | Firebase Auth → Firebase ID Token (JWT) → ASP.NET JwtBearer | `frontend/lib/core/services/auth_service.dart`, `backend/HairFit.Api/Program.cs` |
 | Realtime | Cloud Firestore **CHỈ dùng cho Chat** (`chats/`, `messages/`) | `frontend/lib/features/chat/`, `frontend/firestore.rules` |
 | AI | On-device `google_mlkit_face_detection` (contours), KHÔNG dùng Cloud AI | `frontend/lib/features/ai_consult/` |
