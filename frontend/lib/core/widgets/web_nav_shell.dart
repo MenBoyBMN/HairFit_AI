@@ -99,13 +99,44 @@ class WebTopNavBar extends ConsumerWidget implements PreferredSizeWidget {
     ),
   ];
 
+  static const List<WebNavItem> adminItems = [
+    WebNavItem(
+      label: 'Tổng quan Hệ thống',
+      icon: Icons.dashboard_rounded,
+      route: '/admin/dashboard',
+    ),
+    WebNavItem(
+      label: 'Duyệt Thợ & Salon',
+      icon: Icons.content_cut_rounded,
+      route: '/admin/approve-barbers',
+    ),
+    WebNavItem(
+      label: 'Hộp thư Hệ thống',
+      icon: Icons.forum_rounded,
+      route: '/conversations',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(authStateProvider).value;
+    final isAdmin = currentUser?.isAdmin == true;
     final effectiveIsBarber =
-        isBarber ?? (currentUser?.role == UserRole.barber);
-    final items = effectiveIsBarber ? barberItems : customerItems;
-    final badgeText = effectiveIsBarber ? 'BARBER STUDIO' : 'WEB PORTAL';
+        !isAdmin && (isBarber ?? (currentUser?.role == UserRole.barber));
+
+    final List<WebNavItem> items;
+    final String badgeText;
+
+    if (isAdmin) {
+      items = adminItems;
+      badgeText = 'ADMIN PORTAL';
+    } else if (effectiveIsBarber) {
+      items = barberItems;
+      badgeText = 'BARBER STUDIO';
+    } else {
+      items = customerItems;
+      badgeText = 'WEB PORTAL';
+    }
 
     return ClipRect(
       child: BackdropFilter(
@@ -138,11 +169,13 @@ class WebTopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                     InkWell(
                       borderRadius: AppDimensions.borderRadiusSm,
                       onTap: () {
-                        context.go(
-                          effectiveIsBarber
-                              ? '/barber/appointments'
-                              : '/customer/home',
-                        );
+                        if (isAdmin) {
+                          context.go('/admin/dashboard');
+                        } else if (effectiveIsBarber) {
+                          context.go('/barber/appointments');
+                        } else {
+                          context.go('/customer/home');
+                        }
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -229,11 +262,13 @@ class WebTopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       InkWell(
                         borderRadius: BorderRadius.circular(30),
                         onTap: () {
-                          context.push(
-                            effectiveIsBarber
-                                ? '/barber/profile'
-                                : '/customer/profile',
-                          );
+                          if (isAdmin) {
+                            context.go('/admin/dashboard');
+                          } else if (effectiveIsBarber) {
+                            context.push('/barber/profile');
+                          } else {
+                            context.push('/customer/profile');
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(

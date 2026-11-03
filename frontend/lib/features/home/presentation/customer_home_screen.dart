@@ -5,6 +5,7 @@
 //  - Sử dụng ConsumerWidget/StatefulWidget, kết nối UI với Provider để hiển thị trạng thái và xử lý sự kiện người dùng.
 // ============================================================================
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/seed_data_service.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/antigravity_card.dart';
@@ -25,6 +25,7 @@ import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/barber_profile_model.dart';
 import '../../../providers/appointment_provider.dart';
 import '../../../providers/auth_provider.dart';
+import '../../ai_consult/data/hairstyle_repository.dart';
 import '../../search_map/data/barber_repository.dart';
 import 'widgets/my_ai_hair_profile_card.dart';
 import 'widgets/upcoming_appointment_card.dart';
@@ -351,7 +352,15 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildHairstyleSection() {
-    final hairstyles = SeedDataService.sampleHairstyles;
+    final hairstylesAsync = ref.watch(hairstylesProvider);
+    final hairstyles = hairstylesAsync.valueOrNull ?? [];
+
+    if (hairstyles.isEmpty && hairstylesAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+    if (hairstyles.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,20 +407,30 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(AppDimensions.radiusMd),
                         ),
-                        child: Image.network(
-                          item.imageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: item.imageUrl,
                           height: 100,
                           width: 140,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                                height: 100,
-                                color: AppColors.inputBackground,
-                                child: const Icon(
-                                  Icons.image_not_supported_outlined,
-                                  color: AppColors.textSecondary,
-                                ),
+                          placeholder: (context, url) => Container(
+                            height: 100,
+                            color: AppColors.inputBackground,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 100,
+                            color: AppColors.inputBackground,
+                            child: const Icon(
+                              Icons.image_not_supported_outlined,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
                       ),
                       Padding(
@@ -559,14 +578,15 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 );
               }
 
+              final featuredList = barbers.take(5).toList();
               return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: barbers.length,
+                itemCount: featuredList.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: AppDimensions.md),
                 itemBuilder: (context, index) {
-                  final barber = barbers[index];
+                  final barber = featuredList[index];
                   return InkWell(
                     borderRadius: AppDimensions.borderRadiusMd,
                     onTap: () => context.push('/customer/barber/${barber.uid}'),

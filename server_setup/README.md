@@ -32,17 +32,12 @@ Trong thư mục `server_setup/`, bạn có các kịch bản sẵn sàng:
    - Backend ASP.NET Core tự chạy trên Port 5000.
    - Cloudflare Tunnel cấp URL ngẫu nhiên dạng `https://xxxx.trycloudflare.com`.
 
-### Lựa Chọn C: Node.js Express Web API + Ngrok (Port 3000)
-1. Chạy `2_start_server_nodejs.bat`:
-   - Tự động chạy Node.js Express trên Port 3000.
-   - Ngrok mở đường hầm trỏ về Port 3000.
-
 ---
 
 ## 3. Cơ Chế Auto-Discovery "Cắm Là Chạy" (Zero-Config Plug & Play)
 
 Ứng dụng Flutter đã được tích hợp công nghệ **Tự động nhận diện nền tảng & endpoint (Auto-Discovery Probe)** trong `api_client.dart`:
-- **Web (Chrome/Edge) & Windows Desktop**: Tự động nhận diện và kết nối `http://localhost:5000` (hoặc `http://localhost:3000`).
+- **Web (Chrome/Edge) & Windows Desktop**: Tự động nhận diện và kết nối `http://localhost:5000`.
 - **Máy ảo Android (Android Emulator)**: Tự động chuyển đổi sang loopback `http://10.0.2.2:5000`.
 - **Điện thoại thật cắm cáp USB**: Tự động kích hoạt `adb reverse` để kết nối thẳng `http://localhost:5000` (tốc độ tối đa, 0 ping, offline 100%).
 - **Điện thoại thật chạy 4G/Wi-Fi từ xa**: Khi không tìm thấy server local, app tự động chuyển sang đường hầm Ngrok tĩnh (`https://clothing-similarly-delicacy.ngrok-free.dev`).

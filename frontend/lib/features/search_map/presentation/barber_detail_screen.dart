@@ -8,7 +8,6 @@
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -1174,8 +1173,8 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
                   final comment = rev['reviewComment'] as String? ?? '';
                   final createdAt = rev['createdAt'];
                   DateTime? reviewDate;
-                  if (createdAt is Timestamp) {
-                    reviewDate = createdAt.toDate();
+                  if (createdAt is DateTime) {
+                    reviewDate = createdAt.toLocal();
                   } else if (createdAt is String) {
                     reviewDate = DateTime.tryParse(createdAt)?.toLocal();
                   }
@@ -1322,6 +1321,76 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen> {
                       onPressed: () {
                         context.push('/barber/profile-edit');
                       },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final isAdmin = currentUser?.isAdmin == true;
+    if (isAdmin) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.lg,
+          vertical: AppDimensions.md,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Center(
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.admin_panel_settings_outlined,
+                          size: 16,
+                          color: AppColors.accent,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Chế độ xem Admin',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.md),
+                  Expanded(
+                    child: AppButton(
+                      text: 'Quản Lý Thợ Trong Admin',
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      variant: AppButtonVariant.outline,
+                      onPressed: () => context.go('/admin/approve-barbers'),
                     ),
                   ),
                 ],

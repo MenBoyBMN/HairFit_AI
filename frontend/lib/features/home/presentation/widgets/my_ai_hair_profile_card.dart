@@ -5,30 +5,32 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/services/seed_data_service.dart';
+import '../../../ai_consult/data/hairstyle_repository.dart';
 import '../../../ai_consult/domain/face_shape.dart';
 import '../../../ai_consult/domain/hairstyle_recommendation_engine.dart';
 
-class MyAIHairProfileCard extends StatelessWidget {
+class MyAIHairProfileCard extends ConsumerWidget {
   final String? savedFaceShape;
 
   const MyAIHairProfileCard({super.key, required this.savedFaceShape});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (savedFaceShape == null || savedFaceShape!.trim().isEmpty) {
       return _buildEmptyPromptCard(context);
     }
 
     final shape = FaceShape.fromString(savedFaceShape);
     const engine = HairstyleRecommendationEngine();
+    final hairstyles = ref.watch(hairstylesProvider).valueOrNull ?? [];
     final rec = engine.recommend(
       faceShape: shape,
-      catalog: SeedDataService.sampleHairstyles,
+      catalog: hairstyles,
     );
     final topStyles = rec.primaryRecommendations.take(3).toList();
 

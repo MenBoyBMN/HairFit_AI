@@ -292,10 +292,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ],
                         if (user.isAdmin) ...[
                           _ActionItem(
+                            icon: Icons.dashboard_rounded,
+                            title: 'Bảng điều khiển Admin (Dashboard)',
+                            subtitle: 'Biểu đồ doanh thu, số liệu tổng quan',
+                            onTap: () => context.go('/admin/dashboard'),
+                          ),
+                          _ActionItem(
                             icon: Icons.admin_panel_settings_outlined,
                             title: 'Phê duyệt thợ cắt tóc',
                             subtitle: 'Xét duyệt hồ sơ salon đăng ký mới',
-                            onTap: () => context.push('/admin/approve-barbers'),
+                            onTap: () => context.go('/admin/approve-barbers'),
                           ),
                         ],
                       ],
@@ -304,13 +310,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     _buildActionGroup(
                       title: 'Hệ thống HairFit AI',
                       items: [
-                        _ActionItem(
-                          icon: Icons.science_outlined,
-                          title: 'Kiểm thử AI & Dữ liệu mẫu',
-                          subtitle:
-                              'Công cụ test On-Device AI và nạp dữ liệu mẫu',
-                          onTap: () => context.push('/spike-test'),
-                        ),
                         _ActionItem(
                           icon: Icons.info_outline_rounded,
                           title: 'Về ứng dụng',

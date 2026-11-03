@@ -5,8 +5,6 @@
 //  - Lớp mô hình (Model) bao gồm các thuộc tính và phương thức chuyển đổi (toMap, fromMap, copyWith).
 // ============================================================================
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 enum UserRole {
   customer,
   barber,
@@ -68,8 +66,9 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map, {String? id}) {
     DateTime? parseTimestamp(dynamic val) {
-      if (val is Timestamp) return val.toDate();
+      if (val is DateTime) return val;
       if (val is String) return DateTime.tryParse(val);
+      if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
       return null;
     }
 
@@ -97,11 +96,6 @@ class UserModel {
     );
   }
 
-  factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? {};
-    return UserModel.fromMap(data, id: doc.id);
-  }
-
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -114,12 +108,8 @@ class UserModel {
       if (savedFaceShape != null) 'savedFaceShape': savedFaceShape,
       'savedHairstyleIds': savedHairstyleIds,
       'favoriteBarberIds': favoriteBarberIds,
-      'createdAt': createdAt != null
-          ? Timestamp.fromDate(createdAt!)
-          : FieldValue.serverTimestamp(),
-      'updatedAt': updatedAt != null
-          ? Timestamp.fromDate(updatedAt!)
-          : FieldValue.serverTimestamp(),
+      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     };
   }
 

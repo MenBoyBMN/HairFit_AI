@@ -5,6 +5,8 @@
 //  - Sử dụng ConsumerWidget/StatefulWidget, kết nối UI với Provider để hiển thị trạng thái và xử lý sự kiện người dùng.
 // ============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
@@ -31,8 +33,13 @@ import 'widgets/map_marker.dart';
 /// Màn hình Bản đồ & Tìm kiếm thợ cắt tóc (Task 3.5, 3.9, 3.11)
 class SearchMapScreen extends ConsumerStatefulWidget {
   final String? initialHairstyleId;
+  final String? initialSearchQuery;
 
-  const SearchMapScreen({super.key, this.initialHairstyleId});
+  const SearchMapScreen({
+    super.key,
+    this.initialHairstyleId,
+    this.initialSearchQuery,
+  });
 
   @override
   ConsumerState<SearchMapScreen> createState() => _SearchMapScreenState();
@@ -42,11 +49,24 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
   bool _hasAppliedInitialHairstyle = false;
+  bool _hasAppliedInitialSearchQuery = false;
   bool _dismissedLocationBanner = false;
+  Timer? _mapPositionDebounceTimer;
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchQuery != null && widget.initialSearchQuery!.trim().isNotEmpty) {
+      _searchController.text = widget.initialSearchQuery!.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_hasAppliedInitialSearchQuery && mounted) {
+          ref
+              .read(searchNotifierProvider.notifier)
+              .setSearchQuery(widget.initialSearchQuery!.trim());
+          _hasAppliedInitialSearchQuery = true;
+        }
+      });
+    }
     if (widget.initialHairstyleId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_hasAppliedInitialHairstyle && mounted) {
@@ -61,6 +81,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
 
   @override
   void dispose() {
+    _mapPositionDebounceTimer?.cancel();
     _searchController.dispose();
     _mapController.dispose();
     super.dispose();
@@ -895,14 +916,25 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           options: MapOptions(
             initialCenter: state.referenceLocation,
             initialZoom: 14.5,
-            minZoom: 10.0,
-            maxZoom: 18.0,
+            minZoom: 4.0,
+            maxZoom: 19.0,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+            ),
             onPositionChanged: (camera, hasGesture) {
               if (hasGesture) {
-                // Cập nhật tâm tham chiếu khi người dùng tự kéo bản đồ
-                ref
-                    .read(searchNotifierProvider.notifier)
-                    .setReferenceLocation(camera.center);
+                // Debounce cập nhật tâm tham chiếu tránh giật lag khi đang thao tác
+                _mapPositionDebounceTimer?.cancel();
+                _mapPositionDebounceTimer = Timer(
+                  const Duration(milliseconds: 350),
+                  () {
+                    if (mounted) {
+                      ref
+                          .read(searchNotifierProvider.notifier)
+                          .setReferenceLocation(camera.center);
+                    }
+                  },
+                );
               }
             },
           ),

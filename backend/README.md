@@ -1,10 +1,8 @@
 # HairFit AI - RESTful Web API Backend
 
-Backend Web API phục vụ cho ứng dụng di động & đa nền tảng **HairFit AI**. Dự án cung cấp 2 giải pháp Backend chuyên nghiệp:
-1. **ASP.NET Core 8 Web API** (`HairFit.Api/`): Chạy trên Entity Framework Core, SQL Server LocalDB, xác thực Firebase JWT Bearer, tối ưu hóa cho máy chủ Backend hiệu năng cao tại cổng `5000`.
-2. **Node.js Express Web API** (`server.js`, `routes/`, `data/`): Triển khai Serverless nhẹ nhàng, 0 đồng trên Vercel hoặc chạy cục bộ tại cổng `3000`.
+Backend Web API phục vụ cho ứng dụng di động & đa nền tảng **HairFit AI**, được xây dựng trên **ASP.NET Core 8 Web API** (`HairFit.Api/`): Chạy trên Entity Framework Core, SQL Server LocalDB, xác thực Firebase JWT Bearer, tối ưu hóa cho máy chủ Backend hiệu năng cao tại cổng `5000`.
 
-Cả 2 Backend đều tương thích hoàn toàn 100% với các Route RESTful của Flutter Frontend (`/api/...`).
+Tương thích hoàn toàn 100% với các Route RESTful của Flutter Frontend (`/api/...`).
 
 ---
 
@@ -26,38 +24,6 @@ dotnet run
 ```bash
 dotnet test backend/HairFit.Backend.sln
 ```
-
----
-
-## ⚡ 2. Khởi Chạy Node.js Express Web API (Port 3000)
-
-### Bước 1: Cài đặt Dependencies
-```bash
-cd backend
-npm install
-```
-
-### Bước 2: Khởi chạy Server
-```bash
-npm start
-```
-Server sẽ chạy tại: **`http://localhost:3000`**
-- **Health Endpoint**: `http://localhost:3000/health` hoặc `http://localhost:3000/api/health`
-- **Hairstyles**: `http://localhost:3000/api/hairstyles`
-- **Barbers**: `http://localhost:3000/api/barbers/approved`
-
----
-
-## 🌐 3. Hướng Dẫn Deploy Lên Vercel (Miễn Phí 100%)
-
-1. Mở Terminal tại thư mục `backend/` và gõ lệnh:
-   ```bash
-   npx vercel
-   ```
-2. Bấm `Y` và chọn các thiết lập mặc định.
-3. Vercel sẽ cấp đường dẫn dạng:
-   👉 **`https://hairfit-ai-backend.vercel.app`**
-4. Cập nhật `API_BASE_URL` trong file `frontend/.env` sang URL của Vercel.
 
 ---
 

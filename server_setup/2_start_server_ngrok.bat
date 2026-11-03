@@ -19,7 +19,6 @@ if exist "%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe" (
     set ADB_CMD="%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"
 )
 %ADB_CMD% reverse tcp:5000 tcp:5000 2>nul
-%ADB_CMD% reverse tcp:3000 tcp:3000 2>nul
 echo [USB Bridge] Đã kích hoạt ADB Port Forwarding cho thiết bị Android thật cắm cáp USB.
 echo.
 

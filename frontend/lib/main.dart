@@ -14,7 +14,6 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/services/api_client.dart';
 import 'core/services/firebase_service.dart';
-import 'core/services/tile_server_config.dart';
 import 'core/theme/app_theme.dart';
 import 'routing/app_router.dart';
 
@@ -36,11 +35,10 @@ Future<void> main() async {
   // 2. Khởi tạo Firebase SDK (Auth, Firestore)
   await FirebaseService.initialize();
 
-  // 3. Khởi tạo trước kết nối Tile Server trong nền (Task 3.5 fix DNS)
-  unawaited(TileServerConfig.probe());
-
-  // 3.1 Tự động dò tìm Backend API URL phù hợp (Web / Emulator / Điện thoại thật / Ngrok)
-  unawaited(ApiClient.probe());
+  // 3. Tự động dò tìm Backend API URL phù hợp (Web / Emulator / Điện thoại thật USB / Ngrok)
+  try {
+    await ApiClient.probe(timeout: const Duration(milliseconds: 900));
+  } catch (_) {}
 
   // 4. Khởi chạy ứng dụng bọc trong ProviderScope của Riverpod (Task 1.14)
   runApp(const ProviderScope(child: HairFitApp()));

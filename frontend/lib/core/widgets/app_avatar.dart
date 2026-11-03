@@ -8,7 +8,6 @@
 
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -17,19 +16,37 @@ import '../constants/app_colors.dart';
 import '../constants/app_dimensions.dart';
 import '../constants/app_text_styles.dart';
 
+/// Cache giới hạn cho Base64 MemoryImage để tránh lặp lại decode trên UI thread
+final Map<String, MemoryImage> _base64ImageCache = {};
+
+MemoryImage? _getCachedMemoryImage(String rawData) {
+  final cached = _base64ImageCache[rawData];
+  if (cached != null) return cached;
+
+  try {
+    final commaIdx = rawData.indexOf(',');
+    final base64Str = commaIdx != -1
+        ? rawData.substring(commaIdx + 1)
+        : rawData;
+    final bytes = base64Decode(base64Str);
+    final image = MemoryImage(bytes);
+    if (_base64ImageCache.length >= 60) {
+      _base64ImageCache.remove(_base64ImageCache.keys.first);
+    }
+    _base64ImageCache[rawData] = image;
+    return image;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Helper tạo ImageProvider từ chuỗi URL mạng hoặc Base64 data URI
 ImageProvider? getAvatarImageProvider(String? url) {
   if (url == null || url.trim().isEmpty) return null;
   final clean = url.trim();
 
   if (clean.startsWith('data:image')) {
-    try {
-      final commaIdx = clean.indexOf(',');
-      final base64Str = commaIdx != -1 ? clean.substring(commaIdx + 1) : clean;
-      return MemoryImage(base64Decode(base64Str));
-    } catch (_) {
-      return null;
-    }
+    return _getCachedMemoryImage(clean);
   }
 
   if (clean.startsWith('http://') || clean.startsWith('https://')) {
@@ -38,11 +55,7 @@ ImageProvider? getAvatarImageProvider(String? url) {
 
   // Thử parse nếu là raw base64 hợp lệ
   if (clean.length > 50 && !clean.contains('/') && !clean.contains(':')) {
-    try {
-      return MemoryImage(base64Decode(clean));
-    } catch (_) {
-      return null;
-    }
+    return _getCachedMemoryImage(clean);
   }
 
   return null;
@@ -168,23 +181,17 @@ class AppAvatar extends StatelessWidget {
   }
 
   Widget _buildBase64Image(String rawData, double w, double h) {
-    try {
-      final commaIdx = rawData.indexOf(',');
-      final base64String = commaIdx != -1
-          ? rawData.substring(commaIdx + 1)
-          : rawData;
-      final Uint8List bytes = base64Decode(base64String);
-
-      return Image.memory(
-        bytes,
-        width: w,
-        height: h,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildFallback(w, h),
-      );
-    } catch (_) {
+    final memoryImage = _getCachedMemoryImage(rawData);
+    if (memoryImage == null) {
       return _buildFallback(w, h);
     }
+    return Image(
+      image: memoryImage,
+      width: w,
+      height: h,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) => _buildFallback(w, h),
+    );
   }
 
   Widget _buildNetworkImage(String url, double w, double h) {

@@ -42,7 +42,12 @@ class ApiClient {
 
   /// URL phát hiện tự động hoạt động tốt nhất trong runtime
   static String? _discoveredBaseUrl;
-  static bool _isProbing = false;
+  static Future<String?>? _activeProbeFuture;
+
+  // Cache Firebase Auth Token trong 5 phút để tránh gọi getIdToken() trên từng request
+  static String? _cachedUid;
+  static String? _cachedToken;
+  static DateTime? _tokenFetchedAt;
 
   /// URL Ngrok / Remote cố định mặc định cho trường hợp chạy từ xa qua 4G
   static const String defaultRemoteUrl =
@@ -85,28 +90,23 @@ class ApiClient {
     if (kIsWeb) {
       candidates.addAll([
         'http://localhost:5000',
-        'http://localhost:3000',
         remoteUrl,
       ]);
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       candidates.addAll([
+        'http://localhost:5000', // Real Device USB (adb reverse) hoặc máy chủ local
         'http://10.0.2.2:5000', // Android Emulator (.NET 8)
-        'http://localhost:5000', // Real Device USB (adb reverse)
-        'http://10.0.2.2:3000', // Android Emulator (Node.js)
-        'http://localhost:3000', // Real Device USB (Node.js)
         remoteUrl, // 4G / Wi-Fi từ xa qua Ngrok
       ]);
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       candidates.addAll([
         'http://localhost:5000', // iOS Simulator
-        'http://localhost:3000',
         remoteUrl,
       ]);
     } else {
       // Windows, macOS, Linux Desktop
       candidates.addAll([
         'http://localhost:5000',
-        'http://localhost:3000',
         remoteUrl,
       ]);
     }
@@ -125,19 +125,20 @@ class ApiClient {
   /// Dò tìm endpoint hoạt động nhanh nhất trong nền (Fast Health Probe)
   static Future<String?> probe({
     http.Client? client,
-    Duration timeout = const Duration(milliseconds: 600),
+    Duration timeout = const Duration(milliseconds: 700),
   }) async {
-    if (_isProbing) return _discoveredBaseUrl;
-    _isProbing = true;
+    if (_discoveredBaseUrl != null) return _discoveredBaseUrl;
+    if (_activeProbeFuture != null) return await _activeProbeFuture;
 
     final candidates = getCandidateUrls();
     final testClient = client ?? http.Client();
     final shouldCloseClient = client == null;
 
-    try {
-      final completer = Completer<String?>();
-      int pending = candidates.length;
+    final completer = Completer<String?>();
+    _activeProbeFuture = completer.future;
+    int pending = candidates.length;
 
+    try {
       for (final url in candidates) {
         _checkCandidate(testClient, url, timeout)
             .then((isHealthy) {
@@ -159,7 +160,7 @@ class ApiClient {
       }
 
       final winner = await completer.future.timeout(
-        timeout + const Duration(milliseconds: 250),
+        timeout + const Duration(milliseconds: 300),
         onTimeout: () => null,
       );
 
@@ -170,7 +171,7 @@ class ApiClient {
     } catch (e) {
       debugPrint('⚠️ [ApiClient] Auto-probe check: $e');
     } finally {
-      _isProbing = false;
+      _activeProbeFuture = null;
       if (shouldCloseClient) {
         testClient.close();
       }
@@ -190,15 +191,7 @@ class ApiClient {
       if (res.statusCode >= 200 && res.statusCode < 500) {
         return true;
       }
-    } catch (_) {
-      try {
-        final uri = Uri.parse('$url/health');
-        final res = await client.get(uri).timeout(timeout);
-        if (res.statusCode >= 200 && res.statusCode < 500) {
-          return true;
-        }
-      } catch (_) {}
-    }
+    } catch (_) {}
     return false;
   }
 
@@ -275,9 +268,17 @@ class ApiClient {
     try {
       final user = _safeAuth?.currentUser;
       if (user != null) {
-        final token = await user.getIdToken();
-        if (token != null && token.isNotEmpty) {
-          headers['Authorization'] = 'Bearer $token';
+        final now = DateTime.now();
+        if (_cachedUid != user.uid ||
+            _cachedToken == null ||
+            _tokenFetchedAt == null ||
+            now.difference(_tokenFetchedAt!) > const Duration(minutes: 5)) {
+          _cachedToken = await user.getIdToken();
+          _cachedUid = user.uid;
+          _tokenFetchedAt = now;
+        }
+        if (_cachedToken != null && _cachedToken!.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $_cachedToken';
         }
       }
     } catch (_) {}
@@ -314,7 +315,7 @@ class ApiClient {
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      // Hỗ trợ tự động bóc tách vỏ bọc envelope { status: 'success', data: [...] } nếu có từ Express API
+      // Hỗ trợ tự động bóc tách vỏ bọc envelope { status: 'success', data: [...] } nếu có
       if (decoded is Map &&
           decoded.containsKey('data') &&
           decoded.containsKey('status')) {
@@ -352,7 +353,17 @@ class ApiClient {
     Future<http.Response> Function(Uri uri, Map<String, String> headers)
     makeCall,
   ) async {
-    const timeoutDuration = Duration(seconds: 15);
+    // Nếu Auto-Discovery probe đang chạy trong nền, đợi tối đa 800ms để bắt đúng backend
+    if (_discoveredBaseUrl == null && _activeProbeFuture != null) {
+      try {
+        await _activeProbeFuture!.timeout(
+          const Duration(milliseconds: 800),
+          onTimeout: () => null,
+        );
+      } catch (_) {}
+    }
+
+    const timeoutDuration = Duration(seconds: 8);
     final headers = await _buildHeaders();
 
     // 1. Thử gửi với baseUrl hiện tại
@@ -386,7 +397,7 @@ class ApiClient {
       }
 
       // Thử lại lần cuối với baseUrl hiện tại (đề phòng sóng 4G chập chờn)
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await Future<void>.delayed(const Duration(milliseconds: 500));
       final retryUri = _buildUri(path, queryParameters);
       return await makeCall(retryUri, headers).timeout(timeoutDuration);
     }

@@ -103,8 +103,10 @@ void main() {
         });
 
         final adminRepo = AdminRepository(
-          null,
-          ApiClient(httpClient: mockHttp, baseUrl: 'http://localhost:5000'),
+          apiClient: ApiClient(
+            httpClient: mockHttp,
+            baseUrl: 'http://localhost:5000',
+          ),
         );
 
         final stats = await adminRepo.getDashboardStats();

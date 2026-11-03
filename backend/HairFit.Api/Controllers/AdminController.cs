@@ -26,62 +26,53 @@ public class AdminController : ControllerBase
     {
         var todayStr = DateTime.Now.ToString("yyyy-MM-dd");
 
-        var users = await _db.Users.AsNoTracking().ToListAsync();
-        int customers = 0, barbers = 0, admins = 0, blocked = 0;
-        foreach (var u in users)
-        {
-            if (u.IsBlocked) blocked++;
-            var role = u.Role.ToLowerInvariant();
-            if (role == "barber") barbers++;
-            else if (role == "admin") admins++;
-            else customers++;
-        }
+        var totalUsers = await _db.Users.CountAsync();
+        var blockedUsers = await _db.Users.CountAsync(u => u.IsBlocked);
+        var barbers = await _db.Users.CountAsync(u => u.Role == "barber");
+        var admins = await _db.Users.CountAsync(u => u.Role == "admin");
+        var customers = totalUsers - barbers - admins;
 
-        var barberProfiles = await _db.BarberProfiles.AsNoTracking().ToListAsync();
-        int pendingBarbers = 0, approvedBarbers = 0, suspendedBarbers = 0, rejectedBarbers = 0;
-        foreach (var b in barberProfiles)
-        {
-            var status = b.ApprovalStatus.ToLowerInvariant();
-            if (status == "pending") pendingBarbers++;
-            else if (status == "approved") approvedBarbers++;
-            else if (status == "suspended") suspendedBarbers++;
-            else if (status == "rejected") rejectedBarbers++;
-        }
+        var pendingBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "pending");
+        var approvedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "approved");
+        var suspendedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "suspended");
+        var rejectedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "rejected");
 
-        var appointments = await _db.Appointments.AsNoTracking().ToListAsync();
-        int totalAppToday = 0, pendingAppToday = 0, confirmedAppToday = 0, completedAppToday = 0, cancelledAppToday = 0;
-        int revenueToday = 0, expectedRevenueToday = 0, totalRevenue = 0;
+        var totalAppointments = await _db.Appointments.CountAsync();
+        var totalRevenue = await _db.Appointments
+            .Where(a => a.Status == "completed")
+            .SumAsync(a => (int?)a.Price) ?? 0;
 
-        foreach (var a in appointments)
+        var todayAppointments = await _db.Appointments
+            .AsNoTracking()
+            .Where(a => a.Date == todayStr)
+            .Select(a => new { a.Status, a.Price })
+            .ToListAsync();
+
+        int totalAppToday = todayAppointments.Count;
+        int pendingAppToday = 0, confirmedAppToday = 0, completedAppToday = 0, cancelledAppToday = 0;
+        int revenueToday = 0, expectedRevenueToday = 0;
+
+        foreach (var a in todayAppointments)
         {
-            var status = a.Status.ToLowerInvariant();
-            if (status == "completed")
+            var status = a.Status.ToLower();
+            if (status == "pending")
             {
-                totalRevenue += a.Price;
+                pendingAppToday++;
             }
-
-            if (a.Date == todayStr)
+            else if (status == "confirmed")
             {
-                totalAppToday++;
-                if (status == "pending")
-                {
-                    pendingAppToday++;
-                }
-                else if (status == "confirmed")
-                {
-                    confirmedAppToday++;
-                    expectedRevenueToday += a.Price;
-                }
-                else if (status == "completed")
-                {
-                    completedAppToday++;
-                    revenueToday += a.Price;
-                    expectedRevenueToday += a.Price;
-                }
-                else if (status == "cancelled" || status == "rejected")
-                {
-                    cancelledAppToday++;
-                }
+                confirmedAppToday++;
+                expectedRevenueToday += a.Price;
+            }
+            else if (status == "completed")
+            {
+                completedAppToday++;
+                revenueToday += a.Price;
+                expectedRevenueToday += a.Price;
+            }
+            else if (status == "cancelled" || status == "rejected")
+            {
+                cancelledAppToday++;
             }
         }
 
@@ -90,11 +81,11 @@ public class AdminController : ControllerBase
 
         return Ok(new Dictionary<string, object>
         {
-            ["totalUsers"] = users.Count,
+            ["totalUsers"] = totalUsers,
             ["totalCustomers"] = customers,
             ["totalBarbers"] = barbers,
             ["totalAdmins"] = admins,
-            ["blockedUsers"] = blocked,
+            ["blockedUsers"] = blockedUsers,
             ["pendingBarbers"] = pendingBarbers,
             ["approvedBarbers"] = approvedBarbers,
             ["suspendedBarbers"] = suspendedBarbers,
@@ -107,7 +98,7 @@ public class AdminController : ControllerBase
             ["revenueToday"] = revenueToday,
             ["expectedRevenueToday"] = expectedRevenueToday,
             ["totalRevenue"] = totalRevenue,
-            ["totalAppointments"] = appointments.Count,
+            ["totalAppointments"] = totalAppointments,
             ["totalHairstyles"] = hairstylesCount,
             ["totalReviews"] = reviewsCount
         });

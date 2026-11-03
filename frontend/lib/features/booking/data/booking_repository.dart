@@ -7,8 +7,6 @@
 
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../../core/constants/business_constants.dart';
 import '../../../core/services/api_client.dart';
 import '../../../models/booked_slot_model.dart';
@@ -64,7 +62,7 @@ class CannotCancelException extends BookingException {
 class BookingRepository {
   final ApiClient _apiClient;
 
-  BookingRepository({FirebaseFirestore? firestore, ApiClient? apiClient})
+  BookingRepository({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
   Never _mapApiException(ApiException e) {

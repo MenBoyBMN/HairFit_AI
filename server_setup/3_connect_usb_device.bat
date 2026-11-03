@@ -17,13 +17,11 @@ echo.
 
 echo Đang forward port kết nối Backend sang điện thoại...
 %ADB_CMD% reverse tcp:5000 tcp:5000
-%ADB_CMD% reverse tcp:3000 tcp:3000
 
 echo.
 echo ========================================================
 echo  HOÀN TẤT! Điện thoại thật của bạn đã kết nối với PC:
 echo  - Port 5000 (ASP.NET Core) -> http://localhost:5000
-echo  - Port 3000 (Node.js API)  -> http://localhost:3000
 echo.
 echo  Bây giờ bạn chỉ cần mở App trên điện thoại và chạy ngay,
 echo  hoàn toàn không cần sửa file .env!
