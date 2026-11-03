@@ -11,9 +11,11 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/ai_consult/data/hairstyle_repository.dart';
+import '../features/ai_consult/data/web_face_detector.dart';
 import '../features/ai_consult/domain/ai_consult_result.dart';
 import '../features/ai_consult/domain/ai_consultant_service.dart';
 import '../features/ai_consult/domain/face_shape.dart';
+import '../features/ai_consult/domain/face_shape_analyzer.dart';
 import '../features/ai_consult/domain/hairstyle_recommendation_engine.dart';
 import '../models/hairstyle_model.dart';
 import 'auth_provider.dart';
@@ -236,10 +238,81 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
         }
       }
 
-      // 2. Chuyển đổi ảnh sang InputImage của ML Kit
+      // 2. Chuyển đổi ảnh và phân tích AI On-Device
+      if (kIsWeb) {
+        // Trên trình duyệt Web: Quét khuôn mặt thật bằng MediaPipe Face Landmarker (On-Device WASM)
+        final webFaceResult = await analyzeFaceOnWeb(state.imagePath!);
+
+        if (!webFaceResult.isValid) {
+          final msg =
+              webFaceResult.errorMessage ??
+              'Không phát hiện khuôn mặt trong ảnh';
+          final hint =
+              webFaceResult.errorHint ??
+              'Vui lòng chọn ảnh chân dung chụp rõ khuôn mặt nhìn thẳng, không bị che khuất';
+          final failedResult = AIConsultResult.validationFailed(
+            message: msg,
+            hint: hint,
+          );
+          state = state.copyWith(
+            isAnalyzing: false,
+            result: failedResult,
+            executionTimeMs: stopwatch.elapsedMilliseconds,
+            errorMessage: msg,
+            errorHint: hint,
+          );
+          return failedResult;
+        }
+
+        const analyzer = FaceShapeAnalyzer();
+        final metrics = analyzer.classifyFromMetrics(
+          faceHeight: webFaceResult.faceHeight,
+          cheekboneWidth: webFaceResult.cheekboneWidth,
+          foreheadWidth: webFaceResult.foreheadWidth,
+          jawlineWidth: webFaceResult.jawlineWidth,
+          chinWidth: webFaceResult.chinWidth,
+          contourPointsCount: webFaceResult.contourPointsCount,
+        );
+        final detectedShape = metrics.faceShape;
+
+        const engine = HairstyleRecommendationEngine();
+        final recommendation = engine.recommend(
+          faceShape: detectedShape,
+          catalog: catalog,
+          gender: state.selectedGender,
+          preferredLength: state.selectedLength,
+          preferredTexture: state.selectedTexture,
+        );
+
+        final suggestions = recommendation.primaryRecommendations.take(3).map((
+          rec,
+        ) {
+          return HairstyleSuggestion(
+            id: rec.style.id,
+            reason: rec.matchReasonVi,
+          );
+        }).toList();
+
+        final consultResult = AIConsultResult.success(
+          faceShape: detectedShape,
+          suggestions: suggestions,
+          metrics: metrics,
+          recommendation: recommendation,
+        );
+
+        state = state.copyWith(
+          isAnalyzing: false,
+          result: consultResult,
+          executionTimeMs: stopwatch.elapsedMilliseconds,
+          clearError: true,
+        );
+        _persistSavedFaceShape(detectedShape.keyName);
+        return consultResult;
+      }
+
       final inputImage = InputImage.fromFilePath(state.imagePath!);
 
-      // 3. Thực hiện chuỗi xử lý 3 tầng 100% On-Device
+      // 3. Thực hiện chuỗi xử lý 3 tầng 100% On-Device (Mobile)
       final consultResult = await consultantService.consult(
         inputImage: inputImage,
         catalog: catalog,

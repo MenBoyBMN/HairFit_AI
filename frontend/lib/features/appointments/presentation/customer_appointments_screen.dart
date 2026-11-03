@@ -23,6 +23,7 @@ import '../../../models/chat_model.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/appointment_provider.dart';
 import 'widgets/appointment_card.dart';
+import 'widgets/directions_bottom_sheet.dart';
 import 'widgets/reschedule_bottom_sheet.dart';
 
 /// Màn hình danh sách lịch hẹn của Khách hàng (Task 4.12)
@@ -449,6 +450,10 @@ class _CustomerAppointmentsScreenState
                         child: AppointmentCard(
                           appointment: appointment,
                           isBarberView: false,
+                          onDirections: () => DirectionsBottomSheet.show(
+                            context,
+                            appointment: appointment,
+                          ),
                           onCancel: () => _confirmAndCancel(appointment),
                           onReschedule: () => RescheduleBottomSheet.show(
                             context,
@@ -484,6 +489,10 @@ class _CustomerAppointmentsScreenState
               return AppointmentCard(
                 appointment: appointment,
                 isBarberView: false,
+                onDirections: () => DirectionsBottomSheet.show(
+                  context,
+                  appointment: appointment,
+                ),
                 onCancel: () => _confirmAndCancel(appointment),
                 onReschedule: () => RescheduleBottomSheet.show(
                   context,

@@ -117,10 +117,13 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Bán kính tìm kiếm thợ tối đa:',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                            const Expanded(
+                              child: Text(
+                                'Bán kính tìm kiếm thợ tối đa:',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '${_searchRadiusKm.toStringAsFixed(0)} km',
                               style: const TextStyle(
@@ -312,18 +315,27 @@ class _InfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              softWrap: true,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

@@ -10,10 +10,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/url_helper.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../models/appointment_model.dart';
 import '../../../../models/chat_model.dart';
+import '../../../appointments/presentation/widgets/directions_bottom_sheet.dart';
 
 class UpcomingAppointmentCard extends StatelessWidget {
   final AppointmentModel appointment;
@@ -249,7 +249,7 @@ class UpcomingAppointmentCard extends StatelessWidget {
 
                 const SizedBox(height: AppDimensions.md),
 
-                // Action buttons: Chỉ đường, Chat, Gọi điện
+                // Action buttons: Chỉ đường, Nhắn tin
                 Row(
                   children: [
                     Expanded(
@@ -266,8 +266,9 @@ class UpcomingAppointmentCard extends StatelessWidget {
                           visualDensity: VisualDensity.compact,
                         ),
                         onPressed: () {
-                          UrlHelper.openMapDirections(
-                            title: appointment.barberName,
+                          DirectionsBottomSheet.show(
+                            context,
+                            appointment: appointment,
                           );
                         },
                       ),
@@ -291,28 +292,6 @@ class UpcomingAppointmentCard extends StatelessWidget {
                         onPressed: () => _openChat(context),
                       ),
                     ),
-                    if (appointment.barberPhone != null &&
-                        appointment.barberPhone!.isNotEmpty) ...[
-                      const SizedBox(width: AppDimensions.xs),
-                      IconButton(
-                        tooltip: 'Gọi điện',
-                        icon: const Icon(
-                          Icons.phone_in_talk_rounded,
-                          color: AppColors.success,
-                          size: 20,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: AppColors.success.withValues(
-                            alpha: 0.1,
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        onPressed: () {
-                          UrlHelper.makePhoneCall(appointment.barberPhone!);
-                        },
-                      ),
-                    ],
                   ],
                 ),
               ],

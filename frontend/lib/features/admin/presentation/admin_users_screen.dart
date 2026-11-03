@@ -686,6 +686,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
+                                      const SizedBox(width: 6),
                                       _buildRoleBadge(u.role),
                                     ],
                                   ),
@@ -702,17 +703,31 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
-                                  Row(
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
                                     children: [
-                                      Text(
-                                        'Tham gia: $dateCreated',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey.shade500,
-                                        ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today_outlined,
+                                            size: 11,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            dateCreated,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      if (u.savedFaceShape != null) ...[
-                                        const SizedBox(width: 8),
+                                      if (u.savedFaceShape != null)
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 6,
@@ -722,9 +737,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                             color: AppColors.primary.withValues(
                                               alpha: 0.08,
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
                                           ),
                                           child: Text(
                                             'AI: ${_faceShapeLabels[u.savedFaceShape!] ?? u.savedFaceShape}',
@@ -735,8 +749,6 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                             ),
                                           ),
                                         ),
-                                      ],
-                                      const Spacer(),
                                       AdminStatusBadge(
                                         status: u.isBlocked
                                             ? 'blocked'
@@ -749,7 +761,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                             ),
                             const SizedBox(width: 4),
                             PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.more_vert, size: 20),
                               onSelected: (val) {
                                 if (val == 'detail') {
                                   _showUser360Modal(u);

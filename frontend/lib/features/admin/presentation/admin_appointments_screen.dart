@@ -493,8 +493,11 @@ class _AdminAppointmentsScreenState
                         vertical: 8,
                       ),
                       color: AppColors.primary.withValues(alpha: 0.06),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
                           Text(
                             'Hiển thị: ${filtered.length} lịch hẹn',
@@ -503,15 +506,12 @@ class _AdminAppointmentsScreenState
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Flexible(
-                            child: Text(
-                              'Hoàn tất: ${DateFormatter.formatCurrency(completedRev)} / Tổng: ${DateFormatter.formatCurrency(totalVal)}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            'Hoàn tất: ${DateFormatter.formatCurrency(completedRev)} / Tổng: ${DateFormatter.formatCurrency(totalVal)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -543,65 +543,75 @@ class _AdminAppointmentsScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 6,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '${app.date} · ${app.startTime}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      ),
-                                      if (app.hairstyleId.isNotEmpty) ...[
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.purple.shade50,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                              borderRadius: BorderRadius.circular(
+                                                8,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '${app.date} · ${app.startTime}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                                color: AppColors.primary,
+                                              ),
                                             ),
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.auto_awesome,
-                                                size: 12,
-                                                color: Colors.purple.shade700,
+                                          if (app.hairstyleId.isNotEmpty)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'AI Handshake',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.purple.shade700,
+                                              decoration: BoxDecoration(
+                                                color: Colors.purple.shade50,
+                                                borderRadius: BorderRadius.circular(
+                                                  8,
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                      const Spacer(),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.auto_awesome,
+                                                    size: 12,
+                                                    color: Colors.purple.shade700,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'AI Handshake',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.purple.shade700,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                       AdminStatusBadge(
                                         status: app.status.toStatusString(),
                                       ),
@@ -678,10 +688,21 @@ class _AdminAppointmentsScreenState
                                     ],
                                   ),
                                   const Divider(height: 18),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                                  Wrap(
+                                    alignment: WrapAlignment.end,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 4,
+                                    runSpacing: 4,
                                     children: [
                                       TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                        ),
                                         onPressed: () =>
                                             _showAppointmentDetailSheet(app),
                                         icon: const Icon(
@@ -695,6 +716,14 @@ class _AdminAppointmentsScreenState
                                       ),
                                       if (isPending)
                                         TextButton.icon(
+                                          style: TextButton.styleFrom(
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                          ),
                                           onPressed: () => _confirmStatusUpdate(
                                             app,
                                             'confirmed',
@@ -715,6 +744,14 @@ class _AdminAppointmentsScreenState
                                         ),
                                       if (isConfirmed)
                                         TextButton.icon(
+                                          style: TextButton.styleFrom(
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                          ),
                                           onPressed: () => _confirmStatusUpdate(
                                             app,
                                             'completed',
@@ -735,6 +772,14 @@ class _AdminAppointmentsScreenState
                                         ),
                                       if (canCancel)
                                         TextButton.icon(
+                                          style: TextButton.styleFrom(
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                          ),
                                           onPressed: () => _confirmStatusUpdate(
                                             app,
                                             'cancelled',

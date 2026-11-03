@@ -100,6 +100,233 @@
         }, 400);
       }
     });
+
+    // =========================================================================
+    // On-Device Web Face Detection & Anthropometric Analyzer (MediaPipe Vision)
+    // =========================================================================
+    window._hairfitFaceLandmarkerPromise = null;
+
+    async function _getHairfitFaceLandmarker() {
+      if (window._hairfitFaceLandmarkerPromise) {
+        return window._hairfitFaceLandmarkerPromise;
+      }
+      window._hairfitFaceLandmarkerPromise = (async () => {
+        try {
+          const visionModule = await import(
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs'
+          );
+          const { FaceLandmarker, FilesetResolver } = visionModule;
+          const filesetResolver = await FilesetResolver.forVisionTasks(
+            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+          );
+          try {
+            return await FaceLandmarker.createFromOptions(filesetResolver, {
+              baseOptions: {
+                modelAssetPath:
+                  'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+                delegate: 'GPU',
+              },
+              runningMode: 'IMAGE',
+              numFaces: 5,
+              minFaceDetectionConfidence: 0.55,
+              minFacePresenceConfidence: 0.55,
+            });
+          } catch (_) {
+            return await FaceLandmarker.createFromOptions(filesetResolver, {
+              baseOptions: {
+                modelAssetPath:
+                  'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+                delegate: 'CPU',
+              },
+              runningMode: 'IMAGE',
+              numFaces: 5,
+              minFaceDetectionConfidence: 0.55,
+              minFacePresenceConfidence: 0.55,
+            });
+          }
+        } catch (err) {
+          window._hairfitFaceLandmarkerPromise = null;
+          throw err;
+        }
+      })();
+      return window._hairfitFaceLandmarkerPromise;
+    }
+
+    function _dist2D(a, b) {
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    window.hairfitAnalyzeFaceImage = async function (imageUrl) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = () => reject(new Error('Không thể đọc dữ liệu hình ảnh'));
+          img.src = imageUrl;
+        });
+
+        const maxDim = 1024;
+        let w = img.naturalWidth || img.width || 640;
+        let h = img.naturalHeight || img.height || 640;
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const landmarker = await _getHairfitFaceLandmarker();
+        const detectionResult = landmarker.detect(canvas);
+        const faces = (detectionResult && detectionResult.faceLandmarks) || [];
+
+        if (faces.length === 0) {
+          return JSON.stringify({
+            isValid: false,
+            errorMessage: 'Không phát hiện khuôn mặt trong ảnh',
+            errorHint:
+              'Ảnh tải lên không có khuôn mặt người hợp lệ. Vui lòng chọn ảnh chân dung chụp rõ khuôn mặt nhìn thẳng.',
+            faceCount: 0,
+          });
+        }
+
+        // Chọn khuôn mặt có diện tích lớn nhất nếu trong ảnh có nhiều người
+        let bestPts = null;
+        let bestArea = -1;
+        let bestBox = null;
+
+        for (const lmList of faces) {
+          const pts = lmList.map((p) => ({ x: p.x * w, y: p.y * h }));
+          let minX = pts[0].x,
+            maxX = pts[0].x,
+            minY = pts[0].y,
+            maxY = pts[0].y;
+          for (const pt of pts) {
+            if (pt.x < minX) minX = pt.x;
+            if (pt.x > maxX) maxX = pt.x;
+            if (pt.y < minY) minY = pt.y;
+            if (pt.y > maxY) maxY = pt.y;
+          }
+          const area = (maxX - minX) * (maxY - minY);
+          if (area > bestArea) {
+            bestArea = area;
+            bestPts = pts;
+            bestBox = {
+              minX,
+              maxX,
+              minY,
+              maxY,
+              width: maxX - minX,
+              height: maxY - minY,
+            };
+          }
+        }
+
+        // Kiểm tra kích thước khuôn mặt đủ lớn
+        const areaRatio = bestArea / Math.max(1, w * h);
+        if (bestBox.width < 80 || areaRatio < 0.025) {
+          return JSON.stringify({
+            isValid: false,
+            errorMessage: 'Khuôn mặt trong ảnh quá nhỏ',
+            errorHint:
+              'Vui lòng chọn ảnh chân dung chụp gần hơn (khuôn mặt cần chiếm ít nhất 20% khung hình).',
+            faceCount: faces.length,
+          });
+        }
+
+        // Kiểm tra góc quay ngang (Euler Y / Yaw)
+        const leftCheek = bestPts[234];
+        const rightCheek = bestPts[454];
+        const noseTip = bestPts[1];
+        const cheekSpan = Math.max(1, rightCheek.x - leftCheek.x);
+        const noseRelX = (noseTip.x - leftCheek.x) / cheekSpan;
+        const eulerY = (noseRelX - 0.5) * 90.0;
+
+        if (Math.abs(eulerY) > 20.0) {
+          return JSON.stringify({
+            isValid: false,
+            errorMessage: 'Vui lòng chọn ảnh nhìn thẳng vào camera',
+            errorHint:
+              'Gương mặt trong ảnh đang bị nghiêng sang một bên (' +
+              eulerY.toFixed(1) +
+              '°). Hãy chọn ảnh chụp chính diện.',
+            eulerY: eulerY,
+            faceCount: faces.length,
+          });
+        }
+
+        // Kiểm tra góc ngửa/cúi đầu (Euler X / Pitch)
+        const foreheadTop = bestPts[10];
+        const chinBottom = bestPts[152];
+        const totalVertical = Math.max(1, chinBottom.y - foreheadTop.y);
+        const noseRelY = (noseTip.y - foreheadTop.y) / totalVertical;
+        const eulerX = (noseRelY - 0.58) * 75.0;
+
+        if (Math.abs(eulerX) > 18.0) {
+          return JSON.stringify({
+            isValid: false,
+            errorMessage: 'Vui lòng giữ đầu thẳng đứng',
+            errorHint:
+              'Khuôn mặt trong ảnh đang ngửa lên hoặc cúi xuống quá nhiều (' +
+              eulerX.toFixed(1) +
+              '°).',
+            eulerX: eulerX,
+            eulerY: eulerY,
+            faceCount: faces.length,
+          });
+        }
+
+        // Trích xuất 36 điểm viền ngoài khuôn mặt (Face Oval Contour tương đồng ML Kit)
+        const faceOvalIdx = [
+          10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365,
+          379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93,
+          234, 127, 162, 21, 54, 103, 67, 109,
+        ];
+        const ovalPts = faceOvalIdx.map((idx) => bestPts[idx]);
+
+        const faceHeight = _dist2D(bestPts[10], bestPts[152]);
+        const cheekboneWidth = _dist2D(bestPts[234], bestPts[454]);
+        const foreheadWidth = Math.max(
+          _dist2D(bestPts[54], bestPts[284]),
+          _dist2D(bestPts[103], bestPts[332])
+        );
+        const jawlineWidth = Math.max(
+          _dist2D(bestPts[172], bestPts[397]),
+          _dist2D(bestPts[132], bestPts[361])
+        );
+        const chinWidth = _dist2D(bestPts[149], bestPts[378]);
+
+        return JSON.stringify({
+          isValid: true,
+          faceCount: faces.length,
+          eulerX: eulerX,
+          eulerY: eulerY,
+          faceHeight: faceHeight,
+          cheekboneWidth: cheekboneWidth,
+          foreheadWidth: foreheadWidth,
+          jawlineWidth: jawlineWidth,
+          chinWidth: chinWidth,
+          contourPointsCount: ovalPts.length,
+        });
+      } catch (e) {
+        return JSON.stringify({
+          isValid: false,
+          errorMessage: 'Không thể nhận diện khuôn mặt từ bức ảnh này',
+          errorHint:
+            'Vui lòng kiểm tra kết nối mạng hoặc chọn ảnh chân dung rõ nét hơn (' +
+            (e && e.message ? e.message : e) +
+            ').',
+          faceCount: 0,
+        });
+      }
+    };
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

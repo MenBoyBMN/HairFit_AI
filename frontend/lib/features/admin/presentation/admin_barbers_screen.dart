@@ -667,15 +667,17 @@ class _AdminBarbersScreenState extends ConsumerState<AdminBarbersScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
                       TextButton.icon(
                         icon: const Icon(Icons.info_outline, size: 16),
                         label: const Text('Chi tiết'),
                         onPressed: () => _showBarber360Sheet(b),
                       ),
-                      const SizedBox(width: 8),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.error,
@@ -686,7 +688,6 @@ class _AdminBarbersScreenState extends ConsumerState<AdminBarbersScreen>
                             .read(adminControllerProvider.notifier)
                             .setBarberStatus(b.uid, 'rejected'),
                       ),
-                      const SizedBox(width: 8),
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.success,
@@ -955,8 +956,11 @@ class _AdminBarbersScreenState extends ConsumerState<AdminBarbersScreen>
                           ],
                         ),
                         const Divider(height: 18),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 4,
                           children: [
                             TextButton.icon(
                               onPressed: () => _showBarber360Sheet(b),
@@ -977,7 +981,6 @@ class _AdminBarbersScreenState extends ConsumerState<AdminBarbersScreen>
                                 style: TextStyle(fontSize: 12),
                               ),
                             ),
-                            const SizedBox(width: 4),
                             if (isApproved)
                               FilledButton.tonal(
                                 onPressed: () async {

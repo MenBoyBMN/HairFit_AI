@@ -120,9 +120,16 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
         return Scaffold(
           key: _scaffoldKey,
           appBar: AppBar(
-            title: Text(
-              _getTabTitle(_currentIndex),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _getTabTitle(_currentIndex),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
             ),
             backgroundColor: AppColors.surface,
             elevation: 0,

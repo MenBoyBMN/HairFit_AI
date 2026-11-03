@@ -180,28 +180,48 @@ class MyAIHairProfileCard extends ConsumerWidget {
             spacing: 8,
             runSpacing: 6,
             children: topStyles.map((item) {
-              return ActionChip(
-                backgroundColor: Colors.white.withValues(alpha: 0.1),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                label: Text(
-                  item.style.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    context.push(
+                      '/customer/search?query=${Uri.encodeComponent(item.style.name)}',
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.content_cut_rounded,
+                          size: 13,
+                          color: AppColors.accent,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          item.style.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                avatar: const Icon(
-                  Icons.content_cut_rounded,
-                  size: 13,
-                  color: AppColors.accent,
-                ),
-                onPressed: () {
-                  context.push(
-                    '/customer/search?query=${Uri.encodeComponent(item.style.name)}',
-                  );
-                },
               );
             }).toList(),
           ),

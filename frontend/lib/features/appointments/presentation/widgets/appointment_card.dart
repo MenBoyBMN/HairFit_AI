@@ -4,10 +4,10 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/url_helper.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../models/appointment_model.dart';
 import 'ai_haircut_handshake_card.dart';
+import 'directions_bottom_sheet.dart';
 
 /// Card hiển thị thông tin lịch hẹn cắt tóc (Task 4.14)
 ///
@@ -17,6 +17,7 @@ import 'ai_haircut_handshake_card.dart';
 class AppointmentCard extends StatelessWidget {
   final AppointmentModel appointment;
   final bool isBarberView;
+  final VoidCallback? onDirections;
   final VoidCallback? onCancel;
   final VoidCallback? onConfirm;
   final VoidCallback? onReject;
@@ -30,6 +31,7 @@ class AppointmentCard extends StatelessWidget {
     super.key,
     required this.appointment,
     this.isBarberView = false,
+    this.onDirections,
     this.onCancel,
     this.onConfirm,
     this.onReject,
@@ -287,28 +289,16 @@ class AppointmentCard extends StatelessWidget {
                 icon: const Icon(Icons.directions_outlined, size: 15),
                 label: const Text('Chỉ đường', style: TextStyle(fontSize: 13)),
                 onPressed: () {
-                  UrlHelper.openMapDirections(title: appointment.barberName);
+                  if (onDirections != null) {
+                    onDirections!();
+                  } else {
+                    DirectionsBottomSheet.show(
+                      context,
+                      appointment: appointment,
+                    );
+                  }
                 },
               ),
-              if (appointment.barberPhone != null &&
-                  appointment.barberPhone!.isNotEmpty)
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.success,
-                    side: const BorderSide(color: AppColors.success),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.md,
-                      vertical: AppDimensions.xs,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: AppDimensions.borderRadiusSm,
-                    ),
-                  ),
-                  icon: const Icon(Icons.phone_in_talk_rounded, size: 15),
-                  label: const Text('Gọi tiệm', style: TextStyle(fontSize: 13)),
-                  onPressed: () =>
-                      UrlHelper.makePhoneCall(appointment.barberPhone!),
-                ),
               if (onChat != null)
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
@@ -458,25 +448,6 @@ class AppointmentCard extends StatelessWidget {
           spacing: AppDimensions.sm,
           runSpacing: AppDimensions.xs,
           children: [
-            if (appointment.customerPhone != null &&
-                appointment.customerPhone!.isNotEmpty)
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.success,
-                  side: const BorderSide(color: AppColors.success),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.md,
-                    vertical: AppDimensions.xs,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppDimensions.borderRadiusSm,
-                  ),
-                ),
-                icon: const Icon(Icons.phone_in_talk_rounded, size: 15),
-                label: const Text('Gọi khách', style: TextStyle(fontSize: 13)),
-                onPressed: () =>
-                    UrlHelper.makePhoneCall(appointment.customerPhone!),
-              ),
             if (onChat != null)
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
@@ -538,25 +509,6 @@ class AppointmentCard extends StatelessWidget {
           spacing: AppDimensions.sm,
           runSpacing: AppDimensions.xs,
           children: [
-            if (appointment.customerPhone != null &&
-                appointment.customerPhone!.isNotEmpty)
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.success,
-                  side: const BorderSide(color: AppColors.success),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.md,
-                    vertical: AppDimensions.xs,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppDimensions.borderRadiusSm,
-                  ),
-                ),
-                icon: const Icon(Icons.phone_in_talk_rounded, size: 15),
-                label: const Text('Gọi khách', style: TextStyle(fontSize: 13)),
-                onPressed: () =>
-                    UrlHelper.makePhoneCall(appointment.customerPhone!),
-              ),
             if (onChat != null)
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(

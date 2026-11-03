@@ -270,6 +270,9 @@ void main() {
         );
         expect(find.textContaining('90.000'), findsOneWidget);
         expect(find.text('Hủy lịch hẹn'), findsOneWidget);
+        expect(find.text('Chỉ đường'), findsOneWidget);
+        expect(find.text('Gọi tiệm'), findsNothing);
+        expect(find.text('Gọi khách'), findsNothing);
 
         await tester.tap(find.text('Hủy lịch hẹn'));
         await tester.pump();

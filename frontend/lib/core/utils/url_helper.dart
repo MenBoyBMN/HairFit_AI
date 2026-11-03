@@ -26,38 +26,70 @@ class UrlHelper {
     }
   }
 
-  /// Mở ứng dụng bản đồ chỉ đường tới địa chỉ hoặc toạ độ
+  /// Mở ứng dụng bản đồ chỉ đường tới toạ độ hoặc địa chỉ cụ thể
   static Future<bool> openMapDirections({
     double? latitude,
     double? longitude,
     String? address,
     String? title,
   }) async {
-    Uri uri;
-
-    if (latitude != null &&
+    final hasValidCoords = latitude != null &&
         longitude != null &&
         latitude != 0 &&
-        longitude != 0) {
-      uri = Uri.parse(
+        longitude != 0;
+
+    // 1. Thử mở qua Native Map Scheme trên thiết bị di động nếu có toạ độ
+    if (hasValidCoords && !kIsWeb) {
+      final safeTitle = title?.trim().isNotEmpty == true ? title!.trim() : 'Tiệm cắt tóc';
+      final geoUri = Uri.parse(
+        'geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encodeComponent(safeTitle)})',
+      );
+      try {
+        if (await canLaunchUrl(geoUri)) {
+          final launched = await launchUrl(
+            geoUri,
+            mode: LaunchMode.externalApplication,
+          );
+          if (launched) return true;
+        }
+      } catch (e) {
+        debugPrint('Không thể mở native geo URI: $e');
+      }
+    }
+
+    // 2. Mở qua Google Maps Directions Navigation chuẩn
+    Uri webUri;
+    if (hasValidCoords) {
+      webUri = Uri.parse(
         'https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude',
       );
-    } else if (address != null && address.trim().isNotEmpty) {
-      uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address.trim())}',
-      );
-    } else if (title != null && title.trim().isNotEmpty) {
-      uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(title.trim())}',
-      );
     } else {
-      return false;
+      final queryParts = <String>[];
+      if (title != null && title.trim().isNotEmpty) {
+        queryParts.add(title.trim());
+      }
+      if (address != null && address.trim().isNotEmpty) {
+        queryParts.add(address.trim());
+      }
+
+      if (queryParts.isNotEmpty) {
+        webUri = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(queryParts.join(', '))}',
+        );
+      } else {
+        return false;
+      }
     }
 
     try {
-      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return await launchUrl(
+        webUri,
+        mode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
+      );
     } catch (e) {
-      debugPrint('Error opening map: $e');
+      debugPrint('Error opening map directions: $e');
       return false;
     }
   }

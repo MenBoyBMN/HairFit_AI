@@ -173,8 +173,12 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final aiState = ref.read(aiConsultProvider);
     if (!aiState.hasConsent) {
-      _showConsentDialog();
-      return;
+      if (kIsWeb) {
+        await ref.read(aiConsultProvider.notifier).grantConsent();
+      } else {
+        _showConsentDialog();
+        return;
+      }
     }
 
     try {
@@ -193,7 +197,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi khi truy cập camera/ảnh: $e'),
+          content: Text('Lỗi khi truy cập ảnh: $e'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -280,7 +284,11 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(dialogCtx).pop();
-              context.push('/customer/manual-select');
+              if (kIsWeb) {
+                ref.read(aiConsultProvider.notifier).clearImage();
+              } else {
+                context.push('/customer/manual-select');
+              }
             },
             child: const Text('Chọn thủ công'),
           ),
@@ -567,7 +575,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 7, child: _buildWebFaceShapeGrid()),
+                      Expanded(flex: 7, child: _buildWebLeftColumn(aiState)),
                       const SizedBox(width: AppDimensions.xl),
                       Expanded(
                         flex: 5,
@@ -576,7 +584,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
                     ],
                   )
                 else ...[
-                  _buildWebFaceShapeGrid(),
+                  _buildWebLeftColumn(aiState),
                   const SizedBox(height: AppDimensions.lg),
                   _buildWebPreferencesAndActionCard(aiState),
                 ],
@@ -588,7 +596,217 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
     );
   }
 
-  Widget _buildWebFaceShapeGrid() {
+  Widget _buildWebLeftColumn(AIConsultState aiState) {
+    final hasUploadedImage =
+        aiState.imagePath != null && aiState.imagePath!.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildWebPhotoPickerCard(aiState),
+        if (aiState.errorMessage != null) ...[
+          const SizedBox(height: AppDimensions.md),
+          _buildErrorGuidanceCard(aiState),
+        ],
+        const SizedBox(height: AppDimensions.xl),
+        _buildWebFaceShapeGrid(hasUploadedImage: hasUploadedImage),
+      ],
+    );
+  }
+
+  Widget _buildWebPhotoPickerCard(AIConsultState aiState) {
+    final hasImage = aiState.imagePath != null && aiState.imagePath!.isNotEmpty;
+
+    return AntigravityCard(
+      enable3DTilt: false,
+      padding: const EdgeInsets.all(AppDimensions.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.12),
+                  borderRadius: AppDimensions.borderRadiusSm,
+                ),
+                child: const Icon(
+                  Icons.computer_rounded,
+                  color: AppColors.accent,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.sm),
+              const Expanded(
+                child: Text(
+                  'Bước 1: Tải ảnh từ máy tính để AI quét khuôn mặt',
+                  style: AppTextStyles.h4,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.xs),
+          Text(
+            'Chọn ảnh chân dung nhìn thẳng từ máy tính để AI đo đạc tỷ lệ và gợi ý kiểu tóc chuẩn tỉ lệ vàng (không dùng camera chụp trực tiếp).',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.md),
+          if (hasImage) ...[
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                ClipRRect(
+                  borderRadius: AppDimensions.borderRadiusMd,
+                  child: _buildImagePreview(aiState.imagePath!, height: 260),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppDimensions.xs),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black54,
+                    radius: 18,
+                    child: IconButton(
+                      tooltip: 'Xóa ảnh',
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        ref.read(aiConsultProvider.notifier).clearImage();
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.md),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.gallery),
+                  icon: const Icon(Icons.file_upload_outlined, size: 18),
+                  label: const Text('Chọn ảnh khác'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+                const SizedBox(width: AppDimensions.md),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        aiState.errorMessage != null
+                            ? Icons.error_outline_rounded
+                            : Icons.check_circle_rounded,
+                        color: aiState.errorMessage != null
+                            ? AppColors.error
+                            : AppColors.success,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          aiState.errorMessage ??
+                              'Đã tải ảnh • Sẵn sàng quét AI',
+                          style: TextStyle(
+                            color: aiState.errorMessage != null
+                                ? AppColors.error
+                                : AppColors.success,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            InkWell(
+              onTap: () => _pickImage(ImageSource.gallery),
+              borderRadius: AppDimensions.borderRadiusMd,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: AppDimensions.lg,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: AppDimensions.borderRadiusMd,
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.35),
+                    style: BorderStyle.solid,
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppDimensions.md),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 40,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.md),
+                    const Text(
+                      'Nhấn để chọn ảnh chân dung từ máy tính',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Hỗ trợ định dạng JPG, PNG • Rõ khuôn mặt nhìn thẳng • Không sử dụng camera',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AppDimensions.md),
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.file_upload_outlined, size: 18),
+                      label: const Text('Tải ảnh từ máy tính'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppDimensions.borderRadiusSm,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWebFaceShapeGrid({bool hasUploadedImage = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -607,10 +825,12 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
               ),
             ),
             const SizedBox(width: AppDimensions.sm),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Bước 1: Chọn dáng khuôn mặt của bạn',
-                style: AppTextStyles.h3,
+                hasUploadedImage
+                    ? 'Hoặc tự chọn dáng khuôn mặt thủ công (Tùy chọn):'
+                    : 'Bước 1: Chọn dáng khuôn mặt của bạn (Thủ công):',
+                style: AppTextStyles.h4,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -711,6 +931,8 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
   }
 
   Widget _buildWebPreferencesAndActionCard(AIConsultState aiState) {
+    final hasImage = aiState.imagePath != null && aiState.imagePath!.isNotEmpty;
+
     return AntigravityCard(
       enable3DTilt: false,
       enableHoverLift: false,
@@ -762,21 +984,28 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: AppDimensions.borderRadiusMd,
+              border: Border.all(
+                color: hasImage
+                    ? AppColors.accent.withValues(alpha: 0.3)
+                    : AppColors.divider,
+              ),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.verified_outlined,
+                Icon(
+                  hasImage ? Icons.auto_awesome : Icons.verified_outlined,
                   color: AppColors.accent,
                   size: 20,
                 ),
                 const SizedBox(width: AppDimensions.sm),
                 Expanded(
                   child: Text(
-                    'Đang chọn: ${_selectedWebShape.displayNameVi}',
+                    hasImage
+                        ? 'Chế độ: Quét khuôn mặt AI từ ảnh máy tính'
+                        : 'Đang chọn thủ công: ${_selectedWebShape.displayNameVi}',
                     style: AppTextStyles.bodySmall.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: hasImage ? AppColors.accent : AppColors.primary,
                     ),
                   ),
                 ),
@@ -786,24 +1015,55 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
           const SizedBox(height: AppDimensions.lg),
           AppButton(
             text: aiState.isAnalyzing
-                ? 'Đang tổng hợp gợi ý...'
-                : 'Khám Phá Kiểu Tóc Phù Hợp Ngay',
+                ? 'Đang quét & phân tích...'
+                : (hasImage
+                      ? 'Quét Khuôn Mặt & Tư Vấn AI'
+                      : 'Khám Phá Kiểu Tóc Phù Hợp Ngay'),
             icon: const Icon(
               Icons.auto_awesome_rounded,
               color: Colors.white,
               size: 20,
             ),
             isLoading: aiState.isAnalyzing,
-            onPressed: aiState.isAnalyzing ? null : _onRunWebStudioConsultation,
+            onPressed: aiState.isAnalyzing
+                ? null
+                : (hasImage ? _onStartAnalysis : _onRunWebStudioConsultation),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildImagePreview(String path, {double height = 240}) {
+    if (kIsWeb) {
+      return Image.network(
+        path,
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => Container(
+          height: height,
+          color: AppColors.surface,
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_rounded,
+              size: 40,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+    return Image.file(
+      File(path),
+      height: height,
+      width: double.infinity,
+      fit: BoxFit.cover,
+    );
+  }
+
   Widget _buildPhotoCard(AIConsultState state) {
-    final hasImage =
-        !kIsWeb && state.imagePath != null && state.imagePath!.isNotEmpty;
+    final hasImage = state.imagePath != null && state.imagePath!.isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -832,12 +1092,7 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
               children: [
                 ClipRRect(
                   borderRadius: AppDimensions.borderRadiusMd,
-                  child: Image.file(
-                    File(state.imagePath!),
-                    height: 240,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildImagePreview(state.imagePath!, height: 240),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppDimensions.xs),
@@ -1019,18 +1274,26 @@ class _AIConsultScreenState extends ConsumerState<AIConsultScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => context.push('/customer/manual-select'),
+                onPressed: () {
+                  if (kIsWeb) {
+                    ref.read(aiConsultProvider.notifier).clearImage();
+                  } else {
+                    context.push('/customer/manual-select');
+                  }
+                },
                 child: const Text('Chọn dáng mặt thủ công'),
               ),
               const SizedBox(width: AppDimensions.xs),
               ElevatedButton(
-                onPressed: () => _pickImage(ImageSource.camera),
+                onPressed: () => _pickImage(
+                  kIsWeb ? ImageSource.gallery : ImageSource.camera,
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                child: const Text('Chụp lại'),
+                child: Text(kIsWeb ? 'Chọn ảnh khác' : 'Chụp lại'),
               ),
             ],
           ),
