@@ -5,8 +5,6 @@
 //  - Lớp mô hình (Model) bao gồm các thuộc tính và phương thức chuyển đổi (toMap, fromMap, copyWith).
 // ============================================================================
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 /// Mô hình kiểu tóc trong danh mục chuẩn (hairstyleCatalog/{styleId})
 class HairstyleModel {
   final String id;
@@ -70,12 +68,6 @@ class HairstyleModel {
           [],
       active: map['active'] as bool? ?? true,
     );
-  }
-
-  factory HairstyleModel.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    return HairstyleModel.fromMap(doc.data() ?? {}, id: doc.id);
   }
 
   Map<String, dynamic> toMap() {

@@ -28,10 +28,10 @@ public class BarbersController : ControllerBase
         if (emptyAvatarUids.Count == 0) return;
 
         var userAvatars = await _db.Users
+            .AsNoTracking()
             .Where(u => emptyAvatarUids.Contains(u.Uid) && u.AvatarUrl != "")
             .ToDictionaryAsync(u => u.Uid, u => u.AvatarUrl);
 
-        bool changed = false;
         foreach (var barber in barbers)
         {
             if (string.IsNullOrWhiteSpace(barber.AvatarUrl) &&
@@ -39,13 +39,7 @@ public class BarbersController : ControllerBase
                 !string.IsNullOrWhiteSpace(userAvatar))
             {
                 barber.AvatarUrl = userAvatar.Trim();
-                changed = true;
             }
-        }
-
-        if (changed)
-        {
-            await _db.SaveChangesAsync();
         }
     }
 
@@ -56,6 +50,7 @@ public class BarbersController : ControllerBase
     public async Task<IActionResult> GetApprovedBarbers()
     {
         var barbers = await _db.BarberProfiles
+            .AsNoTracking()
             .Where(b => b.ApprovalStatus == "approved")
             .ToListAsync();
 
@@ -70,6 +65,7 @@ public class BarbersController : ControllerBase
     public async Task<IActionResult> GetFeaturedBarbers([FromQuery] int limit = 5)
     {
         var barbers = await _db.BarberProfiles
+            .AsNoTracking()
             .Where(b => b.ApprovalStatus == "approved")
             .OrderByDescending(b => b.RatingAvg)
             .Take(limit)
@@ -86,6 +82,7 @@ public class BarbersController : ControllerBase
     public async Task<IActionResult> GetPendingBarbers()
     {
         var barbers = await _db.BarberProfiles
+            .AsNoTracking()
             .Where(b => b.ApprovalStatus == "pending")
             .ToListAsync();
 
@@ -99,7 +96,7 @@ public class BarbersController : ControllerBase
     [HttpGet("{uid}")]
     public async Task<IActionResult> GetBarberById(string uid)
     {
-        var barber = await _db.BarberProfiles.FindAsync(uid);
+        var barber = await _db.BarberProfiles.AsNoTracking().FirstOrDefaultAsync(b => b.Uid == uid);
         if (barber == null)
         {
             return NotFound(new { code = "BARBER_NOT_FOUND", message = "Không tìm thấy hồ sơ thợ." });
@@ -117,6 +114,17 @@ public class BarbersController : ControllerBase
     {
         var barber = await _db.BarberProfiles.FindAsync(uid);
         var isNew = barber == null;
+
+        // Nếu hồ sơ đang chờ duyệt (pending), tuyệt đối không cho phép chỉnh sửa
+        if (barber != null && barber.ApprovalStatus == "pending")
+        {
+            return StatusCode(403, new
+            {
+                code = "PROFILE_UNDER_REVIEW",
+                message = "Hồ sơ của bạn đang được xét duyệt. Tuyệt đối không thể chỉnh sửa trong thời gian chờ duyệt."
+            });
+        }
+
         if (barber == null)
         {
             barber = new BarberProfileEntity

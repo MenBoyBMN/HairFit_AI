@@ -96,30 +96,33 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
           margin: const EdgeInsets.only(bottom: 8.0),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
+              horizontal: 10.0,
+              vertical: 6.0,
             ),
             child: Row(
               children: [
                 SizedBox(
-                  width: 80,
+                  width: 68,
                   child: Text(
                     label,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                Switch(
-                  value: !current.closed,
-                  onChanged: (val) {
-                    setState(() {
-                      _hours[day] = DayWorkingHours(
-                        closed: !val,
-                        open: current.open,
-                        close: current.close,
-                      );
-                    });
-                    widget.onChanged(_hours);
-                  },
+                Transform.scale(
+                  scale: 0.85,
+                  child: Switch(
+                    value: !current.closed,
+                    onChanged: (val) {
+                      setState(() {
+                        _hours[day] = DayWorkingHours(
+                          closed: !val,
+                          open: current.open,
+                          close: current.close,
+                        );
+                      });
+                      widget.onChanged(_hours);
+                    },
+                  ),
                 ),
                 if (!current.closed) ...[
                   Expanded(
@@ -127,19 +130,25 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                       onTap: () => _selectTime(context, day, true),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
+                          vertical: 6,
+                          horizontal: 6,
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(current.open, textAlign: TextAlign.center),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            current.open,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text('-'),
                   ),
                   Expanded(
@@ -147,14 +156,20 @@ class _WorkingHoursEditorState extends State<WorkingHoursEditor> {
                       onTap: () => _selectTime(context, day, false),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 12,
+                          vertical: 6,
+                          horizontal: 6,
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(current.close, textAlign: TextAlign.center),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            current.close,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
                     ),
                   ),

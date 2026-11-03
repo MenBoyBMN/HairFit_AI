@@ -270,46 +270,34 @@ class BarberPendingScreen extends ConsumerWidget {
                             style: TextStyle(color: Colors.grey, height: 1.4),
                           ),
                           const SizedBox(height: 24),
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                context.push('/barber/profile-edit'),
-                            icon: const Icon(Icons.storefront_outlined),
-                            label: const Text('Xem & Cập nhật thông tin tiệm'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
+                              horizontal: 20,
+                              vertical: 16,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.amber.shade50,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.amber.shade200),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.info_outline,
-                                  size: 18,
+                                  Icons.lock_clock_outlined,
+                                  size: 22,
                                   color: Colors.amber.shade900,
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 12),
                                 Flexible(
                                   child: Text(
-                                    '(Bạn có thể cập nhật lại thông tin trong Trang Thợ)',
+                                    'Hồ sơ đang được khóa để Ban quản trị xét duyệt.\nBạn sẽ có thể chỉnh sửa thông tin tiệm sau khi hồ sơ được phê duyệt chính thức.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.amber.shade900,
                                       fontWeight: FontWeight.w500,
+                                      height: 1.4,
                                     ),
                                   ),
                                 ),

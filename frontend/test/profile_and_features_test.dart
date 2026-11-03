@@ -10,7 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hairfit_ai/features/admin/presentation/approve_barbers_screen.dart';
+import 'package:hairfit_ai/features/admin/presentation/admin_barbers_screen.dart';
 import 'package:hairfit_ai/features/barber_profile/data/barber_profile_repository.dart';
 import 'package:hairfit_ai/features/barber_profile/presentation/barber_pending_screen.dart';
 import 'package:hairfit_ai/models/appointment_model.dart';
@@ -289,7 +289,7 @@ void main() {
     });
 
     testWidgets(
-      'BarberPendingScreen shows (Bạn có thể cập nhật lại thông tin trong Trang Thợ)',
+      'BarberPendingScreen locks profile editing and displays review message when pending',
       (tester) async {
         final sampleUser = UserModel(
           uid: 'barber_123',
@@ -325,76 +325,84 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('(Bạn có thể cập nhật lại thông tin trong Trang Thợ)'),
+          find.text(
+            'Hồ sơ đang được khóa để Ban quản trị xét duyệt.\nBạn sẽ có thể chỉnh sửa thông tin tiệm sau khi hồ sơ được phê duyệt chính thức.',
+          ),
           findsOneWidget,
         );
-        expect(find.text('Xem lại / Cập nhật hồ sơ'), findsNothing);
+        expect(find.text('Xem & Cập nhật thông tin tiệm'), findsNothing);
       },
     );
 
-    testWidgets('ApproveBarbersScreen renders detail button and opens modal', (
-      tester,
-    ) async {
-      final samplePendingBarber = const BarberProfileModel(
-        uid: 'barber_test_admin',
-        displayName: 'Tiệm Tóc Minh Nhật',
-        bio: '5 năm kinh nghiệm cắt tóc nam',
-        address: '123 Lê Duẩn, Đà Nẵng',
-        location: GeoLocation(latitude: 16.068, longitude: 108.216),
-        priceMin: 70000,
-        priceMax: 150000,
-        approvalStatus: 'pending',
-        services: [
-          ServiceModel(
-            id: 'svc1',
-            name: 'Cắt tạo kiểu',
-            price: 80000,
-            durationMinutes: 30,
-          ),
-        ],
-        hairstyleIds: ['undercut', 'side_part'],
-        workingHours: {
-          'mon': DayWorkingHours(closed: false, open: '08:00', close: '20:00'),
-          'sun': DayWorkingHours(closed: true, open: '00:00', close: '00:00'),
-        },
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            pendingBarbersProvider.overrideWith(
-              (ref) => Future.value([samplePendingBarber]),
-            ),
-            adminControllerProvider.overrideWith(
-              (ref) => FakeAdminController(),
+    testWidgets(
+      'AdminBarbersScreen renders pending barbers and opens detail modal',
+      (tester) async {
+        final samplePendingBarber = const BarberProfileModel(
+          uid: 'barber_test_admin',
+          displayName: 'Tiệm Tóc Minh Nhật',
+          bio: '5 năm kinh nghiệm cắt tóc nam',
+          address: '123 Lê Duẩn, Đà Nẵng',
+          location: GeoLocation(latitude: 16.068, longitude: 108.216),
+          priceMin: 70000,
+          priceMax: 150000,
+          approvalStatus: 'pending',
+          services: [
+            ServiceModel(
+              id: 'svc1',
+              name: 'Cắt tạo kiểu',
+              price: 80000,
+              durationMinutes: 30,
             ),
           ],
-          child: const MaterialApp(home: ApproveBarbersScreen()),
-        ),
-      );
+          hairstyleIds: ['undercut', 'side_part'],
+          workingHours: {
+            'mon': DayWorkingHours(
+              closed: false,
+              open: '08:00',
+              close: '20:00',
+            ),
+            'sun': DayWorkingHours(closed: true, open: '00:00', close: '00:00'),
+          },
+        );
 
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              pendingBarbersProvider.overrideWith(
+                (ref) => Future.value([samplePendingBarber]),
+              ),
+              allBarbersProvider('all').overrideWith((ref) => Future.value([])),
+              userAppointmentsHistoryProvider(
+                (uid: 'barber_test_admin', isBarber: true),
+              ).overrideWith((ref) => Future.value([])),
+              adminControllerProvider.overrideWith(
+                (ref) => FakeAdminController(),
+              ),
+            ],
+            child: const MaterialApp(home: AdminBarbersScreen()),
+          ),
+        );
 
-      // Verify card summary
-      expect(find.text('Tiệm Tóc Minh Nhật'), findsOneWidget);
-      expect(find.text('Xem chi tiết hồ sơ đầy đủ'), findsOneWidget);
+        await tester.pumpAndSettle();
 
-      // Tap on details button
-      await tester.tap(find.text('Xem chi tiết hồ sơ đầy đủ'));
-      await tester.pumpAndSettle();
+        // Verify pending barber summary
+        expect(find.text('Tiệm Tóc Minh Nhật'), findsOneWidget);
+        expect(find.text('Chi tiết'), findsOneWidget);
 
-      // Verify details modal opened
-      expect(find.text('Chi tiết hồ sơ thợ cắt tóc'), findsOneWidget);
-      expect(find.text('Giới thiệu tiệm / thợ'), findsOneWidget);
-      expect(find.text('5 năm kinh nghiệm cắt tóc nam'), findsWidgets);
-      expect(find.text('Dịch vụ & Bảng giá (1 dịch vụ)'), findsOneWidget);
-      expect(find.text('Giờ làm việc chi tiết trong tuần'), findsOneWidget);
-      expect(find.text('Cắt tạo kiểu'), findsOneWidget);
-      expect(find.text('30 phút'), findsOneWidget);
-      expect(find.text('08:00 - 20:00'), findsOneWidget);
-      expect(find.text('Duyệt hồ sơ'), findsWidgets);
-      expect(find.text('Đóng cửa / Nghỉ'), findsWidgets);
-    });
+        // Tap on details button
+        await tester.tap(find.text('Chi tiết'));
+        await tester.pumpAndSettle();
+
+        // Verify details modal opened
+        expect(find.text('5 năm kinh nghiệm cắt tóc nam'), findsWidgets);
+        expect(find.text('Bảng Giá Dịch Vụ (1)'), findsOneWidget);
+        expect(find.text('Giờ Làm Việc Định Kỳ'), findsOneWidget);
+        expect(find.text('Cắt tạo kiểu'), findsOneWidget);
+        expect(find.text('30 phút · Đang hoạt động'), findsOneWidget);
+        expect(find.text('08:00 - 20:00'), findsOneWidget);
+        expect(find.text('Nghỉ / Đóng cửa'), findsOneWidget);
+      },
+    );
   });
 }
 

@@ -7,7 +7,6 @@
 
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,7 +56,10 @@ final barberDetailProvider = FutureProvider.family<BarberProfileModel?, String>(
 
 /// StreamProvider lấy danh sách đánh giá của thợ theo barberId
 final barberReviewsStreamProvider =
-    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, barberId) {
+    StreamProvider.autoDispose.family<List<Map<String, dynamic>>, String>((
+      ref,
+      barberId,
+    ) {
       final repo = ref.watch(barberRepositoryProvider);
       return repo.streamReviewsForBarber(barberId);
     });
@@ -66,7 +68,7 @@ final barberReviewsStreamProvider =
 class BarberRepository {
   final ApiClient _apiClient;
 
-  BarberRepository({FirebaseFirestore? firestore, ApiClient? apiClient})
+  BarberRepository({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
   /// Truy vấn tất cả các thợ có trạng thái approvalStatus == "approved"
@@ -89,12 +91,9 @@ class BarberRepository {
     }
   }
 
-  /// Lắng nghe stream các thợ có trạng thái approved
+  /// Lắng nghe stream các thợ có trạng thái approved (tải 1 lần khi mở màn hình)
   Stream<List<BarberProfileModel>> streamApprovedBarbers() async* {
     yield await getApprovedBarbers();
-    yield* Stream.periodic(const Duration(seconds: 15)).asyncMap((_) async {
-      return await getApprovedBarbers();
-    });
   }
 
   /// Lấy thông tin chi tiết một thợ cắt tóc theo UID
@@ -155,14 +154,11 @@ class BarberRepository {
     return [];
   }
 
-  /// Lắng nghe stream danh sách đánh giá của thợ
+  /// Lắng nghe stream danh sách đánh giá của thợ (tải 1 lần khi mở màn hình)
   Stream<List<Map<String, dynamic>>> streamReviewsForBarber(
     String barberId,
   ) async* {
     yield await _fetchReviewsForBarber(barberId);
-    yield* Stream.periodic(const Duration(seconds: 15)).asyncMap((_) async {
-      return await _fetchReviewsForBarber(barberId);
-    });
   }
 }
 

@@ -1,46 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HairFit AI — Nền tảng đặt lịch cắt tóc thông minh, tìm kiếm salon & tư vấn kiểu tóc chuẩn tỉ lệ khuôn mặt trên Web & Mobile.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="hairfit_ai">
+  <meta name="apple-mobile-web-app-title" content="HairFit AI">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>hairfit_ai</title>
+  <title>HairFit AI — Đặt Lịch Salon & Tư Vấn Kiểu Tóc</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #F5F6FA;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #loading-indicator {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);
+      color: #FFFFFF;
+      z-index: 9999;
+      transition: opacity 0.4s ease-out;
+    }
+    .brand-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: rgba(233, 69, 96, 0.16);
+      border: 1.5px solid rgba(233, 69, 96, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 14px 32px rgba(233, 69, 96, 0.25);
+      animation: floatBadge 2.4s ease-in-out infinite;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #E94560;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+    }
+    .brand-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="loading-indicator">
+    <div class="brand-badge">
+      <div class="spinner"></div>
+    </div>
+    <div class="brand-title">HairFit AI</div>
+    <div class="brand-subtitle">Đang khởi tạo không gian Salon & Web Studio...</div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('loading-indicator');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function () {
+          loader.remove();
+        }, 400);
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
+<!-- CreBy: MenBoyBMN -->

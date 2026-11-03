@@ -6,8 +6,8 @@
 // ============================================================================
 
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -66,6 +66,30 @@ class _BarberRegistrationScreenState
     if (user != null) {
       _nameCtrl.text = user.displayName;
       _avatarUrl = user.avatarUrl;
+
+      final existingProfile = ref.read(barberProfileProvider(user.uid)).value;
+      if (existingProfile != null) {
+        if (existingProfile.isPending) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) context.go('/barber/pending');
+          });
+        } else if (existingProfile.isRejected) {
+          if (existingProfile.displayName.isNotEmpty) {
+            _nameCtrl.text = existingProfile.displayName;
+          }
+          if (existingProfile.bio.isNotEmpty) {
+            _bioCtrl.text = existingProfile.bio;
+          }
+          if (existingProfile.avatarUrl.isNotEmpty) {
+            _avatarUrl = existingProfile.avatarUrl;
+          }
+          _address = existingProfile.address;
+          _location = existingProfile.location;
+          _services = List.from(existingProfile.services);
+          _hairstyleIds = List.from(existingProfile.hairstyleIds);
+          _workingHours = Map.from(existingProfile.workingHours);
+        }
+      }
     }
   }
 
@@ -126,20 +150,21 @@ class _BarberRegistrationScreenState
                   style: AppTextStyles.h4,
                 ),
                 const SizedBox(height: AppDimensions.sm),
-                ListTile(
-                  leading: const Icon(
-                    Icons.camera_alt_outlined,
-                    color: AppColors.accent,
+                if (!kIsWeb)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.camera_alt_outlined,
+                      color: AppColors.accent,
+                    ),
+                    title: const Text(
+                      'Chụp ảnh từ máy ảnh',
+                      style: AppTextStyles.bodyMedium,
+                    ),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _pickAvatarImage(ImageSource.camera);
+                    },
                   ),
-                  title: const Text(
-                    'Chụp ảnh từ máy ảnh',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _pickAvatarImage(ImageSource.camera);
-                  },
-                ),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library_outlined,
@@ -265,6 +290,17 @@ class _BarberRegistrationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authStateProvider).value;
+    if (user != null) {
+      ref.listen(barberProfileProvider(user.uid), (previous, next) {
+        next.whenData((profile) {
+          if (profile != null && profile.isPending && mounted) {
+            context.go('/barber/pending');
+          }
+        });
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tạo hồ sơ Thợ cắt tóc'),

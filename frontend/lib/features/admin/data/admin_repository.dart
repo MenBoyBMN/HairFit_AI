@@ -7,7 +7,6 @@
 //    đánh giá và cấu hình vận hành hệ thống.
 // ============================================================================
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/api_client.dart';
@@ -122,13 +121,13 @@ class AdminAppointmentFilter {
 }
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
-  return AdminRepository(null, ref.watch(apiClientProvider));
+  return AdminRepository(apiClient: ref.watch(apiClientProvider));
 });
 
 class AdminRepository {
   final ApiClient _apiClient;
 
-  AdminRepository([FirebaseFirestore? firestore, ApiClient? apiClient])
+  AdminRepository({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
   /// Lấy số liệu thống kê tổng quan cho Dashboard

@@ -39,102 +39,110 @@ class _ManualSelectScreenState extends ConsumerState<ManualSelectScreen> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Banner giải thích
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.md),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.05),
-                borderRadius: AppDimensions.borderRadiusMd,
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    color: AppColors.accent,
-                    size: 24,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppDimensions.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Banner giải thích
+                Container(
+                  padding: const EdgeInsets.all(AppDimensions.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    borderRadius: AppDimensions.borderRadiusMd,
+                    border: Border.all(color: AppColors.divider),
                   ),
-                  const SizedBox(width: AppDimensions.md),
-                  Expanded(
-                    child: Text(
-                      'Nếu bạn không tiện chụp ảnh hoặc camera bị lỗi, hãy chọn dáng khuôn mặt tương đồng nhất dưới đây. Thuật toán chuyên gia sẽ lập tức đề xuất kiểu tóc tối ưu.',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary,
-                        height: 1.4,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: AppColors.accent,
+                        size: 24,
+                      ),
+                      const SizedBox(width: AppDimensions.md),
+                      Expanded(
+                        child: Text(
+                          'Nếu bạn không tiện chụp ảnh hoặc camera bị lỗi, hãy chọn dáng khuôn mặt tương đồng nhất dưới đây. Thuật toán chuyên gia sẽ lập tức đề xuất kiểu tóc tối ưu.',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textPrimary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.xl),
+
+                Text(
+                  'Danh sách các dáng khuôn mặt chuẩn:',
+                  style: AppTextStyles.h4.copyWith(color: AppColors.primary),
+                ),
+                const SizedBox(height: AppDimensions.md),
+
+                // Danh sách các dáng mặt
+                ...FaceShape.values.map((shape) {
+                  final isSelected = _selectedShape == shape;
+                  return _buildFaceShapeCard(shape, isSelected);
+                }),
+
+                const SizedBox(height: AppDimensions.xxl),
+
+                // Nút bấm xác nhận & xem kết quả
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _selectedShape == null || aiState.isAnalyzing
+                        ? null
+                        : () async {
+                            await ref
+                                .read(aiConsultProvider.notifier)
+                                .selectManualFaceShape(_selectedShape!);
+                            if (context.mounted) {
+                              context.push('/customer/ai-result');
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.accent.withValues(
+                        alpha: 0.35,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppDimensions.borderRadiusMd,
+                      ),
+                    ),
+                    icon: aiState.isAnalyzing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        aiState.isAnalyzing
+                            ? 'Đang đối soát quy tắc...'
+                            : 'Xem gợi ý kiểu tóc cho ${_selectedShape?.displayNameVi ?? ""}',
+                        style: AppTextStyles.buttonMedium.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimensions.xl),
-
-            Text(
-              'Danh sách các dáng khuôn mặt chuẩn:',
-              style: AppTextStyles.h4.copyWith(color: AppColors.primary),
-            ),
-            const SizedBox(height: AppDimensions.md),
-
-            // Danh sách các dáng mặt
-            ...FaceShape.values.map((shape) {
-              final isSelected = _selectedShape == shape;
-              return _buildFaceShapeCard(shape, isSelected);
-            }),
-
-            const SizedBox(height: AppDimensions.xxl),
-
-            // Nút bấm xác nhận & xem kết quả
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _selectedShape == null || aiState.isAnalyzing
-                    ? null
-                    : () async {
-                        await ref
-                            .read(aiConsultProvider.notifier)
-                            .selectManualFaceShape(_selectedShape!);
-                        if (context.mounted) {
-                          context.push('/customer/ai-result');
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.accent.withValues(
-                    alpha: 0.35,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppDimensions.borderRadiusMd,
-                  ),
                 ),
-                icon: aiState.isAnalyzing
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.auto_awesome),
-                label: Text(
-                  aiState.isAnalyzing
-                      ? 'Đang đối soát quy tắc...'
-                      : 'Xem gợi ý kiểu tóc cho ${_selectedShape?.displayNameVi ?? ""}',
-                  style: AppTextStyles.buttonMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                const SizedBox(height: AppDimensions.xl),
+              ],
             ),
-            const SizedBox(height: AppDimensions.xl),
-          ],
+          ),
         ),
       ),
     );

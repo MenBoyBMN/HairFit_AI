@@ -68,15 +68,15 @@ class AIHaircutHandshakeCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: AppDimensions.sm),
       padding: const EdgeInsets.all(AppDimensions.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F5FF),
+        color: AppColors.aiHandshakeLight,
         borderRadius: AppDimensions.borderRadiusMd,
         border: Border.all(
-          color: const Color(0xFF6C5CE7).withValues(alpha: 0.35),
+          color: AppColors.aiHandshake.withValues(alpha: 0.35),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6C5CE7).withValues(alpha: 0.06),
+            color: AppColors.aiHandshake.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -91,12 +91,12 @@ class AIHaircutHandshakeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.15),
+                  color: AppColors.aiHandshake.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.auto_awesome,
-                  color: Color(0xFF6C5CE7),
+                  color: AppColors.aiHandshake,
                   size: 16,
                 ),
               ),
@@ -108,7 +108,7 @@ class AIHaircutHandshakeCard extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.8,
-                    color: Color(0xFF6C5CE7),
+                    color: AppColors.aiHandshake,
                   ),
                 ),
               ),
@@ -135,7 +135,7 @@ class AIHaircutHandshakeCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF6C5CE7),
+                    color: AppColors.aiHandshake,
                   ),
                 ),
               ),
@@ -179,7 +179,7 @@ class AIHaircutHandshakeCard extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: AppDimensions.borderRadiusSm,
                 border: Border.all(
-                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.2),
+                  color: AppColors.aiHandshake.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -214,7 +214,7 @@ class AIHaircutHandshakeCard extends StatelessWidget {
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
-                  foregroundColor: const Color(0xFF6C5CE7),
+                  foregroundColor: AppColors.aiHandshake,
                 ),
                 icon: const Icon(Icons.image_outlined, size: 16),
                 label: const Text(

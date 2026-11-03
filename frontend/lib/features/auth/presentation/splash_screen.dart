@@ -30,15 +30,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _handleInitialNavigation() async {
-    // Chờ 1.5 giây để hiển thị thương hiệu
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // Chờ tối thiểu 600ms để hiển thị nhận diện thương hiệu
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
+    // Đợi authStateProvider hoàn tất tải (tối đa 2.5s) tránh nhảy nhầm sang /login
+    final startTime = DateTime.now();
+    while (mounted &&
+        ref.read(authStateProvider).isLoading &&
+        DateTime.now().difference(startTime) < const Duration(milliseconds: 2500)) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
     if (!mounted) return;
 
     final user = ref.read(authStateProvider).value;
     if (user == null) {
       context.go('/login');
     } else if (user.isAdmin) {
-      context.go('/admin/approve-barbers');
+      context.go('/admin/dashboard');
     } else if (user.isBarber) {
       context.go('/barber/pending');
     } else {

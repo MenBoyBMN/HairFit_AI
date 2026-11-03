@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hairfit_ai/core/services/seed_data_service.dart';
+import 'helpers/sample_test_data.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/ai_consultant_service.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/face_shape.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/hairstyle_recommendation_engine.dart';
@@ -104,9 +104,9 @@ void main() {
       'HairstyleResultCard renders styling tips, match score and triggers callback',
       (tester) async {
         bool tappedFindBarbers = false;
-        final style = SeedDataService.sampleHairstyles.first;
+        final style = SampleTestData.sampleHairstyles.first;
         final rec = RecommendedHairstyle(
-          style: SeedDataService.sampleHairstyles.first,
+          style: SampleTestData.sampleHairstyles.first,
           matchScore: 0.95,
           matchReasonVi: 'Cắt gọn hai bên giúp làm thon gọn khuôn mặt tròn.',
           stylingTips: const ['Sấy vuốt ngược tạo phồng', 'Dùng sáp clay mờ'],
@@ -234,7 +234,7 @@ void main() {
         // Tạo kết quả manual cho mặt vuông
         await notifier.selectManualFaceShape(
           FaceShape.square,
-          catalogOverride: SeedDataService.sampleHairstyles,
+          catalogOverride: SampleTestData.sampleHairstyles,
         );
 
         await tester.pumpWidget(
@@ -272,7 +272,7 @@ void main() {
 
         final recommendation = const HairstyleRecommendationEngine().recommend(
           faceShape: FaceShape.square,
-          catalog: SeedDataService.sampleHairstyles,
+          catalog: SampleTestData.sampleHairstyles,
         );
 
         final successResult = AIConsultSuccess(

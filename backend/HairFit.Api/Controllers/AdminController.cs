@@ -26,62 +26,53 @@ public class AdminController : ControllerBase
     {
         var todayStr = DateTime.Now.ToString("yyyy-MM-dd");
 
-        var users = await _db.Users.AsNoTracking().ToListAsync();
-        int customers = 0, barbers = 0, admins = 0, blocked = 0;
-        foreach (var u in users)
-        {
-            if (u.IsBlocked) blocked++;
-            var role = u.Role.ToLowerInvariant();
-            if (role == "barber") barbers++;
-            else if (role == "admin") admins++;
-            else customers++;
-        }
+        var approvedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "approved");
+        var pendingBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "pending");
+        var suspendedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "suspended");
+        var rejectedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "rejected");
 
-        var barberProfiles = await _db.BarberProfiles.AsNoTracking().ToListAsync();
-        int pendingBarbers = 0, approvedBarbers = 0, suspendedBarbers = 0, rejectedBarbers = 0;
-        foreach (var b in barberProfiles)
-        {
-            var status = b.ApprovalStatus.ToLowerInvariant();
-            if (status == "pending") pendingBarbers++;
-            else if (status == "approved") approvedBarbers++;
-            else if (status == "suspended") suspendedBarbers++;
-            else if (status == "rejected") rejectedBarbers++;
-        }
+        var blockedUsers = await _db.Users.CountAsync(u => u.IsBlocked);
+        var barbers = approvedBarbers;
+        var admins = await _db.Users.CountAsync(u => u.Role == "admin");
+        var customers = await _db.Users.CountAsync(u => u.Role == "customer");
+        var totalUsers = customers + barbers + admins;
 
-        var appointments = await _db.Appointments.AsNoTracking().ToListAsync();
-        int totalAppToday = 0, pendingAppToday = 0, confirmedAppToday = 0, completedAppToday = 0, cancelledAppToday = 0;
-        int revenueToday = 0, expectedRevenueToday = 0, totalRevenue = 0;
+        var totalAppointments = await _db.Appointments.CountAsync();
+        var totalRevenue = await _db.Appointments
+            .Where(a => a.Status == "completed")
+            .SumAsync(a => (int?)a.Price) ?? 0;
 
-        foreach (var a in appointments)
+        var todayAppointments = await _db.Appointments
+            .AsNoTracking()
+            .Where(a => a.Date == todayStr)
+            .Select(a => new { a.Status, a.Price })
+            .ToListAsync();
+
+        int totalAppToday = todayAppointments.Count;
+        int pendingAppToday = 0, confirmedAppToday = 0, completedAppToday = 0, cancelledAppToday = 0;
+        int revenueToday = 0, expectedRevenueToday = 0;
+
+        foreach (var a in todayAppointments)
         {
-            var status = a.Status.ToLowerInvariant();
-            if (status == "completed")
+            var status = a.Status.ToLower();
+            if (status == "pending")
             {
-                totalRevenue += a.Price;
+                pendingAppToday++;
             }
-
-            if (a.Date == todayStr)
+            else if (status == "confirmed")
             {
-                totalAppToday++;
-                if (status == "pending")
-                {
-                    pendingAppToday++;
-                }
-                else if (status == "confirmed")
-                {
-                    confirmedAppToday++;
-                    expectedRevenueToday += a.Price;
-                }
-                else if (status == "completed")
-                {
-                    completedAppToday++;
-                    revenueToday += a.Price;
-                    expectedRevenueToday += a.Price;
-                }
-                else if (status == "cancelled" || status == "rejected")
-                {
-                    cancelledAppToday++;
-                }
+                confirmedAppToday++;
+                expectedRevenueToday += a.Price;
+            }
+            else if (status == "completed")
+            {
+                completedAppToday++;
+                revenueToday += a.Price;
+                expectedRevenueToday += a.Price;
+            }
+            else if (status == "cancelled" || status == "rejected")
+            {
+                cancelledAppToday++;
             }
         }
 
@@ -90,11 +81,11 @@ public class AdminController : ControllerBase
 
         return Ok(new Dictionary<string, object>
         {
-            ["totalUsers"] = users.Count,
+            ["totalUsers"] = totalUsers,
             ["totalCustomers"] = customers,
             ["totalBarbers"] = barbers,
             ["totalAdmins"] = admins,
-            ["blockedUsers"] = blocked,
+            ["blockedUsers"] = blockedUsers,
             ["pendingBarbers"] = pendingBarbers,
             ["approvedBarbers"] = approvedBarbers,
             ["suspendedBarbers"] = suspendedBarbers,
@@ -107,7 +98,7 @@ public class AdminController : ControllerBase
             ["revenueToday"] = revenueToday,
             ["expectedRevenueToday"] = expectedRevenueToday,
             ["totalRevenue"] = totalRevenue,
-            ["totalAppointments"] = appointments.Count,
+            ["totalAppointments"] = totalAppointments,
             ["totalHairstyles"] = hairstylesCount,
             ["totalReviews"] = reviewsCount
         });
@@ -151,6 +142,16 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetAllUsers([FromQuery] string? roleFilter)
     {
         var query = _db.Users.AsNoTracking();
+
+        // Với tài khoản vai trò thợ: chỉ lấy những thợ đã được duyệt chính thức (ApprovalStatus == "approved")
+        var approvedBarberUids = await _db.BarberProfiles
+            .AsNoTracking()
+            .Where(b => b.ApprovalStatus == "approved")
+            .Select(b => b.Uid)
+            .ToListAsync();
+
+        query = query.Where(u => u.Role != "barber" || approvedBarberUids.Contains(u.Uid));
+
         if (!string.IsNullOrWhiteSpace(roleFilter) && roleFilter != "all")
         {
             query = query.Where(u => u.Role == roleFilter);
