@@ -66,6 +66,30 @@ class _BarberRegistrationScreenState
     if (user != null) {
       _nameCtrl.text = user.displayName;
       _avatarUrl = user.avatarUrl;
+
+      final existingProfile = ref.read(barberProfileProvider(user.uid)).value;
+      if (existingProfile != null) {
+        if (existingProfile.isPending) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) context.go('/barber/pending');
+          });
+        } else if (existingProfile.isRejected) {
+          if (existingProfile.displayName.isNotEmpty) {
+            _nameCtrl.text = existingProfile.displayName;
+          }
+          if (existingProfile.bio.isNotEmpty) {
+            _bioCtrl.text = existingProfile.bio;
+          }
+          if (existingProfile.avatarUrl.isNotEmpty) {
+            _avatarUrl = existingProfile.avatarUrl;
+          }
+          _address = existingProfile.address;
+          _location = existingProfile.location;
+          _services = List.from(existingProfile.services);
+          _hairstyleIds = List.from(existingProfile.hairstyleIds);
+          _workingHours = Map.from(existingProfile.workingHours);
+        }
+      }
     }
   }
 
@@ -266,6 +290,17 @@ class _BarberRegistrationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authStateProvider).value;
+    if (user != null) {
+      ref.listen(barberProfileProvider(user.uid), (previous, next) {
+        next.whenData((profile) {
+          if (profile != null && profile.isPending && mounted) {
+            context.go('/barber/pending');
+          }
+        });
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tạo hồ sơ Thợ cắt tóc'),

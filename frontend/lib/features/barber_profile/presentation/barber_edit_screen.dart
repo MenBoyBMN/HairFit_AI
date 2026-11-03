@@ -481,6 +481,64 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
             );
           }
 
+          if (profile.isPending) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.lock_clock_outlined,
+                        size: 64,
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Hồ sơ đang chờ phê duyệt',
+                      style: AppTextStyles.h2,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Hồ sơ của bạn đã được gửi lên Ban quản trị và đang trong quá trình xét duyệt. Bạn không thể chỉnh sửa hồ sơ trong thời gian này.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => context.go('/barber/pending'),
+                      child: const Text('Xem trạng thái duyệt'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (profile.isRejected) {
+            return Center(
+              child: EmptyState(
+                icon: Icons.edit_note_outlined,
+                title: 'Hồ sơ cần chỉnh sửa lại',
+                message:
+                    'Hồ sơ của bạn chưa được duyệt. Vui lòng cập nhật lại thông tin để gửi duyệt lại.',
+                actionText: 'Chỉnh sửa & Gửi lại',
+                onAction: () => context.go('/barber/profile-setup'),
+              ),
+            );
+          }
+
           _populateData(profile);
 
           return SingleChildScrollView(

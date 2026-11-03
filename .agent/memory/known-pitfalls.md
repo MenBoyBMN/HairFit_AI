@@ -6,6 +6,7 @@
 ## Tài liệu & kiến trúc
 - [2026-11-03] [docs] Tài liệu cũ mô tả booking bằng Firestore transaction & Face Mesh landmarks (10/152/234...) → SAI. Thực tế: SQL transaction ở `BookingsController.cs`; AI dùng `FaceContourType.face` trong `face_shape_analyzer.dart`.
 - [2026-11-03] [ui] Token màu card là `AppColors.cardColor` (không phải `AppColors.card`).
+- [2026-11-03] [ui] `Size.fromHeight(h)` đặt `width = double.infinity`; dùng trong `ButtonThemeData` gây lỗi `BoxConstraints forces an infinite width` khi đặt `OutlinedButton`/`ElevatedButton` trong `Row` → dùng `Size(0, h)`.
 - [2026-11-03] [repo] Code nằm trong `frontend/` và `backend/`, không có `lib/` hay `test/` ở gốc repo. Chạy lệnh Flutter trong `frontend/`.
 
 ## Backend parity

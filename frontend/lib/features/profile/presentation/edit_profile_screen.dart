@@ -21,6 +21,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../providers/auth_provider.dart';
 import '../../barber_profile/data/barber_profile_repository.dart';
 import '../../search_map/data/barber_repository.dart';
+import '../../../providers/admin_provider.dart';
 
 /// Màn hình chỉnh sửa thông tin người dùng với chức năng upload ảnh từ máy (Task 6.4 & User Request Task 9)
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -209,6 +210,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final currentUser = ref.read(authStateProvider).value;
       if (currentUser != null) {
         ref.invalidate(barberProfileProvider(currentUser.uid));
+        if (currentUser.isAdmin) {
+          ref.invalidate(allUsersProvider);
+        }
       }
       ref.invalidate(approvedBarbersStreamProvider);
       ref.invalidate(approvedBarbersProvider);

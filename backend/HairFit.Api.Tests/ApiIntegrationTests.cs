@@ -77,8 +77,23 @@ public class ApiIntegrationTests
         using var db = CreateInMemoryDbContext();
         var controller = new BarbersController(db);
 
-        // Seed 5 sample barbers
-        await DbInitializer.SeedBarbersAsync(db, overwrite: true);
+        // Seed 5 test barbers
+        for (int i = 1; i <= 5; i++)
+        {
+            db.BarberProfiles.Add(new BarberProfileEntity
+            {
+                Uid = $"barber_{i}",
+                DisplayName = $"Thợ cắt {i}",
+                Phone = $"090000000{i}",
+                Address = "Hà Nội",
+                Latitude = 21.0285,
+                Longitude = 105.8542,
+                ApprovalStatus = "approved",
+                IsAcceptingBookingsToday = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        await db.SaveChangesAsync();
 
         // 1. Get approved barbers
         var approvedResult = await controller.GetApprovedBarbers();
@@ -250,8 +265,42 @@ public class ApiIntegrationTests
         using var db = CreateInMemoryDbContext();
         var adminCtrl = new AdminController(db);
 
-        // Seed data
-        await DbInitializer.InitializeAsync(new TestServiceProvider(db));
+        // Seed test data for admin stats
+        for (int i = 1; i <= 10; i++)
+        {
+            db.Hairstyles.Add(new HairstyleEntity
+            {
+                Id = $"style_{i}",
+                Name = $"Kiểu {i}",
+                Description = "Mô tả",
+                ImageUrl = "https://example.com/img.jpg",
+                ImageUrlsJson = "[]",
+                FaceShapesJson = "[]",
+                TagsJson = "[]",
+                Active = true
+            });
+        }
+        for (int i = 1; i <= 5; i++)
+        {
+            db.BarberProfiles.Add(new BarberProfileEntity
+            {
+                Uid = $"barber_admin_{i}",
+                DisplayName = $"Thợ {i}",
+                Phone = $"091100000{i}",
+                Address = "Hà Nội",
+                ApprovalStatus = "approved",
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        db.SystemSettings.Add(new SystemSettingEntity
+        {
+            Key = "global",
+            SearchRadiusKm = 10.0,
+            CancelNoticeHours = 1,
+            MaintenanceMode = false,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
 
         // 1. Get stats
         var statsRes = await adminCtrl.GetDashboardStats();
@@ -276,22 +325,7 @@ public class ApiIntegrationTests
         var verifySetting = await db.SystemSettings.FindAsync("global");
         Assert.Equal(15.5, verifySetting!.SearchRadiusKm);
         Assert.True(verifySetting.MaintenanceMode);
-    }
-
-    private class TestServiceProvider : IServiceProvider, IServiceScope, IServiceScopeFactory
-    {
-        private readonly AppDbContext _db;
-        public TestServiceProvider(AppDbContext db) => _db = db;
-        public object? GetService(Type serviceType)
-        {
-            if (serviceType == typeof(AppDbContext)) return _db;
-            if (serviceType == typeof(IServiceScopeFactory)) return this;
-            return null;
-        }
-        public IServiceScope CreateScope() => this;
-        public IServiceProvider ServiceProvider => this;
-        public void Dispose() { }
-    }
+}
 }
 
 // CreBy: MenBoyBMN

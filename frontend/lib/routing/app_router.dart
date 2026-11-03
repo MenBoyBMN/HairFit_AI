@@ -254,6 +254,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'admin_approve_barbers',
         builder: (context, state) => const AdminShellScreen(initialTabIndex: 1),
       ),
+      GoRoute(
+        path: '/admin/profile-edit',
+        name: 'admin_profile_edit',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
       // --- CHAT 1:1 ---
       GoRoute(
         path: '/conversations',

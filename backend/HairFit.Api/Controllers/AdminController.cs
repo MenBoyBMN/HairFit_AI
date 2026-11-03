@@ -26,16 +26,16 @@ public class AdminController : ControllerBase
     {
         var todayStr = DateTime.Now.ToString("yyyy-MM-dd");
 
-        var totalUsers = await _db.Users.CountAsync();
-        var blockedUsers = await _db.Users.CountAsync(u => u.IsBlocked);
-        var barbers = await _db.Users.CountAsync(u => u.Role == "barber");
-        var admins = await _db.Users.CountAsync(u => u.Role == "admin");
-        var customers = totalUsers - barbers - admins;
-
-        var pendingBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "pending");
         var approvedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "approved");
+        var pendingBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "pending");
         var suspendedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "suspended");
         var rejectedBarbers = await _db.BarberProfiles.CountAsync(b => b.ApprovalStatus == "rejected");
+
+        var blockedUsers = await _db.Users.CountAsync(u => u.IsBlocked);
+        var barbers = approvedBarbers;
+        var admins = await _db.Users.CountAsync(u => u.Role == "admin");
+        var customers = await _db.Users.CountAsync(u => u.Role == "customer");
+        var totalUsers = customers + barbers + admins;
 
         var totalAppointments = await _db.Appointments.CountAsync();
         var totalRevenue = await _db.Appointments
@@ -142,6 +142,16 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetAllUsers([FromQuery] string? roleFilter)
     {
         var query = _db.Users.AsNoTracking();
+
+        // Với tài khoản vai trò thợ: chỉ lấy những thợ đã được duyệt chính thức (ApprovalStatus == "approved")
+        var approvedBarberUids = await _db.BarberProfiles
+            .AsNoTracking()
+            .Where(b => b.ApprovalStatus == "approved")
+            .Select(b => b.Uid)
+            .ToListAsync();
+
+        query = query.Where(u => u.Role != "barber" || approvedBarberUids.Contains(u.Uid));
+
         if (!string.IsNullOrWhiteSpace(roleFilter) && roleFilter != "all")
         {
             query = query.Where(u => u.Role == roleFilter);

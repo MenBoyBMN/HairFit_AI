@@ -66,8 +66,12 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-// 4. Tự động tạo Database SQL Server và nạp Seed Data mặc định khi khởi chạy
-await DbInitializer.InitializeAsync(app.Services);
+// 4. Tự động tạo cấu trúc Database SQL Server (nếu chưa có) mà không nạp Seed Data
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 app.UseSwagger();
 app.UseSwaggerUI();

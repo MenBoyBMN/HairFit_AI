@@ -114,6 +114,17 @@ public class BarbersController : ControllerBase
     {
         var barber = await _db.BarberProfiles.FindAsync(uid);
         var isNew = barber == null;
+
+        // Nếu hồ sơ đang chờ duyệt (pending), tuyệt đối không cho phép chỉnh sửa
+        if (barber != null && barber.ApprovalStatus == "pending")
+        {
+            return StatusCode(403, new
+            {
+                code = "PROFILE_UNDER_REVIEW",
+                message = "Hồ sơ của bạn đang được xét duyệt. Tuyệt đối không thể chỉnh sửa trong thời gian chờ duyệt."
+            });
+        }
+
         if (barber == null)
         {
             barber = new BarberProfileEntity

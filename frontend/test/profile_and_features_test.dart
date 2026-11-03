@@ -289,7 +289,7 @@ void main() {
     });
 
     testWidgets(
-      'BarberPendingScreen shows (Bạn có thể cập nhật lại thông tin trong Trang Thợ)',
+      'BarberPendingScreen locks profile editing and displays review message when pending',
       (tester) async {
         final sampleUser = UserModel(
           uid: 'barber_123',
@@ -325,10 +325,12 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('(Bạn có thể cập nhật lại thông tin trong Trang Thợ)'),
+          find.text(
+            'Hồ sơ đang được khóa để Ban quản trị xét duyệt.\nBạn sẽ có thể chỉnh sửa thông tin tiệm sau khi hồ sơ được phê duyệt chính thức.',
+          ),
           findsOneWidget,
         );
-        expect(find.text('Xem lại / Cập nhật hồ sơ'), findsNothing);
+        expect(find.text('Xem & Cập nhật thông tin tiệm'), findsNothing);
       },
     );
 
