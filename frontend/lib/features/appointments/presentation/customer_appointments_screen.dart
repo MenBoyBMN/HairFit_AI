@@ -13,9 +13,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_retry.dart';
 import '../../../core/widgets/loading_shimmer.dart';
+import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/appointment_model.dart';
 import '../../../models/chat_model.dart';
 import '../../../providers/app_providers.dart';
@@ -244,95 +246,150 @@ class _CustomerAppointmentsScreenState
   @override
   Widget build(BuildContext context) {
     final appointmentsAsync = ref.watch(customerAppointmentsProvider);
+    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Lịch Hẹn Của Tôi', style: AppTextStyles.h3),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Quay lại',
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/customer/home');
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Làm mới danh sách',
-            onPressed: () => ref.refresh(customerAppointmentsProvider),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat_outlined, color: AppColors.accent),
-            tooltip: 'Tin nhắn',
-            onPressed: () => context.push('/conversations'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            tooltip: 'Trang chủ',
-            onPressed: () => context.go('/customer/home'),
+      appBar: isDesktop
+          ? const WebTopNavBar(currentRoute: '/customer/appointments')
+          : AppBar(
+              title: const Text('Lịch Hẹn Của Tôi', style: AppTextStyles.h3),
+              centerTitle: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Quay lại',
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    context.go('/customer/home');
+                  }
+                },
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded),
+                  tooltip: 'Làm mới danh sách',
+                  onPressed: () => ref.refresh(customerAppointmentsProvider),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.chat_outlined,
+                    color: AppColors.accent,
+                  ),
+                  tooltip: 'Tin nhắn',
+                  onPressed: () => context.push('/conversations'),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.home_outlined),
+                  tooltip: 'Trang chủ',
+                  onPressed: () => context.go('/customer/home'),
+                ),
+              ],
+              bottom: TabBar(
+                controller: _tabController,
+                labelColor: AppColors.accent,
+                unselectedLabelColor: AppColors.textSecondary,
+                indicatorColor: AppColors.accent,
+                indicatorWeight: 3,
+                labelStyle: AppTextStyles.labelMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                tabs: const [
+                  Tab(text: 'Sắp tới'),
+                  Tab(text: 'Lịch sử'),
+                ],
+              ),
+            ),
+      body: Column(
+        children: [
+          if (isDesktop)
+            Container(
+              color: AppColors.surface,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: PlatformHelper.maxWebContentWidth,
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: AppDimensions.lg),
+                      const Text('Lịch Hẹn Của Tôi', style: AppTextStyles.h3),
+                      const SizedBox(width: AppDimensions.xl),
+                      Expanded(
+                        child: TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          labelColor: AppColors.accent,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          indicatorColor: AppColors.accent,
+                          indicatorWeight: 3,
+                          labelStyle: AppTextStyles.labelMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          tabs: const [
+                            Tab(text: 'Sắp tới'),
+                            Tab(text: 'Lịch sử'),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: 'Làm mới danh sách',
+                        onPressed: () =>
+                            ref.refresh(customerAppointmentsProvider),
+                      ),
+                      const SizedBox(width: AppDimensions.md),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          Expanded(
+            child: appointmentsAsync.when(
+              loading: () => ListView.builder(
+                itemCount: 4,
+                padding: const EdgeInsets.symmetric(vertical: AppDimensions.sm),
+                itemBuilder: (context, index) => LoadingShimmer.listTile(),
+              ),
+              error: (err, _) => Center(
+                child: ErrorRetry(
+                  errorMessage: 'Lỗi tải danh sách lịch hẹn: $err',
+                  onRetry: () => ref.refresh(customerAppointmentsProvider),
+                ),
+              ),
+              data: (appointments) {
+                final upcoming = appointments
+                    .where((a) => a.isPending || a.isConfirmed)
+                    .toList();
+                final history = appointments
+                    .where(
+                      (a) => a.isCompleted || a.isCancelled || a.isRejected,
+                    )
+                    .toList();
+
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildAppointmentList(
+                      appointments: upcoming,
+                      isHistory: false,
+                      emptyTitle: 'Chưa có lịch hẹn nào sắp tới',
+                      emptySubtitle:
+                          'Hãy tìm kiếm thợ cắt tóc ưng ý và đặt lịch ngay!',
+                    ),
+                    _buildAppointmentList(
+                      appointments: history,
+                      isHistory: true,
+                      emptyTitle: 'Chưa có lịch sử lịch hẹn',
+                      emptySubtitle: 'Các lịch hẹn đã hoàn tất hoặc đã hủy sẽ hiển thị ở đây.',
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.accent,
-          indicatorWeight: 3,
-          labelStyle: AppTextStyles.labelMedium.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-          tabs: const [
-            Tab(text: 'Sắp tới'),
-            Tab(text: 'Lịch sử'),
-          ],
-        ),
-      ),
-      body: appointmentsAsync.when(
-        loading: () => ListView.builder(
-          itemCount: 4,
-          padding: const EdgeInsets.symmetric(vertical: AppDimensions.sm),
-          itemBuilder: (context, index) => LoadingShimmer.listTile(),
-        ),
-        error: (err, _) => Center(
-          child: ErrorRetry(
-            errorMessage: 'Lỗi tải danh sách lịch hẹn: $err',
-            onRetry: () => ref.refresh(customerAppointmentsProvider),
-          ),
-        ),
-        data: (appointments) {
-          final upcoming = appointments
-              .where((a) => a.isPending || a.isConfirmed)
-              .toList();
-          final history = appointments
-              .where((a) => a.isCompleted || a.isCancelled || a.isRejected)
-              .toList();
-
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildAppointmentList(
-                appointments: upcoming,
-                isHistory: false,
-                emptyTitle: 'Chưa có lịch hẹn nào sắp tới',
-                emptySubtitle:
-                    'Hãy tìm kiếm thợ cắt tóc ưng ý và đặt lịch ngay!',
-              ),
-              _buildAppointmentList(
-                appointments: history,
-                isHistory: true,
-                emptyTitle: 'Chưa có lịch sử lịch hẹn',
-                emptySubtitle:
-                    'Các lịch hẹn đã hoàn tất hoặc đã hủy sẽ hiển thị ở đây.',
-              ),
-            ],
-          );
-        },
       ),
     );
   }
@@ -364,6 +421,49 @@ class _CustomerAppointmentsScreenState
               ),
             ),
           ],
+        ),
+      );
+    }
+
+    if (PlatformHelper.isDesktopLayout(context)) {
+      return RefreshIndicator(
+        onRefresh: () async => ref.refresh(customerAppointmentsProvider),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppDimensions.xl),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: PlatformHelper.maxWebContentWidth,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth =
+                      (constraints.maxWidth - AppDimensions.lg) / 2;
+                  return Wrap(
+                    spacing: AppDimensions.lg,
+                    runSpacing: AppDimensions.lg,
+                    children: appointments.map((appointment) {
+                      return SizedBox(
+                        width: cardWidth,
+                        child: AppointmentCard(
+                          appointment: appointment,
+                          isBarberView: false,
+                          onCancel: () => _confirmAndCancel(appointment),
+                          onReschedule: () => RescheduleBottomSheet.show(
+                            context,
+                            appointment: appointment,
+                          ),
+                          onRate: () => _showRatingDialog(appointment),
+                          onChat: () => _openChat(appointment),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       );
     }

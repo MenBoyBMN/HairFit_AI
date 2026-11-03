@@ -11,8 +11,8 @@ import 'package:go_router/go_router.dart';
 
 import '../features/ai_consult/presentation/ai_consult_screen.dart';
 import '../features/ai_consult/presentation/ai_result_screen.dart';
-import '../features/ai_consult/presentation/ai_spike_test_screen.dart';
 import '../features/ai_consult/presentation/manual_select_screen.dart';
+import '../features/ai_chat/presentation/ai_chat_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
@@ -69,8 +69,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           loc == '/splash' ||
           loc == '/login' ||
           loc == '/register' ||
-          loc == '/forgot-password' ||
-          loc == '/spike-test';
+          loc == '/forgot-password';
 
       // 1. Chưa đăng nhập mà truy cập route riêng tư -> về /login
       if (!isAuth && !isPublicRoute) {
@@ -147,6 +146,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'customer_search',
         builder: (context, state) => SearchMapScreen(
           initialHairstyleId: state.uri.queryParameters['hairstyleId'],
+          initialSearchQuery: state.uri.queryParameters['query'],
         ),
       ),
       GoRoute(
@@ -203,6 +203,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ManualSelectScreen(),
       ),
       GoRoute(
+        path: '/customer/ai-chat',
+        name: 'customer_ai_chat',
+        builder: (context, state) => const AIChatScreen(),
+      ),
+      GoRoute(
         path: '/customer/profile',
         name: 'customer_profile',
         builder: (context, state) => const ProfileScreen(),
@@ -255,6 +260,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         name: 'admin_approve_barbers',
         builder: (context, state) => const AdminShellScreen(initialTabIndex: 1),
       ),
+      GoRoute(
+        path: '/admin/profile-edit',
+        name: 'admin_profile_edit',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
       // --- CHAT 1:1 ---
       GoRoute(
         path: '/conversations',
@@ -284,12 +294,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             barberName: barberName,
           );
         },
-      ),
-      // --- TEST ---
-      GoRoute(
-        path: '/spike-test',
-        name: 'spike_test',
-        builder: (context, state) => const AISpikeTestScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

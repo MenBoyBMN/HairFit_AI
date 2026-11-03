@@ -38,12 +38,34 @@ class AppColors {
     0xFF34C759,
   ); // Xanh lá (Approved, Confirmed, Completed)
   static const Color successLight = Color(0xFFE8F9ED);
+  static const Color successBorder = Color(0xFFC7EBD1);
   static const Color warning = Color(0xFFFF9500); // Cam (Pending)
   static const Color warningLight = Color(0xFFFFF4E5);
+  static const Color warningBorder = Color(0xFFFFE0B2);
   static const Color error = Color(0xFFFF3B30); // Đỏ (Rejected, Cancelled, Lỗi)
   static const Color errorLight = Color(0xFFFFEBEA);
+  static const Color errorBorder = Color(0xFFFFD1CF);
   static const Color info = Color(0xFF007AFF); // Xanh dương thông tin
   static const Color infoLight = Color(0xFFE5F1FF);
+
+  // Status Badge Auxiliary Colors
+  static const Color statusCompletedBg = Color(0xFFE8EEF8);
+  static const Color statusCompletedBorder = Color(0xFFC4D5F0);
+  static const Color statusCancelledBg = Color(0xFFF0F0F2);
+
+  // Star & Rating
+  static const Color starRating = Color(0xFFFFB800);
+
+  // AI Handshake & Smart Features
+  static const Color aiHandshake = Color(
+    0xFF6C5CE7,
+  ); // Tím AI Handshake & AI Profile
+  static const Color aiHandshakeLight = Color(0xFFF7F5FF);
+
+  // Dark Gradients Auxiliaries
+  static const Color surfaceDarkGradient = Color(0xFF1E272E);
+  static const Color urgentRedGradientStart = Color(0xFFEA2027);
+  static const Color urgentRedGradientEnd = Color(0xFFC0392B);
 
   // UI Borders & Dividers
   static const Color divider = Color(0xFFE5E5EA);

@@ -1,0 +1,11 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "HairFit AI (Frontend)",
+            "request": "launch",
+            "type": "dart",
+            "program": "frontend/lib/main.dart"
+        }
+    ]
+}

@@ -13,6 +13,7 @@ import '../features/booking/data/slot_service.dart';
 import '../models/barber_profile_model.dart';
 import '../models/service_model.dart';
 import '../models/user_model.dart';
+import 'appointment_provider.dart';
 import 'app_providers.dart';
 
 /// Provider cung cấp instance của SlotService
@@ -114,9 +115,13 @@ class BookingState {
 class BookingNotifier extends StateNotifier<BookingState> {
   final SlotService slotService;
   final BookingRepository bookingRepository;
+  final Ref? ref;
 
-  BookingNotifier({required this.slotService, required this.bookingRepository})
-    : super(BookingState());
+  BookingNotifier({
+    required this.slotService,
+    required this.bookingRepository,
+    this.ref,
+  }) : super(BookingState());
 
   /// Khởi tạo trạng thái ban đầu cho màn hình đặt lịch của thợ
   void initialize({
@@ -281,6 +286,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
         isSubmitting: false,
         bookedAppointmentId: appointmentId,
       );
+      ref?.invalidate(customerAppointmentsProvider);
       return true;
     } on BookingException catch (e) {
       state = state.copyWith(isSubmitting: false, errorMessage: e.message);
@@ -305,6 +311,7 @@ final bookingNotifierProvider =
       return BookingNotifier(
         slotService: slotService,
         bookingRepository: bookingRepo,
+        ref: ref,
       );
     });
 

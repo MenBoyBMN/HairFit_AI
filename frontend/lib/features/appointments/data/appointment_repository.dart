@@ -5,8 +5,6 @@
 
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../../core/services/api_client.dart';
 import '../../../models/appointment_model.dart';
 import '../../booking/data/booking_repository.dart';
@@ -17,7 +15,6 @@ class AppointmentRepository {
   final BookingRepository _bookingRepository;
 
   AppointmentRepository({
-    FirebaseFirestore? firestore,
     BookingRepository? bookingRepository,
     ApiClient? apiClient,
   }) : _apiClient = apiClient ?? ApiClient(),
@@ -44,14 +41,15 @@ class AppointmentRepository {
     return [];
   }
 
-  /// Lắng nghe danh sách lịch hẹn của một khách hàng
+  /// Lấy danh sách lịch hẹn của một khách hàng
+  Future<List<AppointmentModel>> getCustomerAppointments(String customerId) =>
+      _fetchCustomerAppointments(customerId);
+
+  /// Lắng nghe danh sách lịch hẹn của một khách hàng (tải 1 lần khi mở màn hình)
   Stream<List<AppointmentModel>> streamCustomerAppointments(
     String customerId,
   ) async* {
     yield await _fetchCustomerAppointments(customerId);
-    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
-      return await _fetchCustomerAppointments(customerId);
-    });
   }
 
   Future<List<AppointmentModel>> _fetchBarberAppointments(
@@ -71,14 +69,15 @@ class AppointmentRepository {
     return [];
   }
 
-  /// Lắng nghe danh sách lịch hẹn của một thợ cắt tóc
+  /// Lấy danh sách lịch hẹn của một thợ cắt tóc
+  Future<List<AppointmentModel>> getBarberAppointments(String barberId) =>
+      _fetchBarberAppointments(barberId);
+
+  /// Lắng nghe danh sách lịch hẹn của một thợ cắt tóc (tải 1 lần khi mở màn hình)
   Stream<List<AppointmentModel>> streamBarberAppointments(
     String barberId,
   ) async* {
     yield await _fetchBarberAppointments(barberId);
-    yield* Stream.periodic(const Duration(seconds: 10)).asyncMap((_) async {
-      return await _fetchBarberAppointments(barberId);
-    });
   }
 
   /// Lấy thông tin chi tiết một lịch hẹn bằng ID

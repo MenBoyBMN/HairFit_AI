@@ -7,7 +7,6 @@
 
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/api_client.dart';
@@ -18,7 +17,7 @@ import '../../../providers/auth_provider.dart';
 final barberProfileRepositoryProvider = Provider<BarberProfileRepository>((
   ref,
 ) {
-  return BarberProfileRepository(null, ref.watch(apiClientProvider));
+  return BarberProfileRepository(apiClient: ref.watch(apiClientProvider));
 });
 
 final barberProfileProvider =
@@ -43,15 +42,12 @@ final currentBarberProfileStreamProvider =
 class BarberProfileRepository {
   final ApiClient _apiClient;
 
-  BarberProfileRepository([FirebaseFirestore? firestore, ApiClient? apiClient])
+  BarberProfileRepository({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
 
-  /// Lắng nghe hồ sơ thợ cắt tóc
+  /// Lắng nghe hồ sơ thợ cắt tóc (tải 1 lần khi mở màn hình)
   Stream<BarberProfileModel?> streamBarberProfile(String uid) async* {
     yield await getBarberProfile(uid);
-    yield* Stream.periodic(const Duration(seconds: 15)).asyncMap((_) async {
-      return await getBarberProfile(uid);
-    });
   }
 
   /// Cập nhật trạng thái nhận khách đặt lịch hôm nay (Task 2.3)

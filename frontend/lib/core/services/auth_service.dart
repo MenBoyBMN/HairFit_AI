@@ -5,7 +5,6 @@
 //  - Xác thực qua Firebase Auth và đồng bộ hồ sơ người dùng qua ASP.NET Core Web API.
 // ============================================================================
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -40,7 +39,6 @@ class AuthService {
 
   AuthService({
     FirebaseAuth? firebaseAuth,
-    FirebaseFirestore? firestore,
     ApiClient? apiClient,
   }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
        _apiClient = apiClient ?? ApiClient(firebaseAuth: firebaseAuth);
@@ -204,10 +202,11 @@ class AuthService {
       final response = await _apiClient.get('/api/users/${authUser.uid}');
       if (response is! Map) return null;
 
-      final userModel = UserModel.fromMap(
+      var userModel = UserModel.fromMap(
         Map<String, dynamic>.from(response),
         id: authUser.uid,
       );
+
       if (userModel.isBlocked) {
         await _firebaseAuth.signOut();
         throw const BlockedAccountException();

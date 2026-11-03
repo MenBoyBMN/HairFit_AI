@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/services/api_client.dart';
 import '../models/user_model.dart';
+import 'auth_provider.dart';
 
 /// Provider cung cấp FirebaseAuth instance (dùng cho Auth & lấy JWT Token)
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
@@ -33,22 +34,9 @@ final authStateChangesProvider = StreamProvider<User?>((ref) {
   return auth.authStateChanges();
 });
 
-/// Provider cung cấp thông tin tài khoản người dùng hiện tại từ ASP.NET Core Web API
+/// Provider cung cấp thông tin tài khoản người dùng hiện tại (đồng bộ từ authStateProvider)
 final currentUserModelProvider = FutureProvider<UserModel?>((ref) async {
-  final authUser = ref.watch(authStateChangesProvider).value;
-  if (authUser == null) return null;
-
-  final apiClient = ref.watch(apiClientProvider);
-  try {
-    final data = await apiClient.get('/api/users/${authUser.uid}');
-    if (data is Map) {
-      return UserModel.fromMap(
-        Map<String, dynamic>.from(data),
-        id: authUser.uid,
-      );
-    }
-  } catch (_) {}
-  return null;
+  return ref.watch(authStateProvider).value;
 });
 
 // CreBy: MenBoyBMN

@@ -32,15 +32,19 @@ public class UsersController : ControllerBase
         if (user == null)
         {
             var now = DateTime.UtcNow;
+            var determinedRole = !string.IsNullOrWhiteSpace(request.Role)
+                ? request.Role.Trim().ToLowerInvariant()
+                : (request.Email != null && request.Email.Trim().ToLowerInvariant().StartsWith("admin@") ? "admin" : "customer");
+
             user = new UserEntity
             {
                 Uid = request.Uid.Trim(),
-                Email = request.Email.Trim(),
+                Email = request.Email?.Trim() ?? string.Empty,
                 DisplayName = string.IsNullOrWhiteSpace(request.DisplayName)
-                    ? request.Email.Split('@').FirstOrDefault() ?? "Người dùng"
+                    ? ((!string.IsNullOrWhiteSpace(request.Email) ? request.Email.Split('@').FirstOrDefault() : null) ?? "Người dùng")
                     : request.DisplayName.Trim(),
                 AvatarUrl = request.AvatarUrl?.Trim() ?? string.Empty,
-                Role = string.IsNullOrWhiteSpace(request.Role) ? "customer" : request.Role.Trim().ToLowerInvariant(),
+                Role = determinedRole,
                 IsBlocked = false,
                 Phone = request.Phone?.Trim(),
                 CreatedAt = now,
@@ -49,16 +53,28 @@ public class UsersController : ControllerBase
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
         }
-        else if (!string.IsNullOrWhiteSpace(request.Role) && request.Role != user.Role && user.CreatedAt > DateTime.UtcNow.AddMinutes(-1))
+        else
         {
-            // Trường hợp vừa đăng ký mới với role cụ thể (vd: barber)
-            user.Role = request.Role.Trim().ToLowerInvariant();
-            if (!string.IsNullOrWhiteSpace(request.DisplayName))
+            var shouldSave = false;
+            if (!string.IsNullOrWhiteSpace(request.Role) && request.Role.Trim().ToLowerInvariant() != user.Role)
+            {
+                var newRole = request.Role.Trim().ToLowerInvariant();
+                if (newRole == "admin" || newRole == "barber" || newRole == "customer")
+                {
+                    user.Role = newRole;
+                    shouldSave = true;
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(request.DisplayName) && request.DisplayName.Trim() != user.DisplayName)
             {
                 user.DisplayName = request.DisplayName.Trim();
+                shouldSave = true;
             }
-            user.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            if (shouldSave)
+            {
+                user.UpdatedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
         }
 
         if (user.IsBlocked)
