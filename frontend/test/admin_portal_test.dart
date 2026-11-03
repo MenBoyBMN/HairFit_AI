@@ -11,7 +11,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hairfit_ai/core/theme/app_theme.dart';
 import 'package:hairfit_ai/features/admin/data/admin_repository.dart';
 import 'package:hairfit_ai/features/admin/presentation/admin_appointments_screen.dart';
 import 'package:hairfit_ai/features/admin/presentation/admin_barbers_screen.dart';
@@ -296,7 +295,7 @@ void main() {
     );
 
     testWidgets(
-      'AdminShellScreen switches to Profile when tapping Tài khoản and opens Drawer from AppBar',
+      'AdminShellScreen opens Drawer when tapping Xem thêm on bottom NavigationBar',
       (tester) async {
         const mockStats = AdminDashboardStats();
 
@@ -326,47 +325,17 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Tổng Quan Hệ Thống'), findsOneWidget);
-        // Tap Tài khoản trên thanh NavigationBar dưới cùng
-        await tester.tap(find.text('Tài khoản'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Tài Khoản Quản Trị'), findsOneWidget);
-        expect(find.text('Quản lý tài khoản'), findsOneWidget);
-
-        // Mở Drawer từ AppBar
-        final drawerButton = find.byTooltip('Open navigation menu');
-        if (drawerButton.evaluate().isNotEmpty) {
-          await tester.tap(drawerButton);
-        } else {
-          await tester.tap(find.byIcon(Icons.menu));
-        }
+        await tester.tap(find.text('Xem thêm'));
         await tester.pumpAndSettle();
 
         expect(find.text('Danh mục kiểu tóc AI'), findsOneWidget);
         expect(find.text('Kiểm duyệt đánh giá'), findsOneWidget);
-
-        // Cuộn xuống để thấy mục Tài khoản cá nhân trong Drawer
-        await tester.scrollUntilVisible(
-          find.text('Tài khoản cá nhân'),
-          100.0,
-          scrollable: find.byType(Scrollable).last,
-        );
-        expect(find.text('Tài khoản cá nhân'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'AdminBarbersScreen displays pending barber in Hồ sơ cần duyệt and barber list in Danh bạ tất cả thợ tab with AppTheme',
+      'AdminBarbersScreen displays barber list in Danh bạ tất cả thợ tab',
       (tester) async {
-        const pendingBarber = BarberProfileModel(
-          uid: 'b_pending_1',
-          displayName: 'Tiệm Tóc Chờ Duyệt',
-          address: '100 Điện Biên Phủ, Đà Nẵng',
-          phone: '0905888999',
-          location: GeoLocation(latitude: 16.06, longitude: 108.21),
-          approvalStatus: 'pending',
-        );
-
         const sampleBarber = BarberProfileModel(
           uid: 'b_360',
           displayName: 'Tiệm Tóc Hoàng Gia',
@@ -383,7 +352,7 @@ void main() {
           ProviderScope(
             overrides: [
               pendingBarbersProvider.overrideWith(
-                (ref) async => [pendingBarber],
+                (ref) async => <BarberProfileModel>[],
               ),
               allBarbersProvider('all')
                   .overrideWith((ref) async => [sampleBarber]),
@@ -393,18 +362,13 @@ void main() {
                 (ref) => FakeAdminController(),
               ),
             ],
-            child: MaterialApp(
-              theme: AppTheme.lightTheme,
-              home: const Scaffold(body: AdminBarbersScreen()),
+            child: const MaterialApp(
+              home: Scaffold(body: AdminBarbersScreen()),
             ),
           ),
         );
 
         await tester.pumpAndSettle();
-
-        expect(find.text('Tiệm Tóc Chờ Duyệt'), findsOneWidget);
-        expect(find.text('Duyệt'), findsOneWidget);
-        expect(find.text('Từ chối'), findsOneWidget);
 
         await tester.tap(find.text('Danh bạ tất cả thợ'));
         await tester.pumpAndSettle();

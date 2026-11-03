@@ -6,7 +6,7 @@
 // ============================================================================
 
 import 'package:flutter_test/flutter_test.dart';
-import 'helpers/sample_test_data.dart';
+import 'package:hairfit_ai/core/services/seed_data_service.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/face_shape.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/face_shape_analyzer.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/hairstyle_recommendation_engine.dart';
@@ -106,7 +106,7 @@ void main() {
     test('Recommends styles matching Square face with specific reasons', () {
       final result = engine.recommend(
         faceShape: FaceShape.square,
-        catalog: SampleTestData.sampleHairstyles,
+        catalog: SeedDataService.sampleHairstyles,
       );
 
       expect(result.faceShape, equals(FaceShape.square));
@@ -125,7 +125,7 @@ void main() {
     test('Recommends styles matching Round face and provides styling tips', () {
       final result = engine.recommend(
         faceShape: FaceShape.round,
-        catalog: SampleTestData.sampleHairstyles,
+        catalog: SeedDataService.sampleHairstyles,
       );
 
       expect(result.faceShape, equals(FaceShape.round));
@@ -143,7 +143,7 @@ void main() {
     test('Recommends styles matching Heart face', () {
       final result = engine.recommend(
         faceShape: FaceShape.heart,
-        catalog: SampleTestData.sampleHairstyles,
+        catalog: SeedDataService.sampleHairstyles,
       );
 
       expect(result.faceShape, equals(FaceShape.heart));
@@ -163,7 +163,7 @@ void main() {
     test('Recommends styles matching Oblong face', () {
       final result = engine.recommend(
         faceShape: FaceShape.oblong,
-        catalog: SampleTestData.sampleHairstyles,
+        catalog: SeedDataService.sampleHairstyles,
       );
 
       expect(result.faceShape, equals(FaceShape.oblong));
@@ -183,9 +183,9 @@ void main() {
 
   group('SeedData Integrity Test', () {
     test('Seed data contains exactly 10 hairstyles', () {
-      expect(SampleTestData.sampleHairstyles.length, equals(10));
+      expect(SeedDataService.sampleHairstyles.length, equals(10));
 
-      for (final style in SampleTestData.sampleHairstyles) {
+      for (final style in SeedDataService.sampleHairstyles) {
         expect(style.id.isNotEmpty, isTrue);
         expect(style.name.isNotEmpty, isTrue);
         expect(style.faceShapes.isNotEmpty, isTrue);
@@ -196,9 +196,9 @@ void main() {
     test(
       'Seed data contains exactly 5 barbers with valid durations and coords',
       () {
-        expect(SampleTestData.sampleBarbers.length, equals(5));
+        expect(SeedDataService.sampleBarbers.length, equals(5));
 
-        for (final barber in SampleTestData.sampleBarbers) {
+        for (final barber in SeedDataService.sampleBarbers) {
           expect(barber.uid.isNotEmpty, isTrue);
           expect(barber.displayName.isNotEmpty, isTrue);
           expect(barber.location.latitude, greaterThan(0));

@@ -7,8 +7,8 @@
 
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,13 +17,11 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/utils/platform_helper.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_retry.dart';
-import '../../../../core/widgets/web_nav_shell.dart';
 import '../../../../models/barber_profile_model.dart';
 import '../../../../models/service_model.dart';
 import '../../../../providers/auth_provider.dart';
@@ -152,21 +150,20 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
                   style: AppTextStyles.h4,
                 ),
                 const SizedBox(height: AppDimensions.sm),
-                if (!kIsWeb)
-                  ListTile(
-                    leading: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: AppColors.accent,
-                    ),
-                    title: const Text(
-                      'Chụp ảnh từ máy ảnh',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _pickAvatarImage(ImageSource.camera);
-                    },
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.accent,
                   ),
+                  title: const Text(
+                    'Chụp ảnh từ máy ảnh',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _pickAvatarImage(ImageSource.camera);
+                  },
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library_outlined,
@@ -261,21 +258,20 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
                 const SizedBox(height: AppDimensions.md),
                 const Text('Chọn ảnh bìa tiệm tóc', style: AppTextStyles.h4),
                 const SizedBox(height: AppDimensions.sm),
-                if (!kIsWeb)
-                  ListTile(
-                    leading: const Icon(
-                      Icons.camera_alt_outlined,
-                      color: AppColors.accent,
-                    ),
-                    title: const Text(
-                      'Chụp ảnh từ máy ảnh',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      _pickCoverImage(ImageSource.camera);
-                    },
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.accent,
                   ),
+                  title: const Text(
+                    'Chụp ảnh từ máy ảnh',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _pickCoverImage(ImageSource.camera);
+                  },
+                ),
                 ListTile(
                   leading: const Icon(
                     Icons.photo_library_outlined,
@@ -441,22 +437,13 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
     }
 
     final profileAsync = ref.watch(barberProfileProvider(user.uid));
-    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: isDesktop
-          ? const WebTopNavBar(
-              currentRoute: '/barber/profile-edit',
-              isBarber: true,
-            )
-          : AppBar(
-              title: const Text(
-                'Chỉnh Sửa Hồ Sơ Tiệm Tóc',
-                style: AppTextStyles.h3,
-              ),
-              centerTitle: true,
-            ),
+      appBar: AppBar(
+        title: const Text('Chỉnh Sửa Hồ Sơ Tiệm Tóc', style: AppTextStyles.h3),
+        centerTitle: true,
+      ),
       body: profileAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.accent),
@@ -477,64 +464,6 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
                 actionText: 'Tạo hồ sơ ngay',
                 onAction: () =>
                     context.pushReplacement('/barber/profile-setup'),
-              ),
-            );
-          }
-
-          if (profile.isPending) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.xl),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.lock_clock_outlined,
-                        size: 64,
-                        color: Colors.amber.shade800,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Hồ sơ đang chờ phê duyệt',
-                      style: AppTextStyles.h2,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Hồ sơ của bạn đã được gửi lên Ban quản trị và đang trong quá trình xét duyệt. Bạn không thể chỉnh sửa hồ sơ trong thời gian này.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => context.go('/barber/pending'),
-                      child: const Text('Xem trạng thái duyệt'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          if (profile.isRejected) {
-            return Center(
-              child: EmptyState(
-                icon: Icons.edit_note_outlined,
-                title: 'Hồ sơ cần chỉnh sửa lại',
-                message:
-                    'Hồ sơ của bạn chưa được duyệt. Vui lòng cập nhật lại thông tin để gửi duyệt lại.',
-                actionText: 'Chỉnh sửa & Gửi lại',
-                onAction: () => context.go('/barber/profile-setup'),
               ),
             );
           }
@@ -1018,21 +947,20 @@ class _BarberEditScreenState extends ConsumerState<BarberEditScreen> {
               const SizedBox(height: AppDimensions.md),
               const Text('Thêm ảnh mẫu tóc đã cắt', style: AppTextStyles.h4),
               const SizedBox(height: AppDimensions.sm),
-              if (!kIsWeb)
-                ListTile(
-                  leading: const Icon(
-                    Icons.camera_alt_outlined,
-                    color: AppColors.accent,
-                  ),
-                  title: const Text(
-                    'Chụp ảnh mới',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _pickPortfolioImage(ImageSource.camera);
-                  },
+              ListTile(
+                leading: const Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColors.accent,
                 ),
+                title: const Text(
+                  'Chụp ảnh mới',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _pickPortfolioImage(ImageSource.camera);
+                },
+              ),
               ListTile(
                 leading: const Icon(
                   Icons.photo_library_outlined,

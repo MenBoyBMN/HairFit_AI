@@ -5,6 +5,8 @@
 //  - Lớp mô hình (Model) bao gồm các thuộc tính và phương thức chuyển đổi (toMap, fromMap, copyWith).
 // ============================================================================
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum AppointmentStatus {
   pending,
   confirmed,
@@ -112,16 +114,14 @@ class AppointmentModel {
 
   factory AppointmentModel.fromMap(Map<String, dynamic> map, {String? id}) {
     DateTime parseTimestamp(dynamic val, DateTime fallback) {
-      if (val is DateTime) return val;
+      if (val is Timestamp) return val.toDate();
       if (val is String) return DateTime.tryParse(val) ?? fallback;
-      if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
       return fallback;
     }
 
     DateTime? parseNullableTimestamp(dynamic val) {
-      if (val is DateTime) return val;
+      if (val is Timestamp) return val.toDate();
       if (val is String) return DateTime.tryParse(val);
-      if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
       return null;
     }
 
@@ -168,6 +168,12 @@ class AppointmentModel {
     );
   }
 
+  factory AppointmentModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return AppointmentModel.fromMap(doc.data() ?? {}, id: doc.id);
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -182,8 +188,8 @@ class AppointmentModel {
       'date': date,
       'startTime': startTime,
       'endTime': endTime,
-      'startTimestamp': startTimestamp.toIso8601String(),
-      'endTimestamp': endTimestamp.toIso8601String(),
+      'startTimestamp': Timestamp.fromDate(startTimestamp),
+      'endTimestamp': Timestamp.fromDate(endTimestamp),
       'timezone': timezone,
       'slotIds': slotIds,
       'hairstyleId': hairstyleId,
@@ -198,8 +204,12 @@ class AppointmentModel {
       'status': status.toStatusString(),
       if (rating != null) 'rating': rating,
       if (reviewComment != null) 'reviewComment': reviewComment,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
+      'updatedAt': updatedAt != null
+          ? Timestamp.fromDate(updatedAt!)
+          : FieldValue.serverTimestamp(),
     };
   }
 

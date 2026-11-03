@@ -1,6 +1,5 @@
 using HairFit.Api.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -60,18 +59,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Hỗ trợ Reverse Proxy / Cloudflare Tunnel nhận đúng HTTPS & Client IP
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
-
-// 4. Tự động tạo cấu trúc Database SQL Server (nếu chưa có) mà không nạp Seed Data
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-}
+// 4. Tự động tạo Database SQL Server và nạp Seed Data mặc định khi khởi chạy
+await DbInitializer.InitializeAsync(app.Services);
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -80,13 +69,6 @@ app.UseCors("AllowFlutterClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "healthy",
-    service = "HairFit.Api",
-    timestamp = DateTime.UtcNow.ToString("O")
-}));
 
 app.MapGet("/api/health", () => Results.Ok(new
 {

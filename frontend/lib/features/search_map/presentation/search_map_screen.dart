@@ -5,8 +5,6 @@
 //  - Sử dụng ConsumerWidget/StatefulWidget, kết nối UI với Provider để hiển thị trạng thái và xử lý sự kiện người dùng.
 // ============================================================================
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
@@ -19,9 +17,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/utils/platform_helper.dart';
 import '../../../../core/widgets/error_retry.dart';
-import '../../../../core/widgets/web_nav_shell.dart';
 import '../../ai_consult/data/hairstyle_repository.dart';
 import '../../../../models/hairstyle_model.dart';
 import '../../../../providers/search_provider.dart';
@@ -33,13 +29,8 @@ import 'widgets/map_marker.dart';
 /// Màn hình Bản đồ & Tìm kiếm thợ cắt tóc (Task 3.5, 3.9, 3.11)
 class SearchMapScreen extends ConsumerStatefulWidget {
   final String? initialHairstyleId;
-  final String? initialSearchQuery;
 
-  const SearchMapScreen({
-    super.key,
-    this.initialHairstyleId,
-    this.initialSearchQuery,
-  });
+  const SearchMapScreen({super.key, this.initialHairstyleId});
 
   @override
   ConsumerState<SearchMapScreen> createState() => _SearchMapScreenState();
@@ -49,24 +40,11 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
   bool _hasAppliedInitialHairstyle = false;
-  bool _hasAppliedInitialSearchQuery = false;
   bool _dismissedLocationBanner = false;
-  Timer? _mapPositionDebounceTimer;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialSearchQuery != null && widget.initialSearchQuery!.trim().isNotEmpty) {
-      _searchController.text = widget.initialSearchQuery!.trim();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_hasAppliedInitialSearchQuery && mounted) {
-          ref
-              .read(searchNotifierProvider.notifier)
-              .setSearchQuery(widget.initialSearchQuery!.trim());
-          _hasAppliedInitialSearchQuery = true;
-        }
-      });
-    }
     if (widget.initialHairstyleId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_hasAppliedInitialHairstyle && mounted) {
@@ -81,7 +59,6 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
 
   @override
   void dispose() {
-    _mapPositionDebounceTimer?.cancel();
     _searchController.dispose();
     _mapController.dispose();
     super.dispose();
@@ -309,13 +286,9 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
   Widget build(BuildContext context) {
     final searchAsync = ref.watch(searchNotifierProvider);
     final hairstylesAsync = ref.watch(hairstylesProvider);
-    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: isDesktop
-          ? const WebTopNavBar(currentRoute: '/customer/search')
-          : null,
       body: SafeArea(
         child: searchAsync.when(
           loading: () => const Scaffold(
@@ -334,9 +307,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
             ),
           ),
           error: (error, _) => Scaffold(
-            appBar: isDesktop
-                ? null
-                : AppBar(title: const Text('Tìm thợ cắt tóc')),
+            appBar: AppBar(title: const Text('Tìm thợ cắt tóc')),
             body: Center(
               child: ErrorRetry(
                 errorMessage: 'Không thể tải dữ liệu thợ: $error',
@@ -346,55 +317,6 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
             ),
           ),
           data: (state) {
-            if (isDesktop) {
-              return Row(
-                children: [
-                  // Cột trái (440px): Tìm kiếm, Bộ lọc & Danh sách salon
-                  Container(
-                    width: 440,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border(
-                        right: BorderSide(color: AppColors.divider),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildSearchHeader(state, isDesktop: true),
-                        _buildHairstyleChips(state, hairstylesAsync),
-                        if (state.isGpsFallback &&
-                            state.locationMessage != null &&
-                            !_dismissedLocationBanner)
-                          _buildLocationFallbackBanner(state.locationMessage!),
-                        const Divider(height: 1),
-                        Expanded(
-                          child: BarberListView(
-                            searchState: state,
-                            onRefresh: () async {
-                              await ref
-                                  .read(searchNotifierProvider.notifier)
-                                  .reload();
-                            },
-                            onClearFilter: () {
-                              _searchController.clear();
-                              ref
-                                  .read(searchNotifierProvider.notifier)
-                                  .setSearchQuery('');
-                              ref
-                                  .read(searchNotifierProvider.notifier)
-                                  .setHairstyleFilter(null);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Cột phải (Expanded): Bản đồ trực quan toàn vùng
-                  Expanded(child: _buildMapView(state)),
-                ],
-              );
-            }
-
             return Column(
               children: [
                 // Thanh Header tìm kiếm và chuyển đổi chế độ xem
@@ -440,7 +362,7 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
   }
 
   /// Thanh tìm kiếm + Nút back + Toggle Map/List
-  Widget _buildSearchHeader(SearchMapState state, {bool isDesktop = false}) {
+  Widget _buildSearchHeader(SearchMapState state) {
     return Container(
       color: AppColors.surface,
       padding: const EdgeInsets.fromLTRB(
@@ -451,8 +373,8 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
       ),
       child: Row(
         children: [
-          // Nút quay lại (nếu có thể pop và không phải Desktop top-nav)
-          if (!isDesktop && context.canPop())
+          // Nút quay lại (nếu có thể pop)
+          if (context.canPop())
             IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
               onPressed: () => context.pop(),
@@ -511,29 +433,27 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           ),
           const SizedBox(width: AppDimensions.xs),
 
-          // Nút toggle Map / List view (ẩn trên Desktop vì đã hiển thị song song)
-          if (!isDesktop) ...[
-            IconButton(
-              tooltip: state.isListView
-                  ? 'Xem trên Bản đồ'
-                  : 'Xem dạng Danh sách',
-              style: IconButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          // Nút toggle Map / List view
+          IconButton(
+            tooltip: state.isListView
+                ? 'Xem trên Bản đồ'
+                : 'Xem dạng Danh sách',
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              icon: Icon(
-                state.isListView ? Icons.map_rounded : Icons.view_list_rounded,
-                size: 20,
-              ),
-              onPressed: () {
-                ref.read(searchNotifierProvider.notifier).toggleViewMode();
-              },
             ),
-            const SizedBox(width: AppDimensions.xs),
-          ],
+            icon: Icon(
+              state.isListView ? Icons.map_rounded : Icons.view_list_rounded,
+              size: 20,
+            ),
+            onPressed: () {
+              ref.read(searchNotifierProvider.notifier).toggleViewMode();
+            },
+          ),
+          const SizedBox(width: AppDimensions.xs),
 
           // Nút lọc giá (Task 6.11)
           IconButton(
@@ -916,25 +836,14 @@ class _SearchMapScreenState extends ConsumerState<SearchMapScreen> {
           options: MapOptions(
             initialCenter: state.referenceLocation,
             initialZoom: 14.5,
-            minZoom: 4.0,
-            maxZoom: 19.0,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-            ),
+            minZoom: 10.0,
+            maxZoom: 18.0,
             onPositionChanged: (camera, hasGesture) {
               if (hasGesture) {
-                // Debounce cập nhật tâm tham chiếu tránh giật lag khi đang thao tác
-                _mapPositionDebounceTimer?.cancel();
-                _mapPositionDebounceTimer = Timer(
-                  const Duration(milliseconds: 350),
-                  () {
-                    if (mounted) {
-                      ref
-                          .read(searchNotifierProvider.notifier)
-                          .setReferenceLocation(camera.center);
-                    }
-                  },
-                );
+                // Cập nhật tâm tham chiếu khi người dùng tự kéo bản đồ
+                ref
+                    .read(searchNotifierProvider.notifier)
+                    .setReferenceLocation(camera.center);
               }
             },
           ),

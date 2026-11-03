@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/services/seed_data_service.dart';
 import '../features/ai_consult/data/hairstyle_repository.dart';
 import '../features/ai_consult/domain/ai_consult_result.dart';
 import '../features/ai_consult/domain/ai_consultant_service.dart';
@@ -226,14 +227,20 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
     final stopwatch = Stopwatch()..start();
 
     try {
-      // 1. Lấy danh mục kiểu tóc (ưu tiên override, sau đó từ API backend)
+      // 1. Lấy danh mục kiểu tóc (ưu tiên override, sau đó Firestore, nếu lỗi dùng fallback seed catalog)
       List<HairstyleModel> catalog = catalogOverride ?? [];
       if (catalog.isEmpty) {
         try {
           catalog = await hairstyleRepository.getAllHairstyles();
         } catch (e) {
-          debugPrint('[AIConsult] Lỗi lấy catalog kiểu tóc: $e');
+          debugPrint(
+            '[AIConsult] Lỗi lấy Firestore catalog, kích hoạt catalog seed dự phòng: $e',
+          );
         }
+      }
+
+      if (catalog.isEmpty) {
+        catalog = SeedDataService.sampleHairstyles;
       }
 
       // 2. Chuyển đổi ảnh sang InputImage của ML Kit
@@ -320,6 +327,9 @@ class AIConsultNotifier extends StateNotifier<AIConsultState> {
         try {
           catalog = await hairstyleRepository.getAllHairstyles();
         } catch (_) {}
+      }
+      if (catalog.isEmpty) {
+        catalog = SeedDataService.sampleHairstyles;
       }
 
       const engine = HairstyleRecommendationEngine();

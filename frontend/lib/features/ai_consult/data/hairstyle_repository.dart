@@ -5,6 +5,7 @@
 //  - Giao tiếp với ASP.NET Core Web API để tải danh mục kiểu tóc.
 // ============================================================================
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/api_client.dart';
@@ -12,7 +13,7 @@ import '../../../../models/hairstyle_model.dart';
 import '../../../../providers/app_providers.dart';
 
 final hairstyleRepositoryProvider = Provider<HairstyleRepository>((ref) {
-  return HairstyleRepository(apiClient: ref.watch(apiClientProvider));
+  return HairstyleRepository(null, ref.watch(apiClientProvider));
 });
 
 final hairstylesProvider = FutureProvider<List<HairstyleModel>>((ref) {
@@ -22,7 +23,7 @@ final hairstylesProvider = FutureProvider<List<HairstyleModel>>((ref) {
 class HairstyleRepository {
   final ApiClient _apiClient;
 
-  HairstyleRepository({ApiClient? apiClient})
+  HairstyleRepository([FirebaseFirestore? firestore, ApiClient? apiClient])
     : _apiClient = apiClient ?? ApiClient();
 
   Future<List<HairstyleModel>> getAllHairstyles() async {

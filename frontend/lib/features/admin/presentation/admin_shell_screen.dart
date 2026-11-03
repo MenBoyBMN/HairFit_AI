@@ -7,11 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/widgets/app_avatar.dart';
 import '../../../../providers/admin_provider.dart';
 import '../../../../providers/admin_stats_provider.dart';
 import '../../../../providers/auth_provider.dart';
-import '../../profile/presentation/profile_screen.dart';
 import 'admin_appointments_screen.dart';
 import 'admin_barbers_screen.dart';
 import 'admin_dashboard_screen.dart';
@@ -75,8 +73,6 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
         return 'Kiểm Duyệt Đánh Giá';
       case 6:
         return 'Cài Đặt & Seed Data';
-      case 7:
-        return 'Tài Khoản Quản Trị';
       default:
         return 'Admin Portal';
     }
@@ -100,8 +96,6 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
         return const AdminReviewsScreen();
       case 6:
         return const AdminSettingsScreen();
-      case 7:
-        return const ProfileScreen(isEmbeddedInAdmin: true);
       default:
         return const Center(child: Text('Trang không tồn tại'));
     }
@@ -146,7 +140,6 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
               : _buildDrawer(
                   currentUser?.displayName,
                   currentUser?.email,
-                  currentUser?.avatarUrl,
                   pendingCount,
                 ),
           body: Row(
@@ -157,41 +150,23 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   onDestinationSelected: _onSelectTab,
                   labelType: NavigationRailLabelType.all,
                   leading: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16.0,
-                      horizontal: 8.0,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Column(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           backgroundColor: AppColors.primary,
                           radius: 22,
-                          backgroundImage: getAvatarImageProvider(
-                            currentUser?.avatarUrl,
+                          child: Icon(
+                            Icons.admin_panel_settings,
+                            color: Colors.white,
                           ),
-                          child:
-                              getAvatarImageProvider(currentUser?.avatarUrl) ==
-                                  null
-                              ? const Icon(
-                                  Icons.admin_panel_settings,
-                                  color: Colors.white,
-                                )
-                              : null,
                         ),
                         const SizedBox(height: 8),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 80),
-                          child: Text(
-                            (currentUser?.displayName.isNotEmpty == true)
-                                ? currentUser!.displayName
-                                : 'HairFit Admin',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
+                        const Text(
+                          'HairFit Admin',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -241,11 +216,6 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                       selectedIcon: Icon(Icons.settings_suggest_rounded),
                       label: Text('Cài đặt'),
                     ),
-                    const NavigationRailDestination(
-                      icon: Icon(Icons.person_outline_rounded),
-                      selectedIcon: Icon(Icons.person_rounded),
-                      label: Text('Tài khoản'),
-                    ),
                   ],
                 ),
               Expanded(child: _buildBody(_currentIndex)),
@@ -254,12 +224,10 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           bottomNavigationBar: isDesktop
               ? null
               : NavigationBar(
-                  selectedIndex: _currentIndex == 7
-                      ? 3
-                      : (_currentIndex <= 2 ? _currentIndex : 0),
+                  selectedIndex: _currentIndex > 2 ? 3 : _currentIndex,
                   onDestinationSelected: (idx) {
                     if (idx == 3) {
-                      _onSelectTab(7);
+                      _scaffoldKey.currentState?.openDrawer();
                     } else {
                       _onSelectTab(idx);
                     }
@@ -289,9 +257,9 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                       label: 'Người dùng',
                     ),
                     const NavigationRequestDestination(
-                      icon: Icon(Icons.person_outline_rounded),
-                      selectedIcon: Icon(Icons.person_rounded),
-                      label: 'Tài khoản',
+                      icon: Icon(Icons.menu_rounded),
+                      selectedIcon: Icon(Icons.menu_open_rounded),
+                      label: 'Xem thêm',
                     ),
                   ],
                 ),
@@ -300,29 +268,19 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
     );
   }
 
-  Widget _buildDrawer(
-    String? name,
-    String? email,
-    String? avatarUrl,
-    int pendingCount,
-  ) {
-    final avatarProvider = getAvatarImageProvider(avatarUrl);
-
+  Widget _buildDrawer(String? name, String? email, int pendingCount) {
     return Drawer(
       child: Column(
         children: [
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: AppColors.primary),
-            currentAccountPicture: CircleAvatar(
+            currentAccountPicture: const CircleAvatar(
               backgroundColor: Colors.white,
-              backgroundImage: avatarProvider,
-              child: avatarProvider == null
-                  ? const Icon(
-                      Icons.admin_panel_settings,
-                      color: AppColors.primary,
-                      size: 36,
-                    )
-                  : null,
+              child: Icon(
+                Icons.admin_panel_settings,
+                color: AppColors.primary,
+                size: 36,
+              ),
             ),
             accountName: Text(
               name ?? 'Quản Trị Viên',
@@ -370,12 +328,6 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   index: 6,
                   icon: Icons.settings_suggest_rounded,
                   title: 'Cài đặt & Seed Data',
-                ),
-                const Divider(),
-                _buildDrawerItem(
-                  index: 7,
-                  icon: Icons.person_rounded,
-                  title: 'Tài khoản cá nhân',
                 ),
               ],
             ),

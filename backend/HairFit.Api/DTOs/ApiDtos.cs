@@ -127,4 +127,8 @@ public record SaveSystemSettingsRequest(
     bool MaintenanceMode = false
 );
 
+public record SeedOptionsRequest(
+    bool Overwrite = false
+);
+
 // CreBy: MenBoyBMN

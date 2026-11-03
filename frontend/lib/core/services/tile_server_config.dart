@@ -115,12 +115,6 @@ class TileServerConfig {
       subdomains: customSubdomains ?? s.subdomains,
       userAgentPackageName: userAgentPackageName,
       maxZoom: s.maxZoom.toDouble(),
-      minZoom: 3.0,
-      panBuffer: 1,
-      keepBuffer: 6,
-      tileUpdateTransformer: TileUpdateTransformers.throttle(
-        const Duration(milliseconds: 100),
-      ),
       tileProvider: NetworkTileProvider(),
       errorTileCallback: (tile, error, stackTrace) {
         if (kDebugMode) {

@@ -3,6 +3,7 @@
 // Mục đích: Màn hình kiểm duyệt đánh giá & xử lý vi phạm cho Admin.
 // ============================================================================
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -196,9 +197,9 @@ class _AdminReviewsScreenState extends ConsumerState<AdminReviewsScreen> {
                     final comment = r['reviewComment'] as String? ?? '';
                     final rawDate = r['createdAt'];
                     String dateStr = '';
-                    if (rawDate is DateTime) {
+                    if (rawDate is Timestamp) {
                       dateStr = DateFormat('dd/MM/yyyy HH:mm')
-                          .format(rawDate.toLocal());
+                          .format(rawDate.toDate());
                     } else if (rawDate is String) {
                       final parsed = DateTime.tryParse(rawDate);
                       if (parsed != null) {

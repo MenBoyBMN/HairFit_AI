@@ -17,9 +17,11 @@ import 'app_providers.dart';
 /// Provider cung cấp instance AuthService
 final authServiceProvider = Provider<AuthService>((ref) {
   final firebaseAuth = ref.watch(firebaseAuthProvider);
+  final firestore = ref.watch(firestoreProvider);
   final apiClient = ref.watch(apiClientProvider);
   return AuthService(
     firebaseAuth: firebaseAuth,
+    firestore: firestore,
     apiClient: apiClient,
   );
 });

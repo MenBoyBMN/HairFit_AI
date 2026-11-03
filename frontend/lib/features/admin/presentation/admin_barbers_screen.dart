@@ -11,6 +11,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_avatar.dart';
 import '../../../../models/barber_profile_model.dart';
 import '../../../../providers/admin_provider.dart';
+import 'approve_barbers_screen.dart';
 import 'widgets/admin_status_badge.dart';
 
 class AdminBarbersScreen extends ConsumerStatefulWidget {
@@ -567,144 +568,11 @@ class _AdminBarbersScreenState extends ConsumerState<AdminBarbersScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [_buildPendingBarbersTab(), _buildAllBarbersTab()],
+        children: [
+          const ApproveBarbersScreen(embedded: true),
+          _buildAllBarbersTab(),
+        ],
       ),
-    );
-  }
-
-  Widget _buildPendingBarbersTab() {
-    final pendingAsync = ref.watch(pendingBarbersProvider);
-
-    return pendingAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(
-        child: Text(
-          'Lỗi khi tải hồ sơ: $err',
-          style: const TextStyle(color: AppColors.error),
-        ),
-      ),
-      data: (barbers) {
-        if (barbers.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 64,
-                  color: Colors.green.shade300,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Không có hồ sơ nào đang chờ duyệt!',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tất cả thợ đăng ký mới đã được xử lý xong.',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: barbers.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
-          itemBuilder: (context, idx) {
-            final b = barbers[idx];
-            return Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      AppAvatar(
-                        imageUrl: b.avatarUrl,
-                        name: b.displayName,
-                        size: 48,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              b.displayName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              b.address,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      AdminStatusBadge(status: b.approvalStatus),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        icon: const Icon(Icons.info_outline, size: 16),
-                        label: const Text('Chi tiết'),
-                        onPressed: () => _showBarber360Sheet(b),
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                        ),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: const Text('Từ chối'),
-                        onPressed: () => ref
-                            .read(adminControllerProvider.notifier)
-                            .setBarberStatus(b.uid, 'rejected'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.success,
-                        ),
-                        icon: const Icon(Icons.check_rounded, size: 16),
-                        label: const Text('Duyệt'),
-                        onPressed: () => ref
-                            .read(adminControllerProvider.notifier)
-                            .setBarberStatus(b.uid, 'approved'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 

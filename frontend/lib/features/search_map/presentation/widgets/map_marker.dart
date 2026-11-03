@@ -21,45 +21,44 @@ class BarberMapMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMatch = item.isMatchingHairstyle;
 
-    return RepaintBoundary(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Khung pin
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: isMatch ? AppColors.accent : AppColors.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (isMatch ? AppColors.accent : Colors.black)
-                        .withValues(alpha: 0.35),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Khung pin
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: isMatch ? AppColors.accent : AppColors.primary,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: (isMatch ? AppColors.accent : Colors.black).withValues(
+                    alpha: 0.35,
                   ),
-                ],
-                border: Border.all(color: Colors.white, width: 2.0),
-              ),
-              child: Icon(
-                isMatch ? Icons.auto_awesome : Icons.content_cut_rounded,
-                color: isMatch ? Colors.white : AppColors.accent,
-                size: isMatch ? 20 : 18,
-              ),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+              border: Border.all(color: Colors.white, width: 2.0),
             ),
-            // Mũi nhọn pin
-            ClipPath(
-              clipper: _TriangleClipper(),
-              child: Container(
-                width: 10,
-                height: 6,
-                color: isMatch ? AppColors.accent : AppColors.primary,
-              ),
+            child: Icon(
+              isMatch ? Icons.auto_awesome : Icons.content_cut_rounded,
+              color: isMatch ? Colors.white : AppColors.accent,
+              size: isMatch ? 20 : 18,
             ),
-          ],
-        ),
+          ),
+          // Mũi nhọn pin
+          ClipPath(
+            clipper: _TriangleClipper(),
+            child: Container(
+              width: 10,
+              height: 6,
+              color: isMatch ? AppColors.accent : AppColors.primary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -85,32 +84,30 @@ class UserLocationMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.blue.withValues(alpha: 0.2),
-          border: Border.all(
-            color: Colors.blue.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.blue.withValues(alpha: 0.2),
+        border: Border.all(
+          color: Colors.blue.withValues(alpha: 0.5),
+          width: 1.5,
         ),
-        child: Center(
-          child: Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.blue.shade600,
-              border: Border.all(color: Colors.white, width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withValues(alpha: 0.4),
-                  blurRadius: 6,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
+      ),
+      child: Center(
+        child: Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.blue.shade600,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withValues(alpha: 0.4),
+                blurRadius: 6,
+                spreadRadius: 2,
+              ),
+            ],
           ),
         ),
       ),

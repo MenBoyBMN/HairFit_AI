@@ -5,6 +5,7 @@
 //  - Sử dụng Riverpod (Notifier/StateNotifier/Provider) để cung cấp trạng thái và xử lý logic nghiệp vụ.
 // ============================================================================
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -139,51 +140,38 @@ class SearchNotifier extends AsyncNotifier<SearchMapState> {
   @override
   Future<SearchMapState> build() async {
     final locationService = ref.watch(locationServiceProvider);
+    final barberRepo = ref.watch(barberRepositoryProvider);
 
-    final previousState = state.valueOrNull;
+    // 1. Lấy vị trí người dùng (hoặc fallback mặc định Đà Nẵng)
+    final locResult = await locationService.getCurrentPosition();
 
-    // 1. Lấy vị trí người dùng (chỉ truy vấn GPS nếu chưa có trạng thái trước đó)
-    final locResult = previousState == null
-        ? await locationService.getCurrentPosition()
-        : null;
+    // 2. Lấy danh sách thợ approved từ Firestore (Stream real-time)
+    final barbersAsync = ref.watch(approvedBarbersStreamProvider);
+    List<BarberProfileModel> barbers = barbersAsync.value ?? [];
 
-    // 2. Lấy danh sách thợ approved từ Stream (đợi giá trị phát đầu tiên)
-    List<BarberProfileModel> barbers = [];
-    try {
-      barbers = await ref.watch(approvedBarbersStreamProvider.future);
-    } catch (_) {
-      barbers = previousState?.allApprovedBarbers ?? [];
+    if (barbers.isEmpty) {
+      try {
+        barbers = await barberRepo.getApprovedBarbers();
+      } catch (e) {
+        debugPrint('⚠️ [SearchNotifier] Không thể tải thợ: $e');
+      }
     }
 
-    final refPoint = previousState?.referenceLocation ?? locResult!.coordinates;
+    final refPoint = locResult.coordinates;
     final processedBarbers = _computeAndSortBarbers(
       barbers: barbers,
       refLocation: refPoint,
-      hairstyleId: previousState?.selectedHairstyleId,
-      query: previousState?.searchQuery ?? '',
-      maxPrice: previousState?.maxPriceFilter,
-      minRating: previousState?.minRatingFilter,
-      onlyOpenNow: previousState?.onlyOpenNow ?? false,
+      hairstyleId: null,
+      query: '',
     );
 
     return SearchMapState(
-      userGpsLocation: previousState != null
-          ? previousState.userGpsLocation
-          : (locResult!.isFallback ? null : locResult.coordinates),
+      userGpsLocation: locResult.isFallback ? null : locResult.coordinates,
       referenceLocation: refPoint,
-      isGpsFallback: previousState?.isGpsFallback ?? locResult!.isFallback,
-      locationMessage:
-          previousState?.locationMessage ?? locResult!.errorMessage,
-      selectedHairstyleId: previousState?.selectedHairstyleId,
-      searchQuery: previousState?.searchQuery ?? '',
-      maxPriceFilter: previousState?.maxPriceFilter,
-      minRatingFilter: previousState?.minRatingFilter,
-      onlyOpenNow: previousState?.onlyOpenNow ?? false,
+      isGpsFallback: locResult.isFallback,
+      locationMessage: locResult.errorMessage,
       allApprovedBarbers: barbers,
       displayBarbers: processedBarbers,
-      selectedBarber: previousState?.selectedBarber,
-      isListView: previousState?.isListView ?? false,
-      isLocating: previousState?.isLocating ?? false,
     );
   }
 

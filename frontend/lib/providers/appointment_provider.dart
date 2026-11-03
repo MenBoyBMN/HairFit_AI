@@ -112,15 +112,9 @@ class AppointmentActionState {
 /// Notifier quản lý các thao tác hành động trên lịch hẹn (Task 4.11)
 class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
   final AppointmentRepository _repository;
-  final Ref? _ref;
 
-  AppointmentActionNotifier(this._repository, [this._ref])
+  AppointmentActionNotifier(this._repository)
     : super(const AppointmentActionState());
-
-  void _invalidateAppointments() {
-    _ref?.invalidate(customerAppointmentsProvider);
-    _ref?.invalidate(barberAppointmentsProvider);
-  }
 
   /// Khách hàng hủy lịch hẹn
   Future<bool> cancelAppointment({
@@ -139,7 +133,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã hủy lịch hẹn thành công!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -171,7 +164,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã đổi giờ hẹn thành công!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -195,7 +187,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã tiếp nhận lịch hẹn thành công!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -215,7 +206,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã từ chối lịch hẹn và mở lại khung giờ!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -235,7 +225,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã cập nhật hoàn thành dịch vụ!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -269,7 +258,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Cảm ơn bạn đã đánh giá dịch vụ!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -292,7 +280,6 @@ class AppointmentActionNotifier extends StateNotifier<AppointmentActionState> {
         isLoading: false,
         successMessage: 'Đã lưu ghi chú khách hàng thành công!',
       );
-      _invalidateAppointments();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -315,7 +302,7 @@ final appointmentActionProvider =
       AppointmentActionState
     >((ref) {
       final repo = ref.watch(appointmentRepositoryProvider);
-      return AppointmentActionNotifier(repo, ref);
+      return AppointmentActionNotifier(repo);
     });
 
 // CreBy: MenBoyBMN

@@ -67,14 +67,14 @@ class StatusBadge extends StatelessWidget {
             label: 'Đã duyệt',
             textColor: AppColors.success,
             backgroundColor: AppColors.successLight,
-            borderColor: AppColors.successBorder,
+            borderColor: Color(0xFFC7EBD1),
           );
         case 'rejected':
           return const _BadgeConfig(
             label: 'Từ chối',
             textColor: AppColors.error,
             backgroundColor: AppColors.errorLight,
-            borderColor: AppColors.errorBorder,
+            borderColor: Color(0xFFFFD1CF),
           );
         case 'pending':
         default:
@@ -82,7 +82,7 @@ class StatusBadge extends StatelessWidget {
             label: 'Chờ duyệt',
             textColor: AppColors.warning,
             backgroundColor: AppColors.warningLight,
-            borderColor: AppColors.warningBorder,
+            borderColor: Color(0xFFFFE0B2),
           );
       }
     } else {
@@ -92,20 +92,20 @@ class StatusBadge extends StatelessWidget {
             label: 'Đã xác nhận',
             textColor: AppColors.success,
             backgroundColor: AppColors.successLight,
-            borderColor: AppColors.successBorder,
+            borderColor: Color(0xFFC7EBD1),
           );
         case 'completed':
           return const _BadgeConfig(
             label: 'Hoàn tất',
             textColor: AppColors.tertiary,
-            backgroundColor: AppColors.statusCompletedBg,
-            borderColor: AppColors.statusCompletedBorder,
+            backgroundColor: Color(0xFFE8EEF8),
+            borderColor: Color(0xFFC4D5F0),
           );
         case 'cancelled':
           return const _BadgeConfig(
             label: 'Đã hủy',
             textColor: AppColors.textSecondary,
-            backgroundColor: AppColors.statusCancelledBg,
+            backgroundColor: Color(0xFFF0F0F2),
             borderColor: AppColors.divider,
           );
         case 'rejected':
@@ -113,7 +113,7 @@ class StatusBadge extends StatelessWidget {
             label: 'Đã từ chối',
             textColor: AppColors.error,
             backgroundColor: AppColors.errorLight,
-            borderColor: AppColors.errorBorder,
+            borderColor: Color(0xFFFFD1CF),
           );
         case 'pending':
         default:
@@ -121,7 +121,7 @@ class StatusBadge extends StatelessWidget {
             label: 'Chờ thợ duyệt',
             textColor: AppColors.warning,
             backgroundColor: AppColors.warningLight,
-            borderColor: AppColors.warningBorder,
+            borderColor: Color(0xFFFFE0B2),
           );
       }
     }

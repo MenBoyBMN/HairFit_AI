@@ -190,15 +190,11 @@ class UpcomingAppointmentCard extends StatelessWidget {
                                 color: AppColors.accent,
                               ),
                               const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '${appointment.startTime} - ${appointment.endTime} (${DateFormatter.formatFullDate(appointment.startTimestamp)})',
-                                  style: AppTextStyles.caption.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                '${appointment.startTime} - ${appointment.endTime} (${DateFormatter.formatFullDate(appointment.startTimestamp)})',
+                                style: AppTextStyles.caption.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -219,10 +215,10 @@ class UpcomingAppointmentCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.aiHandshake.withValues(alpha: 0.1),
+                      color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
                       borderRadius: AppDimensions.borderRadiusSm,
                       border: Border.all(
-                        color: AppColors.aiHandshake.withValues(alpha: 0.3),
+                        color: const Color(0xFF6C5CE7).withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -231,7 +227,7 @@ class UpcomingAppointmentCard extends StatelessWidget {
                         const Icon(
                           Icons.auto_awesome,
                           size: 14,
-                          color: AppColors.aiHandshake,
+                          color: Color(0xFF6C5CE7),
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -239,7 +235,7 @@ class UpcomingAppointmentCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.aiHandshake,
+                            color: Color(0xFF6C5CE7),
                           ),
                         ),
                       ],

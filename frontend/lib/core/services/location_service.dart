@@ -162,13 +162,11 @@ class LocationService {
 
   /// Mở màn hình Cài đặt ứng dụng của máy
   Future<bool> openAppSettings() async {
-    if (kIsWeb) return false;
     return await Geolocator.openAppSettings();
   }
 
   /// Mở màn hình Cài đặt dịch vụ Vị trí của máy
   Future<bool> openLocationSettings() async {
-    if (kIsWeb) return false;
     return await Geolocator.openLocationSettings();
   }
 }

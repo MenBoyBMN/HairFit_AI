@@ -28,12 +28,7 @@ class BarberBottomSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: BarberBottomSheet(item: item),
-        ),
-      ),
+      builder: (_) => BarberBottomSheet(item: item),
     );
   }
 

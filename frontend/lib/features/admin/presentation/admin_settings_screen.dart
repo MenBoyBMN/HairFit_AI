@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/seed_data_service.dart';
 import '../../../../providers/admin_provider.dart';
 import '../../../../providers/admin_stats_provider.dart';
 
@@ -59,6 +60,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final seedService = SeedDataService();
     final settingsAsync = ref.watch(systemSettingsProvider);
 
     settingsAsync.whenData((data) {
@@ -97,6 +99,180 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
+                // SECTION 1: SEED DATA MANAGER
+                _buildSectionHeader(
+                  title: 'Bộ Công Cụ Seed Dữ Liệu Demo 1-Click',
+                  subtitle: 'Tạo nhanh dữ liệu mẫu chuẩn để phục vụ demo, trình diễn và kiểm thử',
+                  icon: Icons.auto_awesome_rounded,
+                ),
+                const SizedBox(height: 10),
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: AppColors.divider),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.rocket_launch_rounded,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          title: const Text(
+                            'Seed Toàn Bộ Hệ Thống (1-Click Full)',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Nạp đồng bộ 10 kiểu tóc AI + 5 tiệm tóc Đà Nẵng + 3 lịch hẹn mẫu hôm nay',
+                          ),
+                          trailing: FilledButton(
+                            onPressed: () =>
+                                _runAction('Nạp toàn bộ dữ liệu mẫu', () async {
+                                  await seedService.seedAll(overwrite: true);
+                                  await seedService.seedSampleAppointments();
+                                }),
+                            child: const Text('Seed tất cả'),
+                          ),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.content_cut_rounded,
+                              color: Colors.purple.shade700,
+                            ),
+                          ),
+                          title: const Text(
+                            'Seed Danh Mục Kiểu Tóc',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Nạp 10 kiểu tóc chuẩn vào hairstyleCatalog kèm dáng mặt AI',
+                          ),
+                          trailing: FilledButton.tonal(
+                            onPressed: () => _runAction(
+                              'Nạp kiểu tóc mẫu',
+                              () => seedService.seedHairstyles(overwrite: true),
+                            ),
+                            child: const Text('Seed tóc'),
+                          ),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.infoLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.storefront_rounded,
+                              color: AppColors.info,
+                            ),
+                          ),
+                          title: const Text(
+                            'Seed Thợ Cắt Tóc & Salon',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Nạp 5 thợ mẫu có tọa độ GPS Đà Nẵng, bảng giá và giờ làm việc',
+                          ),
+                          trailing: FilledButton.tonal(
+                            onPressed: () => _runAction(
+                              'Nạp thợ mẫu',
+                              () => seedService.seedBarbers(overwrite: true),
+                            ),
+                            child: const Text('Seed thợ'),
+                          ),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.successLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.calendar_today_rounded,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          title: const Text(
+                            'Seed Lịch Hẹn Mẫu Hôm Nay',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Nạp 3 ca lịch hẹn mẫu (pending, confirmed, completed) để test dashboard',
+                          ),
+                          trailing: FilledButton.tonal(
+                            onPressed: () => _runAction(
+                              'Nạp lịch hẹn mẫu',
+                              () => seedService.seedSampleAppointments(),
+                            ),
+                            child: const Text('Seed lịch'),
+                          ),
+                        ),
+                        const Divider(),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.cleaning_services_rounded,
+                              color: AppColors.error,
+                            ),
+                          ),
+                          title: const Text(
+                            'Dọn Dẹp Dữ Liệu Demo',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Xóa các lịch hẹn test và 5 thợ mẫu để chuẩn bị cho buổi demo mới',
+                          ),
+                          trailing: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                            ),
+                            onPressed: () =>
+                                _runAction('Dọn dẹp dữ liệu demo', () async {
+                                  await seedService.clearSampleAppointments();
+                                  await seedService.clearSampleBarbers();
+                                }),
+                            child: const Text('Xóa test'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // SECTION 2: SYSTEM CONFIGURATIONS
                 _buildSectionHeader(
                   title: 'Tham Số Nghiệp Vụ Hệ Thống',
                   subtitle: 'Tùy chỉnh và lưu trữ các quy tắc vận hành lên Cloud Firestore (systemSettings/global)',
@@ -241,7 +417,7 @@ class _AdminSettingsScreenState extends ConsumerState<AdminSettingsScreen> {
                         Divider(),
                         _InfoRow(
                           label: 'Cơ sở dữ liệu',
-                          value: 'ASP.NET Core 8 Web API + SQL Server',
+                          value: 'Cloud Firestore (Serverless)',
                         ),
                         Divider(),
                         _InfoRow(

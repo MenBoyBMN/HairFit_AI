@@ -7,7 +7,6 @@
 
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,18 +14,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/platform_helper.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/web_nav_shell.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 
 /// Màn hình thông tin cá nhân và cài đặt tài khoản (Task 6.4)
 class ProfileScreen extends ConsumerStatefulWidget {
-  final bool isEmbeddedInAdmin;
-
-  const ProfileScreen({super.key, this.isEmbeddedInAdmin = false});
+  const ProfileScreen({super.key});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -142,34 +137,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(authStateProvider);
+
     final currentUser = userAsync.value;
-    final isDesktop = PlatformHelper.isDesktopLayout(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: widget.isEmbeddedInAdmin
-          ? null
-          : (isDesktop
-                ? WebTopNavBar(
-                    currentRoute: currentUser?.isBarber == true
-                        ? '/barber/profile'
-                        : '/customer/profile',
-                    isBarber: currentUser?.isBarber == true,
-                  )
-                : AppBar(
-                    title: const Text('Hồ Sơ Của Tôi', style: AppTextStyles.h3),
-                    centerTitle: true,
-                    actions: [
-                      IconButton(
-                        tooltip: 'Làm mới',
-                        icon: const Icon(Icons.refresh_rounded),
-                        onPressed: () =>
-                            ref.read(authStateProvider.notifier).refreshUser(),
-                      ),
-                    ],
-                  )),
-      bottomNavigationBar:
-          (widget.isEmbeddedInAdmin || isDesktop || currentUser == null)
+      appBar: AppBar(
+        title: const Text('Hồ Sơ Của Tôi', style: AppTextStyles.h3),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Làm mới',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () => ref.read(authStateProvider.notifier).refreshUser(),
+          ),
+        ],
+      ),
+      bottomNavigationBar: currentUser == null
           ? null
           : _buildBottomNav(context, currentUser),
       body: userAsync.when(
@@ -215,11 +199,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           title: 'Chỉnh sửa thông tin',
                           subtitle: 'Tên hiển thị, ảnh đại diện',
                           onTap: () => context.push(
-                            user.isAdmin
-                                ? '/admin/profile-edit'
-                                : (user.isBarber
-                                      ? '/barber/profile-edit-user'
-                                      : '/customer/profile-edit'),
+                            user.isBarber
+                                ? '/barber/profile-edit-user'
+                                : '/customer/profile-edit',
                           ),
                         ),
                         _ActionItem(
@@ -230,125 +212,133 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ],
                     ),
-                    if (!user.isAdmin) ...[
-                      const SizedBox(height: AppDimensions.lg),
-                      _buildActionGroup(
-                        title: 'Dịch vụ & Tính năng',
-                        items: [
-                          if (user.isCustomer) ...[
-                            _ActionItem(
-                              icon: Icons.calendar_month_outlined,
-                              title: 'Lịch hẹn của tôi',
-                              subtitle: 'Xem lịch sắp tới và lịch sử cắt tóc',
-                              onTap: () =>
-                                  context.push('/customer/appointments'),
-                            ),
-                            _ActionItem(
-                              icon: Icons.chat_bubble_outline_rounded,
-                              title: 'Tin nhắn & Trò chuyện',
-                              subtitle: 'Trao đổi trực tiếp với thợ cắt tóc',
-                              onTap: () => context.push('/conversations'),
-                            ),
-                            _ActionItem(
-                              icon: Icons.face_retouching_natural_rounded,
-                              title: 'Tư vấn kiểu tóc AI',
-                              subtitle: kIsWeb
-                                  ? 'Studio chọn dáng mặt & chất tóc trực quan'
-                                  : 'Phân tích dáng mặt 100% On-Device',
-                              onTap: () {
-                                try {
-                                  context.push('/customer/ai-consult');
-                                } catch (_) {
-                                  context.go('/customer/ai-consult');
-                                }
-                              },
-                            ),
-                            _ActionItem(
-                              icon: Icons.map_outlined,
-                              title: 'Khám Phá Tiệm Xung Quanh',
-                              subtitle: 'Tìm thợ cắt tóc trên bản đồ',
-                              onTap: () => context.push('/customer/search'),
-                            ),
-                          ],
-                          if (user.isBarber) ...[
-                            _ActionItem(
-                              icon: Icons.content_cut_rounded,
-                              title: 'Quản lý lịch hẹn',
-                              subtitle: 'Xem và phê duyệt các cuộc hẹn',
-                              onTap: () => context.push('/barber/appointments'),
-                            ),
-                            _ActionItem(
-                              icon: Icons.chat_bubble_outline_rounded,
-                              title: 'Tin nhắn & Trò chuyện',
-                              subtitle: 'Trao đổi với khách hàng',
-                              onTap: () => context.push('/conversations'),
-                            ),
-                            _ActionItem(
-                              icon: Icons.storefront_outlined,
-                              title: 'Quản lý hồ sơ tiệm tóc',
-                              subtitle:
-                                  'Cập nhật dịch vụ, giá tiền, giờ làm việc',
-                              onTap: () => context.push('/barber/profile-edit'),
-                            ),
-                            _ActionItem(
-                              icon: Icons.visibility_outlined,
-                              title: 'Xem trang tiệm công khai',
-                              subtitle:
-                                  'Xem giao diện tiệm như khách hàng nhìn thấy',
-                              onTap: () =>
-                                  context.push('/customer/barber/${user.uid}'),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: AppDimensions.lg),
-                      _buildActionGroup(
-                        title: 'Hệ thống HairFit AI',
-                        items: [
+                    const SizedBox(height: AppDimensions.lg),
+                    _buildActionGroup(
+                      title: 'Dịch vụ & Tính năng',
+                      items: [
+                        if (user.isCustomer) ...[
                           _ActionItem(
-                            icon: Icons.info_outline_rounded,
-                            title: 'Về ứng dụng',
-                            subtitle: 'Phiên bản 0.6 beta — Cre by: MenBoyBMN',
+                            icon: Icons.calendar_month_outlined,
+                            title: 'Lịch hẹn của tôi',
+                            subtitle: 'Xem lịch sắp tới và lịch sử cắt tóc',
+                            onTap: () => context.push('/customer/appointments'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            title: 'Tin nhắn & Trò chuyện',
+                            subtitle: 'Trao đổi trực tiếp với thợ cắt tóc',
+                            onTap: () => context.push('/conversations'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.face_retouching_natural_rounded,
+                            title: 'Tư vấn kiểu tóc AI',
+                            subtitle: 'Phân tích dáng mặt 100% On-Device',
                             onTap: () {
-                              showAboutDialog(
-                                context: context,
-                                applicationName: 'HairFit AI',
-                                applicationVersion: '0.6 beta',
-                                applicationLegalese: 'Cre by: MenBoyBMN',
-                                applicationIcon: Container(
-                                  padding: const EdgeInsets.all(
-                                    AppDimensions.sm,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: AppDimensions.borderRadiusSm,
-                                  ),
-                                  child: const Icon(
-                                    Icons.content_cut_rounded,
+                              try {
+                                context.push('/customer/ai-consult');
+                              } catch (_) {
+                                context.go('/customer/ai-consult');
+                              }
+                            },
+                          ),
+                          _ActionItem(
+                            icon: Icons.map_outlined,
+                            title: 'Khám Phá Tiệm Xung Quanh',
+                            subtitle: 'Tìm thợ cắt tóc trên bản đồ',
+                            onTap: () => context.push('/customer/search'),
+                          ),
+                        ],
+                        if (user.isBarber) ...[
+                          _ActionItem(
+                            icon: Icons.content_cut_rounded,
+                            title: 'Quản lý lịch hẹn',
+                            subtitle: 'Xem và phê duyệt các cuộc hẹn',
+                            onTap: () => context.push('/barber/appointments'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            title: 'Tin nhắn & Trò chuyện',
+                            subtitle: 'Trao đổi với khách hàng',
+                            onTap: () => context.push('/conversations'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.storefront_outlined,
+                            title: 'Quản lý hồ sơ tiệm tóc',
+                            subtitle:
+                                'Cập nhật dịch vụ, giá tiền, giờ làm việc',
+                            onTap: () => context.push('/barber/profile-edit'),
+                          ),
+                          _ActionItem(
+                            icon: Icons.visibility_outlined,
+                            title: 'Xem trang tiệm công khai',
+                            subtitle:
+                                'Xem giao diện tiệm như khách hàng nhìn thấy',
+                            onTap: () =>
+                                context.push('/customer/barber/${user.uid}'),
+                          ),
+                        ],
+                        if (user.isAdmin) ...[
+                          _ActionItem(
+                            icon: Icons.admin_panel_settings_outlined,
+                            title: 'Phê duyệt thợ cắt tóc',
+                            subtitle: 'Xét duyệt hồ sơ salon đăng ký mới',
+                            onTap: () => context.push('/admin/approve-barbers'),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: AppDimensions.lg),
+                    _buildActionGroup(
+                      title: 'Hệ thống HairFit AI',
+                      items: [
+                        _ActionItem(
+                          icon: Icons.science_outlined,
+                          title: 'Kiểm thử AI & Dữ liệu mẫu',
+                          subtitle:
+                              'Công cụ test On-Device AI và nạp dữ liệu mẫu',
+                          onTap: () => context.push('/spike-test'),
+                        ),
+                        _ActionItem(
+                          icon: Icons.info_outline_rounded,
+                          title: 'Về ứng dụng',
+                          subtitle: 'Phiên bản 0.6 beta — Cre by: MenBoyBMN',
+                          onTap: () {
+                            showAboutDialog(
+                              context: context,
+                              applicationName: 'HairFit AI',
+                              applicationVersion: '0.6 beta',
+                              applicationLegalese: 'Cre by: MenBoyBMN',
+                              applicationIcon: Container(
+                                padding: const EdgeInsets.all(AppDimensions.sm),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: AppDimensions.borderRadiusSm,
+                                ),
+                                child: const Icon(
+                                  Icons.content_cut_rounded,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                              children: const [
+                                SizedBox(height: AppDimensions.sm),
+                                Text(
+                                  'Cre by: MenBoyBMN',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
                                     color: AppColors.accent,
                                   ),
                                 ),
-                                children: const [
-                                  SizedBox(height: AppDimensions.sm),
-                                  Text(
-                                    'Cre by: MenBoyBMN',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.accent,
-                                    ),
-                                  ),
-                                  SizedBox(height: AppDimensions.xs),
-                                  Text(
-                                    'Ứng dụng tư vấn kiểu tóc bằng AI nhân trắc học 100% On-Device, bản đồ tìm thợ OpenStreetMap và hệ thống đặt lịch chống trùng slot nguyên tử.',
-                                    style: AppTextStyles.bodyMedium,
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                                SizedBox(height: AppDimensions.xs),
+                                Text(
+                                  'Ứng dụng tư vấn kiểu tóc bằng AI nhân trắc học 100% On-Device, bản đồ tìm thợ OpenStreetMap và hệ thống đặt lịch chống trùng slot nguyên tử.',
+                                  style: AppTextStyles.bodyMedium,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppDimensions.xl),
                     AppButton(
                       text: 'Đăng Xuất',
@@ -498,13 +488,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
         ),
-        Material(
-          color: AppColors.surface,
-          shape: RoundedRectangleBorder(
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
             borderRadius: AppDimensions.borderRadiusMd,
-            side: const BorderSide(color: AppColors.divider),
+            border: Border.all(color: AppColors.divider),
           ),
-          clipBehavior: Clip.antiAlias,
           child: ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

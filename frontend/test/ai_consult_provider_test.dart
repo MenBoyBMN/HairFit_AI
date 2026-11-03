@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hairfit_ai/models/hairstyle_model.dart';
-import 'helpers/sample_test_data.dart';
+import 'package:hairfit_ai/core/services/seed_data_service.dart';
 import 'package:hairfit_ai/features/ai_consult/data/face_validation_service.dart';
 import 'package:hairfit_ai/features/ai_consult/data/hairstyle_repository.dart';
 import 'package:hairfit_ai/features/ai_consult/domain/ai_consult_result.dart';
@@ -27,7 +27,7 @@ class FakeFaceValidationService extends FaceValidationService {
 class FakeHairstyleRepository implements HairstyleRepository {
   @override
   Future<List<HairstyleModel>> getAllHairstyles() async {
-    return SampleTestData.sampleHairstyles;
+    return SeedDataService.sampleHairstyles;
   }
 }
 
@@ -106,7 +106,7 @@ void main() {
       () async {
         await notifier.selectManualFaceShape(
           FaceShape.round,
-          catalogOverride: SampleTestData.sampleHairstyles,
+          catalogOverride: SeedDataService.sampleHairstyles,
         );
 
         expect(notifier.state.hasSuccessResult, isTrue);
@@ -138,7 +138,7 @@ void main() {
       () async {
         await notifier.selectManualFaceShape(
           FaceShape.square,
-          catalogOverride: SampleTestData.sampleHairstyles,
+          catalogOverride: SeedDataService.sampleHairstyles,
         );
 
         final success = notifier.state.successResult!;

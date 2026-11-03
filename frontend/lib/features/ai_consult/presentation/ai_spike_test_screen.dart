@@ -7,7 +7,6 @@
 
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
@@ -229,19 +228,12 @@ class _AISpikeTestScreenState extends State<AISpikeTestScreen> {
             if (_selectedImage != null) ...[
               ClipRRect(
                 borderRadius: AppDimensions.borderRadiusMd,
-                child: kIsWeb
-                    ? Image.network(
-                        _selectedImage!.path,
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      )
-                    : Image.file(
-                        File(_selectedImage!.path),
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                child: Image.file(
+                  File(_selectedImage!.path),
+                  height: 220,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
               const SizedBox(height: AppDimensions.md),
             ] else ...[

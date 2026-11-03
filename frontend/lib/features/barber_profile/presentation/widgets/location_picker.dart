@@ -5,7 +5,6 @@
 //  - Widget nhận dữ liệu và hiển thị UI, đóng gói giao diện cho gọn gàng.
 // ============================================================================
 
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -425,7 +424,6 @@ class _FullScreenMapPickerState extends State<_FullScreenMapPicker> {
   final MapController _mapController = MapController();
   late LatLng _center;
   bool _isLocating = false;
-  Timer? _positionDebounceTimer;
 
   @override
   void initState() {
@@ -435,7 +433,6 @@ class _FullScreenMapPickerState extends State<_FullScreenMapPicker> {
 
   @override
   void dispose() {
-    _positionDebounceTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -486,21 +483,11 @@ class _FullScreenMapPickerState extends State<_FullScreenMapPicker> {
               initialZoom: 16.0,
               minZoom: 5.0,
               maxZoom: 18.5,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-              ),
               onPositionChanged: (camera, hasGesture) {
-                _center = camera.center;
                 if (hasGesture) {
-                  _positionDebounceTimer?.cancel();
-                  _positionDebounceTimer = Timer(
-                    const Duration(milliseconds: 150),
-                    () {
-                      if (mounted) {
-                        setState(() {});
-                      }
-                    },
-                  );
+                  setState(() {
+                    _center = camera.center;
+                  });
                 }
               },
             ),

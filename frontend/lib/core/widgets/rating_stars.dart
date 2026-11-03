@@ -25,7 +25,7 @@ class RatingStars extends StatelessWidget {
     this.reviewCount,
     this.starSize = 16.0,
     this.showRatingNumber = true,
-    this.starColor = AppColors.starRating,
+    this.starColor = const Color(0xFFFFB800),
   });
 
   @override

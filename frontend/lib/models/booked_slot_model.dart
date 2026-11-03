@@ -5,6 +5,8 @@
 //  - Lớp mô hình (Model) bao gồm các thuộc tính và phương thức chuyển đổi (toMap, fromMap, copyWith).
 // ============================================================================
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// Mô hình slot thời gian đã đặt (bookedSlots/{slotId})
 /// Dùng để chống trùng lịch bằng Transaction
 class BookedSlotModel {
@@ -43,16 +45,14 @@ class BookedSlotModel {
 
   factory BookedSlotModel.fromMap(Map<String, dynamic> map, {String? id}) {
     DateTime parseTimestamp(dynamic val) {
-      if (val is DateTime) return val;
+      if (val is Timestamp) return val.toDate();
       if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
-      if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
       return DateTime.now();
     }
 
     DateTime? parseNullableTimestamp(dynamic val) {
-      if (val is DateTime) return val;
+      if (val is Timestamp) return val.toDate();
       if (val is String) return DateTime.tryParse(val);
-      if (val is num) return DateTime.fromMillisecondsSinceEpoch(val.toInt());
       return null;
     }
 
@@ -69,16 +69,24 @@ class BookedSlotModel {
     );
   }
 
+  factory BookedSlotModel.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return BookedSlotModel.fromMap(doc.data() ?? {}, id: doc.id);
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'barberId': barberId,
       'date': date,
       'time': time,
       'appointmentId': appointmentId,
-      'startTimestamp': startTimestamp.toIso8601String(),
+      'startTimestamp': Timestamp.fromDate(startTimestamp),
       'isBlockedByBarber': isBlockedByBarber,
       if (blockReason != null) 'blockReason': blockReason,
-      if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
   }
 

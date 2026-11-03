@@ -52,7 +52,7 @@ class BarberDailyEarnings extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.md),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.surfaceDarkGradient],
+          colors: [AppColors.primary, Color(0xFF1E272E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -72,32 +72,25 @@ class BarberDailyEarnings extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.trending_up_rounded,
+              Row(
+                children: [
+                  const Icon(
+                    Icons.trending_up_rounded,
+                    color: AppColors.accent,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppDimensions.xs),
+                  Text(
+                    'TỔNG KẾT HÔM NAY (${DateFormatter.formatShortDate(now)})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
                       color: AppColors.accent,
-                      size: 20,
                     ),
-                    const SizedBox(width: AppDimensions.xs),
-                    Expanded(
-                      child: Text(
-                        'TỔNG KẾT HÔM NAY (${DateFormatter.formatShortDate(now)})',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                          color: AppColors.accent,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppDimensions.xs),
               // Switch Tạm ngưng nhận khách hôm nay
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -155,114 +148,97 @@ class BarberDailyEarnings extends StatelessWidget {
 
           const SizedBox(height: AppDimensions.md),
 
-          // 2 mini KPI boxes + Quick Break button (Responsive layout)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 360;
-
-              final kpiBoxes = Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.sm,
-                        vertical: 8,
+          // 2 mini KPI boxes + Quick Break button
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.sm,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: AppDimensions.borderRadiusSm,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline_rounded,
+                        color: AppColors.success,
+                        size: 18,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: AppDimensions.borderRadiusSm,
-                      ),
-                      child: Row(
+                      const SizedBox(width: 6),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.check_circle_outline_rounded,
-                            color: AppColors.success,
-                            size: 18,
+                          Text(
+                            '$completedCount ca',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$completedCount ca',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'Đã hoàn tất',
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 10,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                          const Text(
+                            'Đã hoàn tất',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: AppDimensions.xs),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.sm,
-                        vertical: 8,
+                ),
+              ),
+              const SizedBox(width: AppDimensions.xs),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.sm,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: AppDimensions.borderRadiusSm,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        color: AppColors.accent,
+                        size: 18,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: AppDimensions.borderRadiusSm,
-                      ),
-                      child: Row(
+                      const SizedBox(width: 6),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            color: AppColors.accent,
-                            size: 18,
+                          Text(
+                            '$activeWaitingCount ca',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$activeWaitingCount ca',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const Text(
-                                  'Chờ phục vụ',
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 10,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                          const Text(
+                            'Chờ phục vụ',
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 10,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              );
-
-              final quickBreakButton = ElevatedButton.icon(
+                ),
+              ),
+              const SizedBox(width: AppDimensions.xs),
+              // Button Khóa giờ nghỉ / Bận đột xuất
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
@@ -281,26 +257,8 @@ class BarberDailyEarnings extends StatelessWidget {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 onPressed: onQuickBreak,
-              );
-
-              if (isCompact) {
-                return Column(
-                  children: [
-                    kpiBoxes,
-                    const SizedBox(height: AppDimensions.xs),
-                    SizedBox(width: double.infinity, child: quickBreakButton),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: kpiBoxes),
-                  const SizedBox(width: AppDimensions.xs),
-                  quickBreakButton,
-                ],
-              );
-            },
+              ),
+            ],
           ),
         ],
       ),
