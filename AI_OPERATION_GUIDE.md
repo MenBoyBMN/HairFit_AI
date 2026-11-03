@@ -13,7 +13,7 @@ graph TD
     A[Chụp ảnh / Chọn ảnh chân dung] --> B[Tầng 1: Face Validation & Quality Check]
     B -->|Đạt chuẩn / Web Simulation| C[Tầng 2: Geometric Face Shape Analyzer]
     C -->|Trích xuất thông số & Dáng mặt| D[Tầng 3: Rule-based Recommendation Engine]
-    D -->|Khớp 50 kiểu tóc catalog| E[Tầng 4: AI Haircut Handshake & Booking]
+    D -->|Khớp 50 kiểu tóc catalog| E[Tầng 4: AI Haircut Handshake & AI Chat Assistant]
 ```
 
 ---
@@ -54,7 +54,19 @@ graph TD
 
 ---
 
-## 3. Trợ Lý AI Chat Trực Tuyến (`AIChatService`)
-- Tích hợp thêm trợ lý trò chuyện thông minh 24/7 giúp giải đáp mọi thắc mắc về kiểu tóc, sản phẩm vuốt sáp, sấy tạo nếp và chăm sóc tóc dựa trên cơ sở tri thức chuyên gia tóc.
+## 4. Cơ Chế Hoạt Động & Xử Lý Ngoài Phạm Vi Của Trợ Lý AI Chat (`AIChatService`)
+
+- **Phân Tích Ý Định (Intent Matching & Semantic Keywords)**:
+  - Khi người dùng nhập câu hỏi (ví dụ: *"Mặt tròn nên cắt tóc gì?"*, *"Cách vuốt sáp giữ nếp lâu"*), hệ thống tiến hành quét và phân tích các từ khóa trọng tâm trong cơ sở tri thức chuyên ngành.
+- **Truy Xuất Cơ Sở Dữ Liệu & Tri Thức Chuyên Gia (Database & Expert Knowledge Base)**:
+  - Dựa trên từ khóa, hệ thống truy xuất các câu trả lời nằm trong **cơ sở dữ liệu** và catalog kiểu tóc thực tế từ các nhà tạo mẫu tóc hàng đầu (như tỷ lệ hình học khuôn mặt, đặc điểm xương hàm, độ phồng, sản phẩm sáp *Clay/Paste* phù hợp).
+- **Định Dạng Trả Lời (Structured Output)**:
+  - Câu trả lời được tổng hợp mạch lạc, chia rõ các mục (*Đặc điểm, Kiểu tóc khuyên dùng, Mẹo thực tế*) giúp người dùng dễ đọc và áp dụng ngay tại salon.
+- **Xử Lý Khi Ngoài Phạm Vi Nghiên Cứu (Out-of-Scope Handling)**:
+  - Nếu người dùng đặt những câu hỏi **không nằm trong cơ sở dữ liệu và không liên quan đến phạm vi nghiên cứu chuyên ngành** (như tóc, dáng mặt, mỹ phẩm tạo nếp hoặc đặt lịch cắt tóc) — ví dụ: *Thời tiết hôm nay thế nào?, Giải hộ tôi bài toán này, Nấu món ăn gì ngon?,...*:
+    - **Cơ chế Fallback thông minh**: Hệ thống sẽ không trả lời lan man hay bịa đặt thông tin ngoài đời thực.
+    - **Phản hồi chuẩn mực & định hướng**: AI sẽ khéo léo thông báo phạm vi chuyên môn của mình và hướng dẫn người dùng quay lại các tính năng cốt lõi của ứng dụng:
+      > *"🤖 Chào bạn! Tôi là Trợ lý AI chuyên gia tư vấn kiểu tóc của HairFit AI. Bạn có thể hỏi tôi bất cứ điều gì về kiểu tóc hợp dáng mặt, cách chọn sáp vuốt, mẹo chăm sóc tóc hoặc quét khuôn mặt AI trên ứng dụng nhé!"*
+  - Cơ chế này giúp ứng dụng luôn giữ được tính chuyên nghiệp cao, tập trung 100% vào phạm vi nghiên cứu và trải nghiệm làm đẹp của người dùng.
 
 // CreBy: MenBoyBMN
