@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 title HairFit AI - Kết Nối Điện Thoại Android Cáp USB (Cắm Là Chạy)
 echo ========================================================

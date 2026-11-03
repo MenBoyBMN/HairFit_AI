@@ -15,22 +15,17 @@ Tài liệu này hướng dẫn cách biến một máy tính cá nhân (laptop/
 
 ---
 
-## 2. Lựa Chọn Khởi Động Server
+## 2. Khởi Động Server & Ngrok Tunnel
 
-Trong thư mục `server_setup/`, bạn có các kịch bản sẵn sàng:
+Trong thư mục `server_setup/`:
 
-### Lựa Chọn A: ASP.NET Core 8 Web API + Ngrok (Khuyên Dùng cho 10 máy Demo)
-1. Chạy `1_setup_new_machine.bat` để cài đặt .NET SDK, Ngrok và nhập Authtoken an toàn.
-2. Kiểm tra tên miền tĩnh của bạn trong `ngrok_domain.txt` (mặc định: `clothing-similarly-delicacy.ngrok-free.dev`).
-3. Chạy `2_start_server_ngrok.bat`:
-   - Backend ASP.NET Core tự động khởi chạy trên Port 5000 (tự tạo DB và seed data).
-   - Ngrok mở đường hầm HTTPS cố định trỏ về Port 5000.
-
-### Lựa Chọn B: ASP.NET Core 8 Web API + Cloudflare Tunnel
-1. Chạy `1_install_tools.bat` để cài đặt .NET SDK & `cloudflared`.
-2. Chạy `2_start_server.bat`:
-   - Backend ASP.NET Core tự chạy trên Port 5000.
-   - Cloudflare Tunnel cấp URL ngẫu nhiên dạng `https://xxxx.trycloudflare.com`.
+1. **Khởi chạy Server**:
+   Chạy file `2_start_server_ngrok.bat`:
+   - Backend ASP.NET Core tự động khởi chạy trên Port 5000 (tự tạo DB và nạp seed data).
+   - Tự động kích hoạt `adb reverse` cho điện thoại cắm cáp USB (nếu có).
+   - Ngrok mở đường hầm HTTPS tĩnh cố định trỏ về Port 5000: `https://clothing-similarly-delicacy.ngrok-free.dev`.
+2. **Khi thiết lập trên máy tính mới**:
+   Chạy `1_setup_new_machine.bat` để tự động cài đặt .NET SDK, Ngrok và nạp Authtoken an toàn.
 
 ---
 

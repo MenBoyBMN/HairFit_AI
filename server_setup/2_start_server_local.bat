@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 title HairFit AI - Khởi Động Backend ASP.NET Core (Local)
 echo ========================================================
