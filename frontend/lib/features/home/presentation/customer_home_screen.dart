@@ -27,6 +27,7 @@ import '../../../providers/appointment_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../ai_consult/data/hairstyle_repository.dart';
 import '../../search_map/data/barber_repository.dart';
+import '../../search_map/presentation/widgets/hairstyle_picker_bottom_sheet.dart';
 import 'widgets/my_ai_hair_profile_card.dart';
 import 'widgets/upcoming_appointment_card.dart';
 
@@ -351,12 +352,44 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             ],
           ),
           const SizedBox(height: AppDimensions.md),
-          _ActionCard(
-            title: 'Chat Trợ Lý AI Tóc',
-            subtitle: 'Hỏi đáp & Mẹo tạo kiểu 24/7',
-            icon: Icons.auto_awesome,
-            iconColor: AppColors.primary,
-            onTap: () => context.push('/customer/ai-chat'),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionCard(
+                  title: 'Chat Trợ Lý AI Tóc',
+                  subtitle: 'Hỏi đáp & Mẹo tạo kiểu',
+                  icon: Icons.auto_awesome,
+                  iconColor: AppColors.primary,
+                  onTap: () => context.push('/customer/ai-chat'),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.md),
+              Expanded(
+                child: _ActionCard(
+                  title: 'Lọc Bộ Sưu Tập Tóc',
+                  subtitle: '50+ kiểu & dáng mặt',
+                  icon: Icons.filter_list_rounded,
+                  iconColor: AppColors.secondary,
+                  onTap: () async {
+                    final hairstyles = ref.read(hairstylesProvider).valueOrNull ?? [];
+                    if (hairstyles.isNotEmpty) {
+                      await HairstylePickerBottomSheet.show(
+                        context: context,
+                        hairstyles: hairstyles,
+                        selectedHairstyleId: null,
+                        onSelectHairstyle: (styleId) {
+                          if (styleId != null) {
+                            context.push('/customer/search?hairstyleId=$styleId');
+                          }
+                        },
+                      );
+                    } else {
+                      context.push('/customer/search');
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
